@@ -33,6 +33,7 @@ STEPS: list[tuple[int, str, str]] = [
     (4, "setup_04_reports",         "Reports"),
     (5, "setup_05_workspace",       "Workspace / Menu"),
     (6, "setup_06_patients",        "Módulo Lote × Pacientes"),
+    (7, "setup_07_prescribers",     "Módulo Médico Prescritor"),
 ]
 
 
