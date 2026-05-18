@@ -484,6 +484,152 @@ def phase_allocate(client, state: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Phase stock_in — Stock Entry Manufacture (entrada física no warehouse)
+# ---------------------------------------------------------------------------
+
+def phase_stock_in(client, state: dict) -> dict:
+    log_section("Phase Extra — Stock Entry Manufacture (entrada física no Bin)")
+
+    batches = state.get("batches") or []
+    if not batches:
+        log_error("Sem batches em estado. Rode --phase produce.")
+        return state
+
+    entries = []
+    t0 = time.time()
+    for b in batches:
+        try:
+            _, body = call(client, "POST", "/api/resource/Stock Entry", json_body={
+                "doctype": "Stock Entry",
+                "stock_entry_type": "Manufacture",
+                "company": COMPANY,
+                "posting_date": dt.date.today().isoformat(),
+                "items": [{
+                    "item_code": ITEM_CODE,
+                    "t_warehouse": TARGET_WAREHOUSE,
+                    "qty": b["produced"],
+                    "basic_rate": 50,  # custo unitário stub
+                    "batch_no": b["batch"],
+                    "use_serial_batch_fields": 1,
+                    "is_finished_item": 1,
+                }],
+            })
+            se_name = body["data"]["name"]
+            submit(client, "Stock Entry", se_name)
+            entries.append(se_name)
+            log_ok(f"  {b['fpb']}: Stock Entry {se_name} (qty={b['produced']})")
+        except ErpnextApiError as exc:
+            log_error(f"  Stock Entry para {b['fpb']}: {exc}")
+
+    state["stock_entries"] = entries
+    save_state(state)
+    log_ok(f"  Total: {len(entries)} Stock Entries em {time.time()-t0:.1f}s")
+    return state
+
+
+# ---------------------------------------------------------------------------
+# Phase invoice — Delivery Note direto → Sales Invoice
+# ---------------------------------------------------------------------------
+
+def phase_invoice(client, state: dict) -> dict:
+    log_section("Phase Extra — Faturamento (DN direto → SI → Payment)")
+
+    so_names = state.get("sos") or []
+    if not so_names:
+        log_error("Sem SOs em estado. Rode --phase orders.")
+        return state
+
+    delivery_notes = []
+    sales_invoices = []
+    payments = []
+
+    t0 = time.time()
+    for so in so_names:
+        so_doc = get_doc(client, "Sales Order", so)
+        items = so_doc.get("items") or []
+        # Mapa SO Item row_id → (item_code, soi_qty, rate)
+        soi_map = {it["name"]: it for it in items}
+
+        # Agrupa fp_patients por (so_detail, batch_no) → qty
+        groups = {}
+        for p in so_doc.get("fp_patients") or []:
+            batch = p.get("batch_no")
+            allocated = float(p.get("allocated_qty") or 0)
+            if not batch or allocated <= 0:
+                continue
+            # Acha o SO Item correspondente (mesmo item_code)
+            soi_row = None
+            for it in items:
+                if it["item_code"] == p["item_code"]:
+                    soi_row = it["name"]
+                    break
+            if not soi_row:
+                continue
+            key = (soi_row, batch)
+            groups[key] = groups.get(key, 0) + allocated
+
+        if not groups:
+            continue
+
+        # 1) Delivery Note manual
+        dn_items = []
+        for (soi_row, batch), qty in groups.items():
+            it = soi_map[soi_row]
+            dn_items.append({
+                "item_code": it["item_code"],
+                "qty": qty,
+                "rate": it.get("rate") or RATE,
+                "warehouse": it.get("warehouse") or TARGET_WAREHOUSE,
+                "batch_no": batch,
+                "against_sales_order": so,
+                "so_detail": soi_row,
+            })
+
+        try:
+            _, body = call(client, "POST", "/api/resource/Delivery Note", json_body={
+                "doctype": "Delivery Note",
+                "customer": so_doc["customer"],
+                "company": COMPANY,
+                "posting_date": dt.date.today().isoformat(),
+                "items": dn_items,
+            })
+            dn_name = body["data"]["name"]
+            submit(client, "Delivery Note", dn_name)
+            delivery_notes.append(dn_name)
+        except ErpnextApiError as exc:
+            log_error(f"  DN {so}: {exc}")
+            continue
+
+        # 2) Sales Invoice from DN
+        try:
+            resp = client.call_method(
+                "erpnext.stock.doctype.delivery_note.delivery_note.make_sales_invoice",
+                {"source_name": dn_name}
+            )
+            si_doc = (resp or {}).get("message") or {}
+            si_doc["docstatus"] = 0
+            _, body = call(client, "POST", "/api/method/frappe.client.insert",
+                           json_body={"doc": si_doc})
+            si_name = (body or {}).get("message", {}).get("name")
+            if not si_name:
+                log_error(f"  SI insert sem nome: {body}")
+                continue
+            submit(client, "Sales Invoice", si_name)
+            sales_invoices.append(si_name)
+            log_ok(f"  ✓ {so} → DN={dn_name} → SI={si_name}")
+        except ErpnextApiError as exc:
+            log_error(f"  SI from DN {dn_name}: {exc}")
+
+    state["delivery_notes"] = delivery_notes
+    state["sales_invoices"] = sales_invoices
+    save_state(state)
+
+    log_ok(f"  Total: {len(delivery_notes)} DN, {len(sales_invoices)} SI "
+           f"em {time.time()-t0:.1f}s")
+    return state
+
+
+# ---------------------------------------------------------------------------
 # Phase 7 — Relatório consolidado
 # ---------------------------------------------------------------------------
 
@@ -589,12 +735,15 @@ PHASES = {
     "orders":   phase_orders,
     "produce":  phase_produce,
     "release":  phase_release,
+    "stock_in": phase_stock_in,
     "allocate": phase_allocate,
+    "invoice":  phase_invoice,
     "report":   phase_report,
     "cleanup":  phase_cleanup,
 }
 
-ALL_SEQUENCE = ["setup", "fpbs", "orders", "produce", "release", "allocate", "report"]
+ALL_SEQUENCE = ["setup", "fpbs", "orders", "produce", "release",
+                "stock_in", "allocate", "invoice", "report"]
 
 
 def main():
