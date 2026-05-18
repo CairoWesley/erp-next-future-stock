@@ -10,3 +10,4 @@ __pycache__/
 .vscode/
 
 .smoke_state.json
+.huge_state.json
