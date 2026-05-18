@@ -19,6 +19,7 @@ implantado 100% via API REST.
 | [`09-testing.md`](09-testing.md)                | Como rodar `test_scenario.py` e variações. |
 | [`10-changelog.md`](10-changelog.md)            | Histórico de versões. |
 | [`11-manual-operacional.md`](11-manual-operacional.md) | Manual visual de uso humano dentro do ERPNext (clique a clique). |
+| [`12-smoke-test-grande.md`](12-smoke-test-grande.md) | Smoke test de volume realista (10 FPBs × 2k ampolas, 22 SOs, 30 patients). |
 
 ## Quickstart
 
