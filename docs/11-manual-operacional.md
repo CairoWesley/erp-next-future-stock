@@ -1440,6 +1440,19 @@ Role mais para baixo. Procure a seção **"Pacientes"** (pode estar collapsible 
 - Útil quando: hospital/clínica compra pra vários pacientes de médicos
   distintos no mesmo pedido
 
+**Colunas adicionais (após produção/liberação)**:
+
+| Coluna | O que mostra | Quando preenche |
+|---|---|---|
+| `Lote Atribuído` | Batch físico que vai pra este paciente | Após liberação + chamar `future_production_allocate_patient_batches` |
+| `Qtd Alocada em Lote` | Quanto da qty já está vinculado ao batch | Mesmo momento |
+| `Status de Alocação` | Pendente / Parcialmente Alocado / Alocado / Entregue / Cancelado | Mesmo momento |
+
+> Fluxo automático: após acionar **Liberar Reservas** (etapa F), execute
+> também **Alocar Batch por Paciente** (botão ou API) para que cada linha
+> de paciente saiba **qual batch físico** vai receber. A farmácia usa essa
+> info pra separar e imprimir etiquetas Zebra (etapa J).
+
 > ⚠ Se um paciente recebeu prescrição de **2 médicos diferentes** pro mesmo
 > item (caso raro), crie **2 linhas** desse paciente no SO, uma com cada
 > Prescriber e dividindo a qty.

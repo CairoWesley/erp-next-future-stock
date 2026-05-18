@@ -18,9 +18,10 @@ Fases (execução incremental):
     python smoke_test_large.py --phase orders      # 3. SOs + reservas (auto FIFO)
     python smoke_test_large.py --phase produce     # 4. Produção real
     python smoke_test_large.py --phase release     # 5. Liberar FIFO
-    python smoke_test_large.py --phase report      # 6. Relatório final
+    python smoke_test_large.py --phase allocate    # 6. Alocar batch por paciente
+    python smoke_test_large.py --phase report      # 7. Relatório final
     python smoke_test_large.py --phase cleanup     # Remover tudo (TEST-LRG-*)
-    python smoke_test_large.py --phase all         # roda 1..6 em sequência
+    python smoke_test_large.py --phase all         # roda 1..7 em sequência
 
 Estado entre fases salvo em .smoke_state.json.
 
@@ -532,11 +533,70 @@ def phase_release(client, state: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Phase 6 — Relatório final
+# Phase 6 — Alocar batch por paciente
+# ---------------------------------------------------------------------------
+
+def phase_allocate(client, state: dict) -> dict:
+    log_section("Phase 6/7 — Alocar batch por paciente (fp_patients.batch_no)")
+
+    so_names = state.get("sos") or []
+    if not so_names:
+        log_error("Sem SOs em estado. Rode --phase orders.")
+        return state
+
+    total_allocated = 0
+    sos_with_alloc = 0
+    for so_name in so_names:
+        try:
+            resp = client.call_method(
+                "future_production_allocate_patient_batches",
+                {"sales_order": so_name},
+            )
+            msg = (resp or {}).get("message") or {}
+            n = int(msg.get("allocated_rows") or 0)
+            if n > 0:
+                sos_with_alloc += 1
+                total_allocated += n
+                log_ok(f"  {so_name}: {n} linha(s) alocada(s)")
+        except ErpnextApiError as exc:
+            log_error(f"  {so_name}: {exc}")
+
+    log_ok(f"  Total: {total_allocated} linha(s) em {sos_with_alloc} SO(s)")
+
+    # Amostra: pega 3 SOs e mostra estado dos pacientes
+    log_section("Amostra — primeiros 3 SOs com pacientes alocados")
+    shown = 0
+    for so_name in so_names:
+        if shown >= 3:
+            break
+        so_doc = get_doc(client, "Sales Order", so_name)
+        patients = so_doc.get("fp_patients") or []
+        if not patients:
+            continue
+        log_ok(f"\n  SO: {so_name}  (qty total={so_doc.get('items', [{}])[0].get('qty')})")
+        rows = []
+        for p in patients:
+            rows.append([
+                (p.get("patient_name") or "")[:30],
+                f"{float(p.get('qty') or 0):.0f}",
+                f"{float(p.get('allocated_qty') or 0):.0f}",
+                (p.get("batch_no") or "-")[:24],
+                (p.get("batch_status") or "")[:22],
+            ])
+        for r in rows:
+            print(f"    - {r[0]:<30} qty={r[1]:>5} alloc={r[2]:>5} "
+                  f"batch={r[3]:<24} status={r[4]}")
+        shown += 1
+
+    return state
+
+
+# ---------------------------------------------------------------------------
+# Phase 7 — Relatório final
 # ---------------------------------------------------------------------------
 
 def phase_report(client, state: dict) -> dict:
-    log_section("Phase 6/6 — Relatório final consolidado")
+    log_section("Phase 7/7 — Relatório final consolidado")
 
     fpb_names = state.get("fpbs") or []
     fpbs = list_fpbs(client, item_code=ITEM_CODE, code_prefix=TAG)
@@ -684,11 +744,12 @@ PHASES = {
     "orders":   phase_orders,
     "produce":  phase_produce,
     "release":  phase_release,
+    "allocate": phase_allocate,
     "report":   phase_report,
     "cleanup":  phase_cleanup,
 }
 
-ALL_SEQUENCE = ["setup", "fpbs", "orders", "produce", "release", "report"]
+ALL_SEQUENCE = ["setup", "fpbs", "orders", "produce", "release", "allocate", "report"]
 
 
 def main() -> int:

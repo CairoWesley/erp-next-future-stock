@@ -1750,6 +1750,41 @@ Empresa correta (se multi-empresa)?</li>
 └──────────────────────────────────────────────────────────────────────────────────────┘</code></pre>
 <p><strong>Como funciona o Link Field “Patient”</strong>: - Clique na célula → aparece dropdown - Digite o nome ou CPF → ele filtra - Clique no certo → nome e CPF preenchem sozinhos - <strong>Prescriber preenche sozinho</strong> com o médico padrão cadastrado no Patient (seção 4.3 — campo “Médico Prescritor”)</p>
 <p><strong>Como funciona a coluna Prescriber</strong>: - Cada linha de paciente pode ter um <strong>médico diferente</strong> - Sistema sugere automaticamente o médico padrão do Patient - Você pode <strong>sobrescrever</strong> clicando e escolhendo outro Prescriber - Útil quando: hospital/clínica compra pra vários pacientes de médicos distintos no mesmo pedido</p>
+<p><strong>Colunas adicionais (após produção/liberação)</strong>:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Coluna</th>
+<th>O que mostra</th>
+<th>Quando preenche</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Lote Atribuído</code></td>
+<td>Batch físico que vai pra este paciente</td>
+<td>Após liberação + chamar <code>future_production_allocate_patient_batches</code></td>
+</tr>
+<tr class="even">
+<td><code>Qtd Alocada em Lote</code></td>
+<td>Quanto da qty já está vinculado ao batch</td>
+<td>Mesmo momento</td>
+</tr>
+<tr class="odd">
+<td><code>Status de Alocação</code></td>
+<td>Pendente / Parcialmente Alocado / Alocado / Entregue / Cancelado</td>
+<td>Mesmo momento</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>Fluxo automático: após acionar <strong>Liberar Reservas</strong> (etapa F), execute também <strong>Alocar Batch por Paciente</strong> (botão ou API) para que cada linha de paciente saiba <strong>qual batch físico</strong> vai receber. A farmácia usa essa info pra separar e imprimir etiquetas Zebra (etapa J).</p>
+</blockquote>
 <blockquote>
 <p>⚠ Se um paciente recebeu prescrição de <strong>2 médicos diferentes</strong> pro mesmo item (caso raro), crie <strong>2 linhas</strong> desse paciente no SO, uma com cada Prescriber e dividindo a qty.</p>
 </blockquote>
