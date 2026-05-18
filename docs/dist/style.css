@@ -1,0 +1,289 @@
+/* Manual Operacional — Produção Futura
+   Tema profissional, fácil de ler, otimizado pra impressão e tela. */
+
+:root {
+  --primary: #1d4ed8;
+  --primary-light: #dbeafe;
+  --accent: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --muted: #64748b;
+  --bg: #ffffff;
+  --bg-alt: #f8fafc;
+  --bg-code: #f1f5f9;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text: #0f172a;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+               Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 6rem;
+}
+
+/* Headings ------------------------------------------------------------ */
+
+h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 2.5rem 0 1.2rem;
+  color: var(--primary);
+  padding-bottom: 0.6rem;
+  border-bottom: 3px solid var(--primary);
+}
+
+h1:first-child {
+  margin-top: 0;
+  padding-top: 0.5rem;
+}
+
+h2 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin: 2.2rem 0 0.9rem;
+  color: var(--primary);
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--border);
+}
+
+h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 1.6rem 0 0.7rem;
+  color: var(--text);
+}
+
+h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.2rem 0 0.5rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Paragraphs ---------------------------------------------------------- */
+
+p {
+  margin: 0.6rem 0 1rem;
+}
+
+strong { color: var(--text); font-weight: 700; }
+em { color: var(--muted); }
+
+/* Lists --------------------------------------------------------------- */
+
+ul, ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0 1.2rem;
+}
+
+li {
+  margin: 0.3rem 0;
+}
+
+li::marker { color: var(--primary); }
+
+input[type="checkbox"] {
+  margin-right: 0.4rem;
+  transform: scale(1.1);
+  accent-color: var(--accent);
+}
+
+/* Links --------------------------------------------------------------- */
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+
+a:hover {
+  border-bottom-color: var(--primary);
+}
+
+/* Code blocks (ASCII diagrams) ---------------------------------------- */
+
+code, pre {
+  font-family: "SF Mono", "Menlo", "Monaco", "Consolas", monospace;
+  font-size: 0.86em;
+}
+
+code {
+  background: var(--bg-code);
+  color: var(--text);
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1.2rem 1.4rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  line-height: 1.45;
+  font-size: 0.82em;
+  margin: 1rem 0 1.4rem;
+  border-left: 4px solid var(--primary);
+  white-space: pre;
+}
+
+pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+}
+
+/* Tables -------------------------------------------------------------- */
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.2rem 0 1.8rem;
+  font-size: 0.94em;
+  background: var(--bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+th {
+  background: var(--primary);
+  color: white;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid var(--primary);
+}
+
+td {
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+tr:nth-child(even) td {
+  background: var(--bg-alt);
+}
+
+tr:hover td {
+  background: var(--primary-light);
+}
+
+/* Blockquotes (call-outs) --------------------------------------------- */
+
+blockquote {
+  margin: 1.2rem 0;
+  padding: 0.9rem 1.2rem;
+  border-left: 4px solid var(--warning);
+  background: #fef3c7;
+  color: #78350f;
+  border-radius: 0 6px 6px 0;
+}
+
+blockquote p { margin: 0.2rem 0; }
+blockquote strong { color: #78350f; }
+
+/* Horizontal rule ----------------------------------------------------- */
+
+hr {
+  border: none;
+  border-top: 2px solid var(--border);
+  margin: 2.5rem 0;
+}
+
+/* Table of Contents (manual) ------------------------------------------ */
+
+ul ul {
+  margin: 0.2rem 0 0.4rem;
+}
+
+/* Print --------------------------------------------------------------- */
+
+@media print {
+  body {
+    max-width: 100%;
+    padding: 0;
+    font-size: 11pt;
+  }
+
+  h1 {
+    page-break-before: always;
+    font-size: 22pt;
+  }
+
+  h1:first-child {
+    page-break-before: avoid;
+  }
+
+  h2 { font-size: 16pt; page-break-after: avoid; }
+  h3 { font-size: 13pt; page-break-after: avoid; }
+
+  pre {
+    background: #f5f5f5 !important;
+    color: #000 !important;
+    border: 1px solid #999;
+    page-break-inside: avoid;
+    font-size: 8.5pt;
+  }
+
+  table { page-break-inside: avoid; font-size: 10pt; }
+  blockquote { page-break-inside: avoid; }
+
+  a { color: var(--text); }
+  a::after {
+    content: " (" attr(href) ")";
+    color: var(--muted);
+    font-size: 0.8em;
+  }
+}
+
+/* Header / Footer styling --------------------------------------------- */
+
+.manual-header {
+  background: linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%);
+  color: white;
+  padding: 2.5rem 2rem;
+  margin: -2.5rem -2rem 2rem;
+  border-radius: 0 0 12px 12px;
+}
+
+.manual-header h1 {
+  color: white;
+  border-bottom: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  font-size: 2.4rem;
+}
+
+.manual-header .subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.manual-footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid var(--border);
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9em;
+}

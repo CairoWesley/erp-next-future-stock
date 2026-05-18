@@ -1,0 +1,3140 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Manual Operacional — Produção Futura</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {  background-color: #f8f8f8; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ef2929; } /* Alert */
+    code span.an { color: #8f5902; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #c4a000; } /* Attribute */
+    code span.bn { color: #0000cf; } /* BaseN */
+    code span.cf { color: #204a87; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4e9a06; } /* Char */
+    code span.cn { color: #000000; } /* Constant */
+    code span.co { color: #8f5902; font-style: italic; } /* Comment */
+    code span.cv { color: #8f5902; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #8f5902; font-weight: bold; font-style: italic; } /* Documentation */
+    code span.dt { color: #204a87; } /* DataType */
+    code span.dv { color: #0000cf; } /* DecVal */
+    code span.er { color: #a40000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #0000cf; } /* Float */
+    code span.fu { color: #000000; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #8f5902; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #204a87; font-weight: bold; } /* Keyword */
+    code span.op { color: #ce5c00; font-weight: bold; } /* Operator */
+    code span.ot { color: #8f5902; } /* Other */
+    code span.pp { color: #8f5902; font-style: italic; } /* Preprocessor */
+    code span.sc { color: #000000; } /* SpecialChar */
+    code span.ss { color: #4e9a06; } /* SpecialString */
+    code span.st { color: #4e9a06; } /* String */
+    code span.va { color: #000000; } /* Variable */
+    code span.vs { color: #4e9a06; } /* VerbatimString */
+    code span.wa { color: #8f5902; font-weight: bold; font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="data:text/css,%0A%3Aroot%20%7B%0A%2D%2Dprimary%3A%20%231d4ed8%3B%0A%2D%2Dprimary%2Dlight%3A%20%23dbeafe%3B%0A%2D%2Daccent%3A%20%23059669%3B%0A%2D%2Dwarning%3A%20%23d97706%3B%0A%2D%2Ddanger%3A%20%23dc2626%3B%0A%2D%2Dmuted%3A%20%2364748b%3B%0A%2D%2Dbg%3A%20%23ffffff%3B%0A%2D%2Dbg%2Dalt%3A%20%23f8fafc%3B%0A%2D%2Dbg%2Dcode%3A%20%23f1f5f9%3B%0A%2D%2Dborder%3A%20%23e2e8f0%3B%0A%2D%2Dborder%2Dstrong%3A%20%23cbd5e1%3B%0A%2D%2Dtext%3A%20%230f172a%3B%0A%7D%0A%2A%20%7B%20box%2Dsizing%3A%20border%2Dbox%3B%20%7D%0Ahtml%20%7B%20scroll%2Dbehavior%3A%20smooth%3B%20%7D%0Abody%20%7B%0Afont%2Dfamily%3A%20%2Dapple%2Dsystem%2C%20BlinkMacSystemFont%2C%20%22Segoe%20UI%22%2C%20Roboto%2C%20%22Helvetica%20Neue%22%2C%0AArial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2015px%3B%0Aline%2Dheight%3A%201%2E65%3B%0Acolor%3A%20var%28%2D%2Dtext%29%3B%0Abackground%3A%20var%28%2D%2Dbg%29%3B%0Amax%2Dwidth%3A%20980px%3B%0Amargin%3A%200%20auto%3B%0Apadding%3A%202%2E5rem%202rem%206rem%3B%0A%7D%0A%0Ah1%20%7B%0Afont%2Dsize%3A%202%2E2rem%3B%0Afont%2Dweight%3A%20700%3B%0Aline%2Dheight%3A%201%2E2%3B%0Amargin%3A%202%2E5rem%200%201%2E2rem%3B%0Acolor%3A%20var%28%2D%2Dprimary%29%3B%0Apadding%2Dbottom%3A%200%2E6rem%3B%0Aborder%2Dbottom%3A%203px%20solid%20var%28%2D%2Dprimary%29%3B%0A%7D%0Ah1%3Afirst%2Dchild%20%7B%0Amargin%2Dtop%3A%200%3B%0Apadding%2Dtop%3A%200%2E5rem%3B%0A%7D%0Ah2%20%7B%0Afont%2Dsize%3A%201%2E55rem%3B%0Afont%2Dweight%3A%20700%3B%0Amargin%3A%202%2E2rem%200%200%2E9rem%3B%0Acolor%3A%20var%28%2D%2Dprimary%29%3B%0Apadding%2Dbottom%3A%200%2E4rem%3B%0Aborder%2Dbottom%3A%202px%20solid%20var%28%2D%2Dborder%29%3B%0A%7D%0Ah3%20%7B%0Afont%2Dsize%3A%201%2E2rem%3B%0Afont%2Dweight%3A%20600%3B%0Amargin%3A%201%2E6rem%200%200%2E7rem%3B%0Acolor%3A%20var%28%2D%2Dtext%29%3B%0A%7D%0Ah4%20%7B%0Afont%2Dsize%3A%201%2E05rem%3B%0Afont%2Dweight%3A%20600%3B%0Amargin%3A%201%2E2rem%200%200%2E5rem%3B%0Acolor%3A%20var%28%2D%2Dmuted%29%3B%0Atext%2Dtransform%3A%20uppercase%3B%0Aletter%2Dspacing%3A%200%2E04em%3B%0A%7D%0A%0Ap%20%7B%0Amargin%3A%200%2E6rem%200%201rem%3B%0A%7D%0Astrong%20%7B%20color%3A%20var%28%2D%2Dtext%29%3B%20font%2Dweight%3A%20700%3B%20%7D%0Aem%20%7B%20color%3A%20var%28%2D%2Dmuted%29%3B%20%7D%0A%0Aul%2C%20ol%20%7B%0Apadding%2Dleft%3A%201%2E5rem%3B%0Amargin%3A%200%2E5rem%200%201%2E2rem%3B%0A%7D%0Ali%20%7B%0Amargin%3A%200%2E3rem%200%3B%0A%7D%0Ali%3A%3Amarker%20%7B%20color%3A%20var%28%2D%2Dprimary%29%3B%20%7D%0Ainput%5Btype%3D%22checkbox%22%5D%20%7B%0Amargin%2Dright%3A%200%2E4rem%3B%0Atransform%3A%20scale%281%2E1%29%3B%0Aaccent%2Dcolor%3A%20var%28%2D%2Daccent%29%3B%0A%7D%0A%0Aa%20%7B%0Acolor%3A%20var%28%2D%2Dprimary%29%3B%0Atext%2Ddecoration%3A%20none%3B%0Aborder%2Dbottom%3A%201px%20solid%20transparent%3B%0Atransition%3A%20border%2Dcolor%200%2E15s%3B%0A%7D%0Aa%3Ahover%20%7B%0Aborder%2Dbottom%2Dcolor%3A%20var%28%2D%2Dprimary%29%3B%0A%7D%0A%0Acode%2C%20pre%20%7B%0Afont%2Dfamily%3A%20%22SF%20Mono%22%2C%20%22Menlo%22%2C%20%22Monaco%22%2C%20%22Consolas%22%2C%20monospace%3B%0Afont%2Dsize%3A%200%2E86em%3B%0A%7D%0Acode%20%7B%0Abackground%3A%20var%28%2D%2Dbg%2Dcode%29%3B%0Acolor%3A%20var%28%2D%2Dtext%29%3B%0Apadding%3A%200%2E12em%200%2E4em%3B%0Aborder%2Dradius%3A%204px%3B%0Aborder%3A%201px%20solid%20var%28%2D%2Dborder%29%3B%0A%7D%0Apre%20%7B%0Abackground%3A%20%230f172a%3B%0Acolor%3A%20%23e2e8f0%3B%0Apadding%3A%201%2E2rem%201%2E4rem%3B%0Aborder%2Dradius%3A%208px%3B%0Aoverflow%2Dx%3A%20auto%3B%0Aline%2Dheight%3A%201%2E45%3B%0Afont%2Dsize%3A%200%2E82em%3B%0Amargin%3A%201rem%200%201%2E4rem%3B%0Aborder%2Dleft%3A%204px%20solid%20var%28%2D%2Dprimary%29%3B%0Awhite%2Dspace%3A%20pre%3B%0A%7D%0Apre%20code%20%7B%0Abackground%3A%20transparent%3B%0Acolor%3A%20inherit%3B%0Apadding%3A%200%3B%0Aborder%3A%20none%3B%0Afont%2Dsize%3A%20inherit%3B%0A%7D%0A%0Atable%20%7B%0Aborder%2Dcollapse%3A%20collapse%3B%0Awidth%3A%20100%25%3B%0Amargin%3A%201%2E2rem%200%201%2E8rem%3B%0Afont%2Dsize%3A%200%2E94em%3B%0Abackground%3A%20var%28%2D%2Dbg%29%3B%0Abox%2Dshadow%3A%200%201px%203px%20rgba%280%2C%200%2C%200%2C%200%2E05%29%3B%0Aborder%2Dradius%3A%206px%3B%0Aoverflow%3A%20hidden%3B%0A%7D%0Ath%20%7B%0Abackground%3A%20var%28%2D%2Dprimary%29%3B%0Acolor%3A%20white%3B%0Apadding%3A%200%2E7rem%200%2E9rem%3B%0Atext%2Dalign%3A%20left%3B%0Afont%2Dweight%3A%20600%3B%0Aborder%2Dbottom%3A%202px%20solid%20var%28%2D%2Dprimary%29%3B%0A%7D%0Atd%20%7B%0Apadding%3A%200%2E65rem%200%2E9rem%3B%0Aborder%2Dbottom%3A%201px%20solid%20var%28%2D%2Dborder%29%3B%0Avertical%2Dalign%3A%20top%3B%0A%7D%0Atr%3Anth%2Dchild%28even%29%20td%20%7B%0Abackground%3A%20var%28%2D%2Dbg%2Dalt%29%3B%0A%7D%0Atr%3Ahover%20td%20%7B%0Abackground%3A%20var%28%2D%2Dprimary%2Dlight%29%3B%0A%7D%0A%0Ablockquote%20%7B%0Amargin%3A%201%2E2rem%200%3B%0Apadding%3A%200%2E9rem%201%2E2rem%3B%0Aborder%2Dleft%3A%204px%20solid%20var%28%2D%2Dwarning%29%3B%0Abackground%3A%20%23fef3c7%3B%0Acolor%3A%20%2378350f%3B%0Aborder%2Dradius%3A%200%206px%206px%200%3B%0A%7D%0Ablockquote%20p%20%7B%20margin%3A%200%2E2rem%200%3B%20%7D%0Ablockquote%20strong%20%7B%20color%3A%20%2378350f%3B%20%7D%0A%0Ahr%20%7B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%202px%20solid%20var%28%2D%2Dborder%29%3B%0Amargin%3A%202%2E5rem%200%3B%0A%7D%0A%0Aul%20ul%20%7B%0Amargin%3A%200%2E2rem%200%200%2E4rem%3B%0A%7D%0A%0A%40media%20print%20%7B%0Abody%20%7B%0Amax%2Dwidth%3A%20100%25%3B%0Apadding%3A%200%3B%0Afont%2Dsize%3A%2011pt%3B%0A%7D%0Ah1%20%7B%0Apage%2Dbreak%2Dbefore%3A%20always%3B%0Afont%2Dsize%3A%2022pt%3B%0A%7D%0Ah1%3Afirst%2Dchild%20%7B%0Apage%2Dbreak%2Dbefore%3A%20avoid%3B%0A%7D%0Ah2%20%7B%20font%2Dsize%3A%2016pt%3B%20page%2Dbreak%2Dafter%3A%20avoid%3B%20%7D%0Ah3%20%7B%20font%2Dsize%3A%2013pt%3B%20page%2Dbreak%2Dafter%3A%20avoid%3B%20%7D%0Apre%20%7B%0Abackground%3A%20%23f5f5f5%20%21important%3B%0Acolor%3A%20%23000%20%21important%3B%0Aborder%3A%201px%20solid%20%23999%3B%0Apage%2Dbreak%2Dinside%3A%20avoid%3B%0Afont%2Dsize%3A%208%2E5pt%3B%0A%7D%0Atable%20%7B%20page%2Dbreak%2Dinside%3A%20avoid%3B%20font%2Dsize%3A%2010pt%3B%20%7D%0Ablockquote%20%7B%20page%2Dbreak%2Dinside%3A%20avoid%3B%20%7D%0Aa%20%7B%20color%3A%20var%28%2D%2Dtext%29%3B%20%7D%0Aa%3A%3Aafter%20%7B%0Acontent%3A%20%22%20%28%22%20attr%28href%29%20%22%29%22%3B%0Acolor%3A%20var%28%2D%2Dmuted%29%3B%0Afont%2Dsize%3A%200%2E8em%3B%0A%7D%0A%7D%0A%0A%2Emanual%2Dheader%20%7B%0Abackground%3A%20linear%2Dgradient%28135deg%2C%20var%28%2D%2Dprimary%29%200%25%2C%20%231e3a8a%20100%25%29%3B%0Acolor%3A%20white%3B%0Apadding%3A%202%2E5rem%202rem%3B%0Amargin%3A%20%2D2%2E5rem%20%2D2rem%202rem%3B%0Aborder%2Dradius%3A%200%200%2012px%2012px%3B%0A%7D%0A%2Emanual%2Dheader%20h1%20%7B%0Acolor%3A%20white%3B%0Aborder%2Dbottom%3A%20none%3B%0Amargin%3A%200%200%200%2E5rem%3B%0Apadding%3A%200%3B%0Afont%2Dsize%3A%202%2E4rem%3B%0A%7D%0A%2Emanual%2Dheader%20%2Esubtitle%20%7B%0Acolor%3A%20rgba%28255%2C%20255%2C%20255%2C%200%2E85%29%3B%0Afont%2Dsize%3A%201%2E05rem%3B%0Amargin%3A%200%3B%0A%7D%0A%2Emanual%2Dfooter%20%7B%0Amargin%2Dtop%3A%204rem%3B%0Apadding%2Dtop%3A%201%2E5rem%3B%0Aborder%2Dtop%3A%202px%20solid%20var%28%2D%2Dborder%29%3B%0Atext%2Dalign%3A%20center%3B%0Acolor%3A%20var%28%2D%2Dmuted%29%3B%0Afont%2Dsize%3A%200%2E9em%3B%0A%7D%0A" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Manual Operacional — Produção Futura</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#manual-operacional">11 — Manual Operacional</a>
+<ul>
+<li><a href="#sumário">Sumário</a></li>
+<li><a href="#antes-de-começar">0. Antes de Começar</a></li>
+<li><a href="#visão-geral-do-processo">1. Visão Geral do Processo</a></li>
+<li><a href="#papéis-e-responsabilidades">2. Papéis e Responsabilidades</a></li>
+<li><a href="#mapa-de-telas">3. Mapa de Telas</a></li>
+<li><a href="#cadastros-mestres">4. Cadastros Mestres</a></li>
+<li><a href="#etapa-a-planejar-lote-de-produção-fpb">5. Etapa A — Planejar Lote de Produção (FPB)</a></li>
+<li><a href="#etapa-b-emitir-pedido-de-venda">6. Etapa B — Emitir Pedido de Venda</a></li>
+<li><a href="#etapa-c-reservar-lote">7. Etapa C — Reservar Lote</a></li>
+<li><a href="#etapa-d-programar-produção">8. Etapa D — Programar Produção</a></li>
+<li><a href="#etapa-e-registrar-produção-real">9. Etapa E — Registrar Produção Real</a></li>
+<li><a href="#etapa-f-liberar-reservas">10. Etapa F — Liberar Reservas</a></li>
+<li><a href="#etapa-g-picking-pick-list">11. Etapa G — Picking (Pick List)</a></li>
+<li><a href="#etapa-h-entrega-delivery-note">12. Etapa H — Entrega (Delivery Note)</a></li>
+<li><a href="#etapa-i-faturamento">13. Etapa I — Faturamento</a></li>
+<li><a href="#etapa-j-dispensação">14. Etapa J — Dispensação</a></li>
+<li><a href="#exceções">15. Exceções</a></li>
+<li><a href="#checklist-diário">16. Checklist Diário</a></li>
+<li><a href="#apêndice-resumo-das-transições-de-status">Apêndice — Resumo das transições de status</a></li>
+</ul></li>
+<li><a href="#anexo-i-passo-a-passo-via-integração-api-n8n">Anexo I — Passo a Passo via Integração (API / n8n)</a>
+<ul>
+<li><a href="#opção-a-chain-de-endpoints-existentes">Opção A — Chain de endpoints existentes</a></li>
+<li><a href="#opção-b-endpoint-único-custom-a-construir">Opção B — Endpoint único custom (a construir)</a></li>
+</ul></li>
+<li><a href="#anexo-ii-disponibilizar-este-manual-dentro-do-erpnext">Anexo II — Disponibilizar este Manual dentro do ERPNext</a>
+<ul>
+<li><a href="#caminho-1-web-page-recomendado">Caminho 1 — Web Page (recomendado)</a></li>
+<li><a href="#caminho-2-file-anexado-a-workspace">Caminho 2 — File anexado a Workspace</a></li>
+<li><a href="#caminho-3-help-article-knowledge-base">Caminho 3 — Help Article (knowledge base)</a></li>
+<li><a href="#caminho-4-api-custom-para-servir-o-html">Caminho 4 — API custom para servir o HTML</a></li>
+</ul></li>
+<li><a href="#anexo-iii-onde-encontrar-os-arquivos-gerados">Anexo III — Onde encontrar os arquivos gerados</a></li>
+</ul>
+</nav>
+<h1 id="manual-operacional">11 — Manual Operacional</h1>
+<blockquote>
+<p>Guia visual e detalhado de <strong>uso humano dentro do ERPNext</strong>. Premissa: <strong>nada é automático</strong>. Cada etapa tem um operador clicando em telas. Quando algo for opcionalmente automatizável (n8n, robô, API), isso é dito explicitamente no Anexo I.</p>
+</blockquote>
+<blockquote>
+<p><strong>Para quem é este manual</strong>: você nunca usou o ERPNext, ou usou pouco. Não precisa saber programar. Cada passo é descrito como se fosse a primeira vez.</p>
+</blockquote>
+<hr />
+<h2 id="sumário">Sumário</h2>
+<ul>
+<li><a href="#0-antes-de-começar">0. Antes de Começar (LEIA PRIMEIRO)</a>
+<ul>
+<li><a href="#01-o-que-é-o-erpnext">0.1. O que é o ERPNext</a></li>
+<li><a href="#02-glossário-rápido">0.2. Glossário rápido</a></li>
+<li><a href="#03-como-entrar-no-sistema">0.3. Como entrar no sistema (login)</a></li>
+<li><a href="#04-conhecendo-a-tela-inicial">0.4. Conhecendo a tela inicial</a></li>
+<li><a href="#05-convenções-deste-manual">0.5. Convenções deste manual</a></li>
+<li><a href="#06-botões-e-atalhos">0.6. Botões e atalhos que aparecem o tempo todo</a></li>
+</ul></li>
+<li><a href="#1-visão-geral-do-processo">1. Visão Geral do Processo</a></li>
+<li><a href="#2-papéis-e-responsabilidades">2. Papéis e Responsabilidades</a></li>
+<li><a href="#3-mapa-de-telas">3. Mapa de Telas (onde fica cada coisa)</a></li>
+<li><a href="#4-cadastros-mestres">4. Cadastros Mestres (uma vez por entidade)</a></li>
+<li><a href="#5-etapa-a--planejar-lote-de-produção-fpb">5. Etapa A — Planejar Lote de Produção (FPB)</a></li>
+<li><a href="#6-etapa-b--emitir-pedido-de-venda">6. Etapa B — Emitir Pedido de Venda (com Pacientes)</a></li>
+<li><a href="#7-etapa-c--reservar-lote">7. Etapa C — Reservar Lote</a></li>
+<li><a href="#8-etapa-d--programar-produção">8. Etapa D — Programar Produção (Work Order)</a></li>
+<li><a href="#9-etapa-e--registrar-produção-real">9. Etapa E — Registrar Produção Real (Batch + FPB)</a></li>
+<li><a href="#10-etapa-f--liberar-reservas">10. Etapa F — Liberar Reservas</a></li>
+<li><a href="#11-etapa-g--picking">11. Etapa G — Picking (Pick List)</a></li>
+<li><a href="#12-etapa-h--entrega">12. Etapa H — Entrega (Delivery Note)</a></li>
+<li><a href="#13-etapa-i--faturamento">13. Etapa I — Faturamento (Sales Invoice)</a></li>
+<li><a href="#14-etapa-j--dispensação">14. Etapa J — Dispensação + Etiqueta Zebra</a></li>
+<li><a href="#15-exceções">15. Exceções (Replanejar, Cancelar, Sobra/Falta)</a></li>
+<li><a href="#16-checklist-diário">16. Checklist Diário do Operador</a></li>
+</ul>
+<hr />
+<h2 id="antes-de-começar">0. Antes de Começar</h2>
+<h3 id="o-que-é-o-erpnext">0.1. O que é o ERPNext</h3>
+<p>O <strong>ERPNext</strong> é o sistema onde sua empresa registra tudo: clientes, pedidos, produção, entregas, faturas. Pense nele como um <strong>caderno gigante e inteligente</strong> — tudo que acontece no negócio fica anotado lá, organizado, e o sistema <strong>avisa</strong> se algo não bate (ex: você tenta vender ampolas que não existem em estoque).</p>
+<p>Ele funciona pelo navegador (Chrome, Firefox, Edge, Safari). Não precisa instalar nada na sua máquina — basta acessar um endereço web.</p>
+<blockquote>
+<p><strong>Endereço de acesso</strong>: <code>https://erp.injemedpharma.com.br</code> (ou o que sua empresa configurou). Anote esse endereço — vai usar todos os dias.</p>
+</blockquote>
+<h3 id="glossário-rápido">0.2. Glossário rápido</h3>
+<p>Termos que aparecem o tempo todo neste manual. Decore os 6 primeiros — sem eles, nada faz sentido.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Termo</th>
+<th>Significado em português claro</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>FPB</strong> (Future Production Batch)</td>
+<td>“<strong>Lote de Produção Futura</strong>”. É a promessa: “vamos fabricar 2.000 ampolas no dia 20/05”. Existe <strong>antes</strong> da produção real acontecer. Permite vender hoje algo que sai daqui a 30 dias.</td>
+</tr>
+<tr class="even">
+<td><strong>PR</strong> (Production Reservation)</td>
+<td>“<strong>Reserva de Produção</strong>”. Liga um pedido específico a um FPB. É como reservar um lugar no cinema: enquanto não chega a data, ninguém mais pode ocupar aquela cadeira.</td>
+</tr>
+<tr class="odd">
+<td><strong>SO</strong> (Sales Order)</td>
+<td>“<strong>Pedido de Venda</strong>”. O documento que registra: cliente X comprou Y ampolas por Z reais.</td>
+</tr>
+<tr class="even">
+<td><strong>Customer</strong></td>
+<td>“<strong>Cliente comprador</strong>” — quem paga a nota fiscal. Pode ser PJ (CNPJ) ou PF (CPF).</td>
+</tr>
+<tr class="odd">
+<td><strong>Prescriber</strong></td>
+<td>“<strong>Médico Prescritor</strong>” — profissional de saúde com conselho (CRM, CRO, CRF, etc) que assina a prescrição. <strong>Sempre pessoa física</strong>. Cadastro diferente do Customer.</td>
+</tr>
+<tr class="even">
+<td><strong>Conselho Profissional</strong></td>
+<td>Registro do prescritor: CRM (médico), CRO (dentista), CRF (farmacêutico), CRBM (biomédico), CRN (nutricionista), etc.</td>
+</tr>
+<tr class="odd">
+<td><strong>Batch</strong></td>
+<td>“<strong>Lote físico real</strong>”. Quando a produção termina e as ampolas existem de verdade, esse é o número/código que identifica aquele grupo de ampolas (data de fabricação, data de validade).</td>
+</tr>
+<tr class="even">
+<td><strong>Item</strong></td>
+<td>Qualquer <strong>produto</strong> cadastrado no sistema (uma ampola, uma caixa, uma matéria-prima). Identificado por um código único (ex: TIR00060).</td>
+</tr>
+<tr class="odd">
+<td><strong>DocType</strong></td>
+<td>Tipo de documento no ERPNext. Cliente é um DocType. Pedido é outro. Lote é outro. Não se assuste com o nome técnico — sempre que aparecer, leia como “tipo de cadastro”.</td>
+</tr>
+<tr class="even">
+<td><strong>Submit / Submeter</strong></td>
+<td>É como “<strong>assinar e enviar</strong>”. Antes de Submit, o documento é só um rascunho que pode ser apagado. Depois de Submit, ele vira oficial — não pode mais ser editado livremente, só cancelado. <strong>Equivale a “fechar o pedido” no caixa</strong>.</td>
+</tr>
+<tr class="odd">
+<td><strong>Save / Salvar</strong></td>
+<td>Salva o rascunho. Não é o mesmo que Submit. Você pode Save 100 vezes e ainda editar tudo. Mas só depois do Submit é que o sistema “aceita” o documento como real.</td>
+</tr>
+<tr class="even">
+<td><strong>Cancel</strong></td>
+<td>Desfaz um Submit. O documento fica registrado mas com status “Cancelado” — vira só histórico.</td>
+</tr>
+<tr class="odd">
+<td><strong>Workspace</strong></td>
+<td>“<strong>Área de trabalho</strong>”. É o painel de atalhos no menu lateral esquerdo. Tem um Workspace chamado “Produção Futura” com tudo do nosso processo.</td>
+</tr>
+<tr class="even">
+<td><strong>Field / Campo</strong></td>
+<td>Cada caixinha de preenchimento numa tela (Nome, CPF, Quantidade…).</td>
+</tr>
+<tr class="odd">
+<td><strong>Link Field</strong></td>
+<td>Campo que conecta com outro cadastro. Ex: no Pedido, o campo “Cliente” é um Link Field — você não digita o nome, você escolhe um cliente já cadastrado.</td>
+</tr>
+<tr class="even">
+<td><strong>Child Table / Tabela Filho</strong></td>
+<td>Tabela dentro de um documento. Ex: dentro do Pedido tem a tabela de Itens (cada linha é um produto) e a tabela de Pacientes (cada linha é uma pessoa).</td>
+</tr>
+<tr class="odd">
+<td><strong>Warehouse / Depósito</strong></td>
+<td>Local físico onde as ampolas ficam guardadas (ex: “Produtos Acabados - I”).</td>
+</tr>
+<tr class="even">
+<td><strong>BOM</strong> (Bill of Materials)</td>
+<td>“<strong>Lista de Materiais</strong>”. Receita do que precisa pra fabricar 1 ampola (matérias-primas, embalagem, etc).</td>
+</tr>
+<tr class="odd">
+<td><strong>Work Order</strong></td>
+<td>“<strong>Ordem de Produção</strong>”. Documento que autoriza começar a fabricar.</td>
+</tr>
+<tr class="even">
+<td><strong>Pick List</strong></td>
+<td>“<strong>Lista de Separação</strong>”. Diz pro pessoal da expedição quais ampolas separar (de qual lote, qual depósito).</td>
+</tr>
+<tr class="odd">
+<td><strong>Delivery Note</strong></td>
+<td>“<strong>Nota de Entrega</strong>”. Confirma que as ampolas saíram do depósito.</td>
+</tr>
+<tr class="even">
+<td><strong>Sales Invoice</strong></td>
+<td>“<strong>Fatura/Nota Fiscal</strong>”. Documento de cobrança. Gera o lançamento contábil.</td>
+</tr>
+<tr class="odd">
+<td><strong>Payment Entry</strong></td>
+<td>“<strong>Recebimento</strong>”. Registra que o cliente pagou.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="como-entrar-no-sistema">0.3. Como entrar no sistema</h3>
+<ol type="1">
+<li>Abra o navegador (Chrome, Edge, etc.)</li>
+<li>Digite o endereço: <code>https://erp.injemedpharma.com.br</code> (ou o seu)</li>
+<li>Aparece a tela de login:</li>
+</ol>
+<pre><code>   ┌─────────────────────────────────────┐
+   │           Login ERPNext              │
+   ├─────────────────────────────────────┤
+   │                                      │
+   │  E-mail:    [_________________]      │
+   │                                      │
+   │  Senha:     [_________________]      │
+   │                                      │
+   │            [ Entrar ]                │
+   │                                      │
+   │  Esqueci minha senha                 │
+   └─────────────────────────────────────┘</code></pre>
+<ol start="4" type="1">
+<li>Coloque seu <strong>e-mail corporativo</strong> + <strong>senha</strong></li>
+<li>Clique <strong>Entrar</strong></li>
+</ol>
+<blockquote>
+<p><strong>Primeira vez?</strong> Peça o login pro administrador (TI/RH). Ele cria o usuário e te manda link pra criar senha.</p>
+</blockquote>
+<blockquote>
+<p><strong>Esqueci a senha</strong>: clique no link “Esqueci minha senha” — sistema envia e-mail com instruções pra resetar.</p>
+</blockquote>
+<h3 id="conhecendo-a-tela-inicial">0.4. Conhecendo a tela inicial</h3>
+<p>Depois de logar, você vê algo assim:</p>
+<pre><code>┌────────────────────────────────────────────────────────────────────────┐
+│ ☰  ERPNext        🔍 Buscar...                            🔔  👤 Você  │ ← Barra superior
+├──────────┬─────────────────────────────────────────────────────────────┤
+│          │                                                             │
+│  Menu    │              ÁREA PRINCIPAL                                  │
+│  lateral │              (muda conforme você navega)                     │
+│          │                                                             │
+│  • Home  │                                                             │
+│  • Sell  │                                                             │
+│  • Stock │                                                             │
+│  • ...   │                                                             │
+│          │                                                             │
+└──────────┴─────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>O que cada parte faz</strong>:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Elemento</th>
+<th>Função</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>🔍 Buscar (topo)</td>
+<td><strong>Procura qualquer coisa no sistema</strong>. Digite “TIR00060” e ele te leva pro item. Digite “Maria” e mostra clientes e pacientes com esse nome.</td>
+</tr>
+<tr class="even">
+<td>🔔 Notificações</td>
+<td>Avisos do sistema (ex: alguém mencionou você num comentário).</td>
+</tr>
+<tr class="odd">
+<td>👤 Seu avatar</td>
+<td>Menu de conta — sair, mudar senha, configurações pessoais.</td>
+</tr>
+<tr class="even">
+<td>☰ Menu lateral</td>
+<td>Lista de áreas: Vendas, Estoque, Produção, etc. Clique pra expandir.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Dica</strong>: use a <strong>busca do topo</strong> o tempo todo. É a forma mais rápida de abrir qualquer documento, item, cliente ou paciente.</p>
+</blockquote>
+<h3 id="convenções-deste-manual">0.5. Convenções deste manual</h3>
+<p>Quando você ler:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Notação</th>
+<th>Significado</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><em>Selling → Sales Order → + New</em></td>
+<td>Clique no menu “Selling”, depois em “Sales Order”, depois no botão “+ New”</td>
+</tr>
+<tr class="even">
+<td><strong>Save</strong></td>
+<td>Clique no botão “Save” (normalmente no canto superior direito)</td>
+</tr>
+<tr class="odd">
+<td><strong>Submit</strong></td>
+<td>Clique no botão “Submit” (aparece depois de Save)</td>
+</tr>
+<tr class="even">
+<td><code>TIR00060</code></td>
+<td>Texto literal pra digitar exatamente assim</td>
+</tr>
+<tr class="odd">
+<td><code>&lt;algo&gt;</code></td>
+<td>Você substitui pelo valor real (ex: <code>&lt;seu nome&gt;</code> vira “Maria”)</td>
+</tr>
+<tr class="even">
+<td>☑</td>
+<td>Checkbox que precisa estar marcado</td>
+</tr>
+<tr class="odd">
+<td>☐</td>
+<td>Checkbox que pode ficar desmarcado</td>
+</tr>
+<tr class="even">
+<td>✓</td>
+<td>Validação que deu certo</td>
+</tr>
+<tr class="odd">
+<td>⚠</td>
+<td>Atenção — leia com cuidado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="botões-e-atalhos-que-aparecem-o-tempo-todo">0.6. Botões e atalhos que aparecem o tempo todo</h3>
+<p>Toda tela de cadastro/documento no ERPNext tem alguns botões padrão:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│ &lt; Voltar           Documento ABC-123                             │
+│                                                                  │
+│                       [ Salvar ]  [ Submit ]  [ Menu ▼ ]         │ ← Topo direito
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   Campo 1: [________________]                                    │
+│   Campo 2: [________________]                                    │
+│                                                                  │
+│   ...                                                            │
+└──────────────────────────────────────────────────────────────────┘</code></pre>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Botão</th>
+<th>O que faz</th>
+<th>Atalho de teclado</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Salvar / Save</strong></td>
+<td>Salva rascunho. Ainda editável.</td>
+<td><code>Ctrl + S</code></td>
+</tr>
+<tr class="even">
+<td><strong>Submit</strong></td>
+<td>Oficializa o documento. Aparece depois de Save.</td>
+<td><code>Ctrl + Shift + S</code></td>
+</tr>
+<tr class="odd">
+<td><strong>Cancel</strong></td>
+<td>Anula um documento já submetido. Aparece no menu ▼ depois do Submit.</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td><strong>Amend</strong></td>
+<td>Cria nova versão a partir de um documento cancelado.</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td><strong>Print</strong></td>
+<td>Imprime/gera PDF do documento.</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td><strong>Menu ▼</strong></td>
+<td>Outras ações (Print, Duplicate, Delete, etc).</td>
+<td>—</td>
+</tr>
+<tr class="odd">
+<td><strong>+ New</strong></td>
+<td>Cria novo documento daquele tipo.</td>
+<td>—</td>
+</tr>
+<tr class="even">
+<td><strong>+ Add Row</strong> (dentro de tabelas)</td>
+<td>Adiciona uma linha numa tabela filho.</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Ações sempre disponíveis em listas</strong>:</p>
+<ul>
+<li><strong>Filtros</strong> (topo da lista): clique em “Filter” pra restringir o que aparece</li>
+<li><strong>Colunas</strong> (botão ⚙️): escolhe quais colunas mostrar</li>
+<li><strong>Exportar</strong>: baixa Excel/CSV do que está filtrado</li>
+</ul>
+<hr />
+<h2 id="visão-geral-do-processo">1. Visão Geral do Processo</h2>
+<h3 id="por-que-esse-processo-existe">Por que esse processo existe?</h3>
+<p>A empresa fabrica ampolas em <strong>lotes grandes</strong> (ex: 2.000 ampolas de uma vez) que serão divididas entre <strong>vários pedidos de vários clientes</strong> ao longo do mês. Sem um sistema que faça isso direito, acontece:</p>
+<ul>
+<li><strong>Vender o que não tem</strong> — operador promete entrega mas não sabia que o lote já estava todo reservado</li>
+<li><strong>Reservar a mesma coisa pra mais de um cliente</strong> — caos quando chegar a hora de entregar</li>
+<li><strong>Não saber quem vai receber o quê</strong> — paciente certo, lote errado, validade vencendo</li>
+<li><strong>Confundir estoque real com promessa de produção</strong> — vendedor olha “1000 ampolas disponíveis” achando que é estoque, mas é só plano</li>
+</ul>
+<p>O processo abaixo resolve isso. Cada etapa tem responsável claro. O sistema <strong>bloqueia</strong> ações erradas (ex: você tenta reservar 3.000 num lote de 2.000 — ele recusa).</p>
+<h3 id="o-fluxo-completo-em-uma-imagem">O fluxo completo (em uma imagem)</h3>
+<pre><code>   COMERCIAL          PRODUÇÃO            EXPEDIÇÃO          FARMÁCIA
+   ─────────          ─────────           ─────────          ─────────
+
+   Cadastros          (antes: criar
+   (Cliente,           FPB planejado)
+   Paciente)
+      │                                                      
+      ▼                                                      
+   [B] Sales Order  ──►  [A] FPB existe                      
+   (com pacientes)         (saldo &gt; 0)                       
+      │                       │                              
+      ▼                       │                              
+   [C] Reserva  ──────────────┘                              
+   (PR criada,                                               
+    saldo do FPB cai)                                        
+      │                                                      
+      └──────────►  [D] Work Order                           
+                       │                                     
+                       ▼                                     
+                    [E] Produção real                        
+                       (Batch + produced_qty)                
+                       │                                     
+                       ▼                                     
+                    [F] Liberar (FIFO)                       
+                       │                                     
+                       └────────►  [G] Pick List             
+                                      │                      
+                                      ▼                      
+                                   [H] Delivery Note ───►   [J] Dispensação
+                                      │                       (etiqueta Zebra)
+                                      ▼                      
+                                   [I] Sales Invoice         
+                                      (Fatura/NF)            
+                                      │
+                                      ▼
+                                   Payment Entry
+                                   (Recebimento)</code></pre>
+<h3 id="como-ler-esse-fluxo">Como ler esse fluxo</h3>
+<ul>
+<li>Cada <strong>letra entre colchetes</strong> ([A], [B], etc) é uma <strong>etapa numerada</strong> neste manual</li>
+<li>A <strong>coluna</strong> mostra qual setor cuida da etapa</li>
+<li><strong>Setas para baixo</strong> = ordem do tempo</li>
+<li><strong>Setas horizontais</strong> = a coisa “atravessa” pro próximo setor</li>
+<li>Tudo começa com <strong>cadastros</strong> (etapa 4) que são feitos uma única vez por entidade</li>
+</ul>
+<h3 id="tempo-aproximado-por-etapa">Tempo aproximado por etapa</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Etapa</th>
+<th>Quem</th>
+<th>Duração típica</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>4. Cadastrar cliente/paciente</td>
+<td>Comercial</td>
+<td>2-5 min por cadastro</td>
+</tr>
+<tr class="even">
+<td>A. Planejar FPB</td>
+<td>Planejamento</td>
+<td>5 min</td>
+</tr>
+<tr class="odd">
+<td>B. Emitir Pedido</td>
+<td>Comercial</td>
+<td>5-10 min</td>
+</tr>
+<tr class="even">
+<td>C. Reservar</td>
+<td>Comercial</td>
+<td>1 min</td>
+</tr>
+<tr class="odd">
+<td>D. Work Order</td>
+<td>Planejamento</td>
+<td>2 min</td>
+</tr>
+<tr class="even">
+<td>E. Produção real</td>
+<td>Produção</td>
+<td>varia — depende do batch físico</td>
+</tr>
+<tr class="odd">
+<td>F. Liberar</td>
+<td>Supervisor</td>
+<td>1 min</td>
+</tr>
+<tr class="even">
+<td>G. Pick List</td>
+<td>Expedição</td>
+<td>5-15 min (depende da separação física)</td>
+</tr>
+<tr class="odd">
+<td>H. Delivery Note</td>
+<td>Expedição</td>
+<td>2 min</td>
+</tr>
+<tr class="even">
+<td>I. Faturamento</td>
+<td>Financeiro</td>
+<td>5 min</td>
+</tr>
+<tr class="odd">
+<td>J. Dispensação</td>
+<td>Farmácia</td>
+<td>3-5 min por paciente</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="papéis-e-responsabilidades">2. Papéis e Responsabilidades</h2>
+<p>Quem faz o quê, e quais seções deste manual leem com prioridade.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Papel</th>
+<th>Responsabilidade principal</th>
+<th>Telas-chave</th>
+<th>Leia com prioridade</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Vendedor / Comercial</strong></td>
+<td>Cadastrar cliente, médico prescritor e paciente, emitir pedido, reservar lote</td>
+<td>Customer, Prescriber, Patient, Sales Order</td>
+<td>Seções 4, 6, 7</td>
+</tr>
+<tr class="even">
+<td><strong>Planejador de Produção</strong></td>
+<td>Criar lote planejado (FPB), criar Work Order, acompanhar saldo</td>
+<td>Future Production Batch, Work Order, BOM</td>
+<td>Seções 5, 8</td>
+</tr>
+<tr class="odd">
+<td><strong>Operador de Produção</strong></td>
+<td>Registrar o lote físico real e quanto saiu da produção</td>
+<td>Batch, Future Production Batch, Stock Entry</td>
+<td>Seção 9</td>
+</tr>
+<tr class="even">
+<td><strong>Supervisor de Produção</strong></td>
+<td>Acionar a liberação FIFO das reservas</td>
+<td>Future Production Batch, Production Reservation</td>
+<td>Seção 10, 15</td>
+</tr>
+<tr class="odd">
+<td><strong>Expedição / Logística</strong></td>
+<td>Separar e entregar</td>
+<td>Pick List, Delivery Note</td>
+<td>Seções 11, 12</td>
+</tr>
+<tr class="even">
+<td><strong>Financeiro</strong></td>
+<td>Emitir nota fiscal, registrar recebimento</td>
+<td>Sales Invoice, Payment Entry</td>
+<td>Seção 13</td>
+</tr>
+<tr class="odd">
+<td><strong>Farmacêutico</strong></td>
+<td>Dispensar ampola, imprimir etiqueta paciente</td>
+<td>Delivery Note (ou Dispensation)</td>
+<td>Seção 14</td>
+</tr>
+<tr class="even">
+<td><strong>Gestor / Auditoria</strong></td>
+<td>Acompanhar relatórios, identificar pendências</td>
+<td>Reports, Workspace “Produção Futura”</td>
+<td>Seção 16</td>
+</tr>
+</tbody>
+</table>
+<h3 id="quem-precisa-de-qual-permissão-de-acesso">Quem precisa de qual permissão de acesso</h3>
+<blockquote>
+<p>Se uma tela não aparece pra você, <strong>provavelmente é permissão</strong>. Avise o TI/administrador. Os papéis acima precisam:</p>
+</blockquote>
+<ul>
+<li><strong>Vendedor</strong>: Sales User + Customer + Patient (criar/editar)</li>
+<li><strong>Planejador</strong>: Manufacturing User + Future Production Batch (criar/submeter)</li>
+<li><strong>Operador</strong>: Stock User + Batch (criar) + Future Production Batch (editar)</li>
+<li><strong>Supervisor</strong>: Manufacturing Manager</li>
+<li><strong>Expedição</strong>: Stock User + Pick List + Delivery Note</li>
+<li><strong>Financeiro</strong>: Accounts User + Sales Invoice + Payment Entry</li>
+<li><strong>Farmacêutico</strong>: papel “Dispensador” (a definir quando módulo for criado)</li>
+<li><strong>Gestor</strong>: System Manager OU role customizada read-only</li>
+</ul>
+<hr />
+<h2 id="mapa-de-telas">3. Mapa de Telas</h2>
+<h3 id="onde-fica-cada-coisa-no-menu-lateral">Onde fica cada coisa no menu lateral</h3>
+<p>Depois de logar, o <strong>menu lateral esquerdo</strong> tem várias áreas. Cada área agrupa as telas (DocTypes) que pertencem a aquele setor.</p>
+<pre><code>Menu lateral do ERPNext (clique pra expandir cada área)
+│
+├─ 🏠 Home                              (tela inicial, atalhos)
+│
+├─ 💰 Selling                            (área comercial)
+│   ├─ Customer                          ← cadastro de cliente
+│   ├─ Sales Order                       ← pedido de venda
+│   ├─ Quotation                          ← orçamento (opcional)
+│   └─ Sales Person                       ← vendedores
+│
+├─ 📦 Stock                              (área de estoque)
+│   ├─ Item                              ← catálogo de produtos
+│   ├─ Batch                             ← lote físico real
+│   ├─ Stock Entry                       ← movimentação de estoque
+│   ├─ Pick List                         ← lista de separação
+│   ├─ Delivery Note                     ← nota de entrega
+│   └─ Warehouse                         ← depósitos
+│
+├─ 🏭 Manufacturing                       (área de produção)
+│   ├─ Work Order                        ← ordem de produção
+│   ├─ BOM                               ← lista de materiais
+│   └─ Production Plan                   ← plano de produção
+│
+├─ 💵 Accounts                            (área financeira)
+│   ├─ Sales Invoice                     ← nota fiscal/fatura
+│   ├─ Payment Entry                     ← recebimento
+│   └─ Journal Entry                     ← lançamento contábil
+│
+└─ ⭐ Produção Futura                     ← Workspace customizado (importante!)
+    ├─ Lote de Produção Futura           ← FPB (nosso DocType custom)
+    ├─ Reserva de Produção               ← PR (nosso DocType custom)
+    ├─ Paciente                          ← Patient (nosso DocType custom)
+    ├─ Médico Prescritor                 ← Prescriber (a construir)
+    └─ Relatórios
+        ├─ Mapa de Produção              ← visão geral de todos os lotes
+        ├─ Saldo por Lote                ← quanto disponível por FPB
+        ├─ Reservas por Pedido           ← detalhe de cada SO
+        └─ Pendências de Liberação       ← sobras pra replanejar</code></pre>
+<h3 id="como-abrir-uma-tela-específica">Como abrir uma tela específica</h3>
+<p><strong>3 caminhos</strong> que sempre funcionam:</p>
+<p><strong>Caminho 1 — Menu lateral</strong>: 1. Clique na área (ex: “Selling”) 2. Clique no item (ex: “Sales Order”) 3. Abre a <strong>lista</strong> de todos os pedidos</p>
+<p><strong>Caminho 2 — Busca rápida (mais rápido)</strong>: 1. No topo, na barra de busca, digite o nome do DocType ou do registro 2. Ex: digite “Sales Order” → mostra atalho pra lista 3. Ex: digite “SAL-ORD-2026-00031” → abre o pedido específico</p>
+<p><strong>Caminho 3 — URL direta</strong> (se você sabe a URL): - <code>https://seu-erpnext.com.br/app/sales-order</code> → lista de pedidos - <code>https://seu-erpnext.com.br/app/sales-order/new</code> → novo pedido - <code>https://seu-erpnext.com.br/app/sales-order/SAL-ORD-2026-00031</code> → pedido específico</p>
+<h3 id="diferença-entre-lista-e-documento">Diferença entre Lista e Documento</h3>
+<pre><code>LISTA (várias linhas)              DOCUMENTO (1 cadastro completo)
+─────────────────                  ──────────────────────────────
++ New  Filter  Export              &lt; Voltar     Save  Submit
+                                                                
+☐ Nome     Status     Data         Nome:    [____________]
+☐ ABC-001  Aberto    01/05         Status:  [____________]
+☐ ABC-002  Fechado   02/05         Data:    [____________]
+☐ ABC-003  Aberto    03/05         ...</code></pre>
+<ul>
+<li><strong>Lista</strong>: visão geral, várias linhas. Clique em qualquer linha pra abrir o documento.</li>
+<li><strong>Documento</strong>: detalhe completo de 1 cadastro. Aqui você edita os campos.</li>
+</ul>
+<hr />
+<h2 id="cadastros-mestres">4. Cadastros Mestres</h2>
+<blockquote>
+<p>“Cadastros mestres” são informações que você cadastra <strong>uma vez</strong> e <strong>reusa</strong> depois. Cliente é mestre. Médico Prescritor é mestre. Paciente é mestre. Item (produto) é mestre. Você não cadastra do zero toda vez que faz pedido — você escolhe o já existente.</p>
+</blockquote>
+<blockquote>
+<p><strong>Antes de cadastrar</strong>, sempre <strong>busque primeiro</strong>: a pessoa já pode estar no sistema. Cadastros duplicados criam confusão (dois “Dr. José” diferentes, qual usar?).</p>
+</blockquote>
+<h3 id="panorama-4-entidades-distintas">4.0. Panorama: 4 entidades distintas</h3>
+<p>Antes de mergulhar em cada cadastro, entenda que o sistema trabalha com <strong>4 entidades separadas</strong> que se conectam num pedido:</p>
+<pre><code>   ┌─────────────────────────────────┐
+   │ 1. CUSTOMER (quem PAGA)         │
+   │                                 │
+   │ Pode ser:                        │
+   │  • Empresa (PJ, CNPJ)            │
+   │    Ex: Clínica X, Hospital Y     │
+   │  • Pessoa física (PF, CPF)       │
+   │    Ex: médico que compra direto  │
+   └──────────────┬──────────────────┘
+                  │ paga
+                  ▼
+   ┌─────────────────────────────────────────────────┐
+   │ 2. PRESCRIBER (quem PRESCREVE)                  │
+   │                                                  │
+   │ Sempre pessoa física com conselho profissional:  │
+   │  • CPF                                            │
+   │  • Tipo Conselho: CRM, CRO, CRF, CRBM/CRN, etc.  │
+   │  • Número do conselho                             │
+   │  • UF do conselho                                 │
+   │                                                  │
+   │ ⚠ É um cadastro INDEPENDENTE do Customer.        │
+   │ Mesmo se o médico compra direto, ele tem:        │
+   │   - 1 cadastro como Customer (Individual)         │
+   │   - 1 cadastro como Prescriber (com CRM)          │
+   └──────────────┬──────────────────────────────────┘
+                  │ prescreve para
+                  ▼
+   ┌─────────────────────────────────┐
+   │ 3. PATIENT (quem RECEBE)        │
+   │                                 │
+   │  • CPF                           │
+   │  • Nome                          │
+   │  • Contato, endereço             │
+   │  • Médico padrão (Prescriber)    │
+   └──────────────┬──────────────────┘
+                  │ consome
+                  ▼
+   ┌─────────────────────────────────┐
+   │ 4. ITEM (o quê)                 │
+   │                                 │
+   │  • TIR00060 — Tirzepatida...     │
+   │  • Com batch + validade          │
+   └─────────────────────────────────┘</code></pre>
+<h4 id="como-essas-4-entidades-aparecem-no-pedido-de-venda-so">Como essas 4 entidades aparecem no Pedido de Venda (SO)</h4>
+<pre><code>   Sales Order
+   ├─ customer:    Customer (cabeçalho — quem paga a NF)
+   ├─ items[]:     Item + qty + preço
+   └─ fp_patients[]:  cada linha tem...
+       ├─ patient:     Patient
+       ├─ prescriber:  Prescriber (pode ser DIFERENTE por linha!)
+       ├─ item_code:   Item
+       └─ qty:         quantidade</code></pre>
+<h4 id="cenários-reais-que-esse-modelo-cobre">Cenários reais que esse modelo cobre</h4>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Cenário</th>
+<th>Customer</th>
+<th>Prescriber</th>
+<th>Patient</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Clínica compra, 1 médico prescreve todos os pacientes</td>
+<td>Clínica XYZ Ltda (CNPJ)</td>
+<td>Dr. José (CRM-SP)</td>
+<td>Maria, João, Ana</td>
+</tr>
+<tr class="even">
+<td>Médico compra direto pra si mesmo prescrever</td>
+<td>Dr. José (Individual, CPF)</td>
+<td>Dr. José (CRM-SP) — outro cadastro</td>
+<td>Maria</td>
+</tr>
+<tr class="odd">
+<td>Hospital com vários médicos no mesmo pedido</td>
+<td>Hospital ABC (CNPJ)</td>
+<td>Dr. José pra Maria, Dra. Ana pra João</td>
+<td>Maria, João</td>
+</tr>
+<tr class="even">
+<td>Farmácia comprando pra estoque pra múltiplos médicos</td>
+<td>Farmácia Bem-Estar (CNPJ)</td>
+<td>varia por paciente</td>
+<td>varia</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Decisão</strong>: Customer e Prescriber <strong>sempre</strong> são cadastros separados, mesmo quando é a mesma pessoa física. Isso garante: - Compras anônimas (PJ) sem médico atrelado funcionam - Histórico de prescrição do médico não polui dados de compra - Auditoria CRM/conselho separa do financeiro</p>
+</blockquote>
+<h4 id="ordem-recomendada-de-cadastro">Ordem recomendada de cadastro</h4>
+<ol type="1">
+<li><strong>Customer</strong> (PJ ou PF) — quem paga</li>
+<li><strong>Prescriber</strong> — médico/dentista/farmacêutico que prescreve</li>
+<li><strong>Patient</strong> — paciente final (linka o Prescriber padrão)</li>
+<li><strong>Item</strong> (TI cadastra uma vez, comercial reusa)</li>
+</ol>
+<blockquote>
+<p><strong>Status do módulo Prescriber</strong>: ⚠ DocType ainda não existe no sistema. Hoje o sistema usa <code>prescribing_doctor</code> no Patient apontando pra Customer (modelo antigo, simplificado). A construção do DocType <code>Prescriber</code> está na fila de implementação. Enquanto não existe, <strong>continue cadastrando o médico como Customer Individual</strong> (modelo simplificado). Quando o Prescriber for criado, vai ter migração automática.</p>
+</blockquote>
+<h3 id="cadastro-de-cliente-customer">4.1. Cadastro de Cliente (Customer)</h3>
+<h4 id="o-que-é">O que é?</h4>
+<p>Cliente = quem <strong>compra</strong> as ampolas e <strong>paga a nota fiscal</strong>. Pode ser:</p>
+<ul>
+<li><strong>Pessoa Jurídica (PJ — empresa)</strong>: clínica, hospital, farmácia, distribuidor — identificada pelo <strong>CNPJ</strong></li>
+<li><strong>Pessoa Física (PF)</strong>: um médico que compra direto pra prescrever — identificada pelo <strong>CPF</strong></li>
+</ul>
+<blockquote>
+<p>⚠ <strong>Importante</strong>: Customer é só o <strong>comprador/pagador</strong>. Mesmo quando é uma pessoa física que também prescreve (médico que compra pra si mesmo), esse cadastro de Customer <strong>não substitui</strong> o cadastro de Prescriber (seção 4.2). São registros diferentes pra finalidades diferentes.</p>
+</blockquote>
+<h4 id="quando-cadastrar">Quando cadastrar?</h4>
+<ul>
+<li>Antes de fazer o primeiro pedido pra essa pessoa/empresa</li>
+<li>Quando receber um lead novo do comercial</li>
+</ul>
+<h4 id="quem-faz">Quem faz?</h4>
+<p>Comercial (vendedor que está atendendo)</p>
+<h4 id="passo-a-passo">Passo a passo</h4>
+<p><strong>1.</strong> No menu lateral, clique em <strong>Selling</strong> → <strong>Customer</strong></p>
+<p>Você vê a lista de todos os clientes cadastrados:</p>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│ Customer                                  + New   Filter     │
+├─────────────────────────────────────────────────────────────┤
+│ ☐ Nome                       Tipo       Grupo                │
+│ ☐ Dr. Antonio Pereira        Individual Comercial            │
+│ ☐ Clínica São Paulo Ltda     Company    Comercial            │
+│ ☐ ...                                                        │
+└─────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>2.</strong> <strong>PRIMEIRO</strong>: use a busca no topo. Digite parte do nome (ex: “Antonio”). Se aparecer, <strong>NÃO cadastre de novo</strong> — clique no existente.</p>
+<p><strong>3.</strong> Se realmente não existe, clique <strong>+ New</strong> (canto superior direito)</p>
+<p><strong>4.</strong> Aparece a tela de novo cliente. Preencha conforme o tipo:</p>
+<h4 id="se-for-pessoa-jurídica-empresa-cnpj">Se for Pessoa Jurídica (empresa — CNPJ)</h4>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  NEW CUSTOMER (Pessoa Jurídica)                Save           │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Customer Name *: [Clínica São Paulo Ltda____________]        │
+│  ← Razão social. Como sai na nota fiscal.                    │
+│                                                              │
+│  Customer Type:   ○ Individual  ◉ Company                    │
+│  ← Empresa = Company.                                        │
+│                                                              │
+│  Customer Group *: [Comercial                       ▼]       │
+│  Territory *:      [Brazil                           ▼]      │
+│                                                              │
+│  Tax Category:     [Regime Geral / Simples / ...     ▼]      │
+│  ← Importante pra cálculo de imposto na NF.                  │
+│                                                              │
+│  Default Currency: [BRL                             ▼]       │
+│                                                              │
+│  ── More Info ── (role pra baixo)                            │
+│                                                              │
+│  Tax ID (CNPJ) *:  [12.345.678/0001-90]                       │
+│  ← CNPJ da empresa. Pode digitar com ou sem máscara.         │
+│                                                              │
+│  Inscrição Estadual:[________________]                        │
+│  Inscrição Municipal:[________________]                       │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+<h4 id="se-for-pessoa-física-médico-que-compra-direto-cpf">Se for Pessoa Física (médico que compra direto — CPF)</h4>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  NEW CUSTOMER (Pessoa Física)                  Save           │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Customer Name *: [Dr. José da Silva__________]               │
+│  ← Nome completo.                                            │
+│                                                              │
+│  Customer Type:   ◉ Individual  ○ Company                    │
+│                                                              │
+│  Customer Group *: [Comercial                       ▼]       │
+│  Territory *:      [Brazil                           ▼]      │
+│                                                              │
+│  Default Currency: [BRL                             ▼]       │
+│                                                              │
+│  ── More Info ──                                             │
+│                                                              │
+│  Tax ID (CPF) *:   [111.444.777-35]                           │
+│  ← CPF da pessoa. Pode digitar com ou sem máscara.           │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+<blockquote>
+<p><strong>Regras gerais</strong>: - Customer Group: SEMPRE <strong>Comercial</strong>. ⚠ NÃO USE “All Customer Groups”. - Territory: SEMPRE <strong>Brazil</strong>. ⚠ NÃO USE “All Territories”. - Currency: SEMPRE <strong>BRL</strong>.</p>
+</blockquote>
+<p><strong>5.</strong> Role para baixo. Há outras seções:</p>
+<ul>
+<li><strong>Contact Info</strong> (telefone, e-mail) — preencha pelo menos 1 contato</li>
+<li><strong>Address</strong> (endereço de cobrança) — preencha CEP, rua, número, cidade, UF</li>
+</ul>
+<blockquote>
+<p><strong>Atenção</strong>: e-mail e telefone são opcionais MAS muito úteis pra enviar nota fiscal e comunicação. Sempre que possível, preencha.</p>
+</blockquote>
+<p><strong>6.</strong> No topo direito, clique <strong>Save</strong></p>
+<p><strong>7.</strong> ✓ <strong>Sucesso</strong>: o cliente foi criado. Aparece um número/código tipo <code>CUST-2026-00045</code> ou simplesmente o próprio nome.</p>
+<h4 id="erros-comuns-e-o-que-fazer">Erros comuns e o que fazer</h4>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Erro</th>
+<th>Causa</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>LinkValidationError: Customer Group All Customer Groups</code></td>
+<td>Você escolheu o grupo errado</td>
+<td>Volte ao campo “Customer Group” e escolha <strong>Comercial</strong></td>
+</tr>
+<tr class="even">
+<td><code>LinkValidationError: Territory</code></td>
+<td>Mesma coisa pra Território</td>
+<td>Escolha <strong>Brazil</strong></td>
+</tr>
+<tr class="odd">
+<td><code>Mandatory field: Customer Name</code></td>
+<td>Esqueceu o nome</td>
+<td>Preencha</td>
+</tr>
+<tr class="even">
+<td>Cliente duplicado</td>
+<td>Você cadastrou alguém que já existia</td>
+<td>Use o existente, apague o novo (Menu ▼ → Delete)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cadastro-de-médico-prescritor-prescriber">4.2. Cadastro de Médico Prescritor (Prescriber)</h3>
+<blockquote>
+<p>⚠ <strong>Status atual</strong>: O DocType <code>Prescriber</code> está <strong>planejado mas ainda não foi construído</strong> no sistema. Esta seção descreve como vai funcionar quando implementado. Enquanto não existe, <strong>continue usando Customer Individual</strong> com nome do médico (modelo simplificado atual). Quando o <code>Prescriber</code> for criado, haverá script de migração automática.</p>
+</blockquote>
+<h4 id="o-que-é-1">O que é?</h4>
+<p>Prescriber = <strong>profissional habilitado a prescrever</strong> medicamentos. Pessoa física obrigatoriamente, com <strong>registro em conselho profissional</strong> válido.</p>
+<p><strong>Não confunda com Customer</strong>: - Customer paga a NF (pode ser empresa ou PF) - Prescriber assina a prescrição (sempre PF com conselho)</p>
+<h4 id="quem-pode-ser-prescriber">Quem pode ser Prescriber?</h4>
+<p>Profissionais com habilitação legal pra prescrever medicamentos controlados/biológicos no Brasil:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Conselho</th>
+<th>Profissão</th>
+<th>Sigla típica</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>CRM</strong></td>
+<td>Médico</td>
+<td>CRM-SP 12345</td>
+</tr>
+<tr class="even">
+<td><strong>CRO</strong></td>
+<td>Dentista (Cirurgião-Dentista)</td>
+<td>CRO-SP 12345</td>
+</tr>
+<tr class="odd">
+<td><strong>CRF</strong></td>
+<td>Farmacêutico (em casos previstos em lei)</td>
+<td>CRF-SP 12345</td>
+</tr>
+<tr class="even">
+<td><strong>CRBM / CRN / Outros</strong></td>
+<td>Biomédico, Nutricionista, outros — quando a lei permitir</td>
+<td>varia</td>
+</tr>
+</tbody>
+</table>
+<h4 id="quando-cadastrar-1">Quando cadastrar?</h4>
+<ul>
+<li>Antes de cadastrar o primeiro paciente desse médico</li>
+<li>Quando receber a primeira prescrição</li>
+</ul>
+<h4 id="quem-faz-1">Quem faz?</h4>
+<p>Comercial (que recebe a prescrição)</p>
+<h4 id="passo-a-passo-1">Passo a passo</h4>
+<p><strong>1.</strong> Menu → <strong>Produção Futura</strong> → <strong>Médico Prescritor (Prescriber)</strong></p>
+<p><strong>2.</strong> <strong>PRIMEIRO</strong>: busque por CPF ou nome. Se existir, reuse.</p>
+<p><strong>3.</strong> <strong>+ New</strong></p>
+<p><strong>4.</strong> Preencha:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  NEW PRESCRIBER                                Save           │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ── Identificação ──                                          │
+│                                                              │
+│  Nome *:               [Dr. José da Silva____________]        │
+│  ← Nome completo como aparece no conselho.                   │
+│                                                              │
+│  CPF *:                [123.456.789-09]                       │
+│  ← 11 dígitos válidos. Único no sistema.                     │
+│                                                              │
+│  Data de Nascimento:   [DD/MM/AAAA]   (opcional)              │
+│  Gênero:               ○ Masculino ○ Feminino ○ Outro         │
+│                                                              │
+│  ── Conselho Profissional ──                                  │
+│                                                              │
+│  Tipo de Conselho *:   ◉ CRM (Médico)                        │
+│                        ○ CRO (Dentista)                      │
+│                        ○ CRF (Farmacêutico)                  │
+│                        ○ CRBM (Biomédico)                    │
+│                        ○ CRN (Nutricionista)                 │
+│                        ○ Outro                                │
+│                                                              │
+│  Número do Conselho *: [12345]                                │
+│  ← Só números, sem prefixo CRM.                              │
+│                                                              │
+│  UF do Conselho *:     [SP ▼]                                 │
+│  ← Estado onde o conselho foi emitido (SP, RJ, MG, ...).     │
+│                                                              │
+│  Outro Conselho (se &quot;Outro&quot;):                                │
+│  [_______________]                                            │
+│  ← Aparece só se Tipo = &quot;Outro&quot;. Ex: &quot;CFFa&quot; (Fonoaudiologia).│
+│                                                              │
+│  Status do Conselho:   ● Ativo  ○ Suspenso  ○ Cassado        │
+│                                                              │
+│  Especialidade:        [Endocrinologia____]   (opcional)      │
+│                                                              │
+│  ── Contato ──                                                │
+│                                                              │
+│  Celular:              [(11) 99999-0000]                      │
+│  E-mail Profissional:  [jose@clinica.com]                     │
+│                                                              │
+│  ── Endereço Profissional ──                                  │
+│                                                              │
+│  Consultório / Clínica:[Clínica São Paulo Ltda]               │
+│  Customer Vinculado:   [Clínica São Paulo Ltda     ▼]        │
+│  ← Opcional. Se o médico trabalha numa empresa que já é      │
+│    cliente, escolha aqui. Facilita relatórios.               │
+│                                                              │
+│  CEP:                  [01310-100]                            │
+│  Rua/Número/Bairro/Cidade/UF                                 │
+│                                                              │
+│  ── Observações ──                                            │
+│  [_____________________________________________]              │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>5.</strong> Clique <strong>Save</strong></p>
+<p><strong>6.</strong> ✓ <strong>Sucesso</strong>: gera código <code>PRES-2026-#####</code> (ex: <code>PRES-2026-00007</code>).</p>
+<h4 id="validações-automáticas">Validações automáticas</h4>
+<ul>
+<li><strong>CPF</strong>: 11 dígitos válidos, único no sistema</li>
+<li><strong>Número do conselho</strong>: combinação <code>(tipo + número + UF)</code> deve ser única (não pode ter 2 PRES-2026 com CRM-SP-12345)</li>
+<li><strong>Status “Cassado”</strong>: bloqueia uso em novas prescrições (sistema avisa)</li>
+</ul>
+<h4 id="médico-que-também-compra-direto">Médico que também compra direto</h4>
+<p>Caso especial: Dr. José prescreve <strong>e</strong> compra direto pra si. Você precisa de <strong>2 cadastros distintos</strong>:</p>
+<pre><code>   ┌────────────────────────────────────┐
+   │ Customer Dr. José (Individual, CPF)│
+   │   - Tax ID: 123.456.789-09          │
+   │   - Pra emitir NF                   │
+   └────────────────────────────────────┘
+   
+   ┌────────────────────────────────────┐
+   │ Prescriber Dr. José (CPF + CRM)    │
+   │   - CPF: 123.456.789-09             │
+   │   - CRM-SP 12345                    │
+   │   - Pra constar em prescrições     │
+   └────────────────────────────────────┘</code></pre>
+<p><strong>Por que 2 cadastros?</strong> - Customer pode ser PJ (empresa não tem CRM) - Prescriber é dado regulatório (ANVISA, conselho) - Histórico de compras ≠ histórico de prescrições</p>
+<p><strong>Não é trabalho duplicado</strong> — você cadastra 1 vez cada e reusa pra sempre.</p>
+<h4 id="atualizar-dados-do-médico">Atualizar dados do médico</h4>
+<p>Mudou clínica? Mudou número de telefone? <strong>Edite o Prescriber existente</strong> (não crie novo). Sistema mantém histórico (<code>track_changes=1</code>).</p>
+<blockquote>
+<p>⚠ <strong>Não edite</strong> Tipo/Número/UF do conselho a menos que tenha sido erro de digitação. Mudança real de inscrição (transferência de UF, por exemplo) normalmente vira novo registro pra preservar auditoria. Avise gestor.</p>
+</blockquote>
+<h4 id="erros-comuns">Erros comuns</h4>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Erro</th>
+<th>Causa</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>CPF já cadastrado como Prescriber: PRES-2026-00007</code></td>
+<td>Tentou duplicar</td>
+<td>Use o existente</td>
+</tr>
+<tr class="even">
+<td><code>Conselho CRM-SP-12345 já existe (PRES-2026-00007)</code></td>
+<td>Outro Prescriber tem mesmo conselho</td>
+<td>Use o existente (ou corrija o número)</td>
+</tr>
+<tr class="odd">
+<td><code>CPF inválido</code></td>
+<td>&lt; 11 dígitos</td>
+<td>Confira CPF</td>
+</tr>
+<tr class="even">
+<td>Status “Cassado” e estou criando pedido</td>
+<td>Conselho foi cassado</td>
+<td>Não pode prescrever. Use outro médico ou avise jurídico.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cadastro-de-paciente-patient">4.3. Cadastro de Paciente (Patient)</h3>
+<h4 id="o-que-é-2">O que é?</h4>
+<p>Paciente = a <strong>pessoa que vai receber</strong> a ampola. Pode ser diferente do cliente: o cliente é o médico que compra, mas o paciente é quem usa o medicamento.</p>
+<p>Cada ampola, no final, fica vinculada a 1 paciente específico (rastreabilidade exigida pra medicamento controlado).</p>
+<h4 id="quando-cadastrar-2">Quando cadastrar?</h4>
+<ul>
+<li>Quando o médico passa a prescrição pro vendedor</li>
+<li>Antes de criar o Sales Order (Pedido)</li>
+</ul>
+<h4 id="quem-faz-2">Quem faz?</h4>
+<p>Comercial (vendedor que recebe a prescrição)</p>
+<h4 id="passo-a-passo-2">Passo a passo</h4>
+<p><strong>1.</strong> No menu lateral, abra <strong>Produção Futura</strong> (Workspace customizado)</p>
+<p><strong>2.</strong> Clique em <strong>Paciente</strong></p>
+<p><strong>3.</strong> <strong>PRIMEIRO</strong>: na busca, procure pelo <strong>CPF</strong> ou <strong>nome</strong>. Se já existe, use.</p>
+<p><strong>4.</strong> Se não existe, <strong>+ New</strong></p>
+<p><strong>5.</strong> Preencha:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  NEW PATIENT                                      Save        │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Nome do Paciente *:    [Maria Aparecida Silva________]      │
+│  ← Nome completo, como sai na etiqueta.                      │
+│                                                              │
+│  CPF:                   [111.444.777-35_______________]      │
+│  ← Pode digitar com ou sem pontos. Sistema limpa.            │
+│  ⚠ Precisa ter 11 dígitos válidos. Não pode ser &quot;11111…&quot;.    │
+│                                                              │
+│  RG:                    [_______________]                     │
+│  ← Opcional.                                                 │
+│                                                              │
+│  Data de Nascimento:    [DD/MM/AAAA]                          │
+│                                                              │
+│  Gênero:                ◉ Feminino ○ Masculino ○ Outro       │
+│                                                              │
+│  Médico Prescritor *:   [PRES-2026-00007 — Dr. José  ▼]      │
+│  ← Link Field. Procura na lista de Prescribers (seção 4.2).  │
+│  ⚠ Médico padrão deste paciente. Pode ser sobrescrito em     │
+│    cada Sales Order (linha por linha em fp_patients).         │
+│                                                              │
+│  ── Contato ──                                                │
+│  Celular:               [(11) 99999-0001]                     │
+│  Telefone:              [(11) 3000-0000]                      │
+│  E-mail:                [maria@exemplo.com]                   │
+│                                                              │
+│  ── Endereço ──                                               │
+│  CEP:                   [01310-100]                           │
+│  Rua/Logradouro:        [Av. Paulista]                        │
+│  Número:                [1500]                                │
+│  Complemento:           [Apto 10]                             │
+│  Bairro:                [Bela Vista]                          │
+│  Cidade:                [São Paulo]                           │
+│  UF:                    [SP]                                  │
+│  País:                  [Brazil]    (padrão)                  │
+│                                                              │
+│  Observações:           [_______________________________]     │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>6.</strong> Clique <strong>Save</strong></p>
+<p><strong>7.</strong> ✓ <strong>Sucesso</strong>: gera código no padrão <code>PAC-2026-#####</code> (ex: <code>PAC-2026-00014</code>).</p>
+<blockquote>
+<p><strong>Anote esse código</strong>. Você vai precisar dele ao montar o Sales Order (etapa 6). Ou usa a busca, mas tendo o código é mais rápido.</p>
+</blockquote>
+<h4 id="paciente-recorrente-mesma-pessoa-volta-depois">Paciente recorrente (mesma pessoa volta depois)</h4>
+<p><strong>Pergunta comum</strong>: “O médico mandou o mesmo paciente hoje. E daqui a 3 meses ele vai voltar. São dois cadastros ou um só?”</p>
+<p><strong>Resposta</strong>: <strong>UM SÓ cadastro</strong>. Paciente é cadastro mestre permanente. Cria <strong>uma vez na vida</strong> e reusa em <strong>todas</strong> as compras futuras dessa pessoa.</p>
+<h4 id="como-funciona-na-prática">Como funciona na prática</h4>
+<pre><code>   ┌─────────────────────────────────────────────────────────┐
+   │                                                         │
+   │   Visita 1 — Hoje (2026-05-17)                          │
+   │                                                         │
+   │   Médico manda paciente Maria pela primeira vez         │
+   │      │                                                  │
+   │      ▼                                                  │
+   │   Vendedor:                                             │
+   │     - Busca CPF de Maria → não acha                     │
+   │     - Cadastra Patient                                  │
+   │     - Sistema gera: PAC-2026-00014                      │
+   │     - Cria Sales Order SAL-ORD-2026-00031               │
+   │       (fp_patients aponta PAC-2026-00014)               │
+   │                                                         │
+   └─────────────────────────────────────────────────────────┘
+                              │
+                              │  3 meses depois...
+                              ▼
+   ┌─────────────────────────────────────────────────────────┐
+   │                                                         │
+   │   Visita 2 — Daqui a 3 meses (2026-08-17)               │
+   │                                                         │
+   │   Médico manda Maria de novo (mesmo paciente)           │
+   │      │                                                  │
+   │      ▼                                                  │
+   │   Vendedor:                                             │
+   │     - Busca CPF de Maria → ACHA PAC-2026-00014          │
+   │     - REUSA o cadastro existente                        │
+   │     - NÃO cria novo Patient                             │
+   │     - Cria NOVO Sales Order SAL-ORD-2026-00089          │
+   │       (fp_patients aponta MESMO PAC-2026-00014)         │
+   │                                                         │
+   └─────────────────────────────────────────────────────────┘</code></pre>
+<h4 id="regra-cpf-é-único">Regra: CPF é único</h4>
+<p>O sistema <strong>força</strong> essa unicidade pelo CPF. Se você tentar cadastrar de novo um CPF que já existe, dá erro:</p>
+<pre><code>   ⚠ ERRO: DuplicateEntryError
+   CPF &quot;11144477735&quot; já existe (Patient: PAC-2026-00014).</code></pre>
+<h4 id="o-que-muda-entre-uma-visita-e-outra">O que MUDA entre uma visita e outra</h4>
+<ul>
+<li><strong>Sales Order</strong>: NOVO a cada compra (transacional)</li>
+<li><strong>Reservas (PR)</strong>: NOVAS a cada compra</li>
+<li><strong>Quantidade na linha <code>fp_patients</code></strong>: pode mudar (3 ampolas agora, 5 daqui 3 meses)</li>
+<li><strong>Lote físico (Batch)</strong>: provavelmente diferente (validade nova)</li>
+</ul>
+<h4 id="o-que-não-muda">O que NÃO muda</h4>
+<ul>
+<li><strong>Patient (cadastro mestre)</strong>: o mesmo <code>PAC-2026-00014</code></li>
+<li><strong>CPF, RG, data de nascimento</strong>: o mesmo</li>
+<li><strong>Médico prescritor</strong>: pode ser o mesmo OU outro (se mudou de médico)</li>
+</ul>
+<h4 id="quando-atualizar-dados-do-patient">Quando atualizar dados do Patient</h4>
+<p>Endereço, telefone, e-mail mudam? <strong>Edite o Patient existente</strong> (não crie novo):</p>
+<ol type="1">
+<li>Abra o <code>PAC-2026-00014</code></li>
+<li>Atualize os campos</li>
+<li><strong>Save</strong></li>
+</ol>
+<p>Sistema mantém histórico de alterações (<code>track_changes=1</code>) — auditoria fica preservada.</p>
+<h4 id="vantagens-de-manter-1-só-cadastro">Vantagens de manter 1 só cadastro</h4>
+<ul>
+<li><strong>Histórico unificado</strong>: relatório “todos os pedidos da Maria desde 2026” funciona</li>
+<li><strong>Rastreabilidade</strong>: liga lotes históricos (que ela já tomou) com novos</li>
+<li><strong>Sem duplicação</strong>: ninguém fica confuso entre 3 “Maria” diferentes</li>
+<li><strong>LGPD</strong>: dados pessoais em 1 lugar, mais fácil de atualizar/anonimizar</li>
+</ul>
+<h4 id="mesma-lógica-vale-pra-customer-médico">Mesma lógica vale pra Customer (médico)</h4>
+<p>Médico prescritor também é cadastro mestre <strong>único</strong>. Cadastre uma vez. Use em todos os SOs e Patients que ele prescrever.</p>
+<h4 id="erros-comuns-e-o-que-fazer-1">Erros comuns e o que fazer</h4>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Erro</th>
+<th>Causa</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>CPF precisa ter 11 dígitos</code></td>
+<td>CPF incompleto ou com letra</td>
+<td>Confira o CPF. Pode digitar com ou sem máscara, mas precisa ter 11 dígitos.</td>
+</tr>
+<tr class="even">
+<td><code>CPF inválido (todos iguais)</code></td>
+<td>Você digitou 11111111111 ou similar</td>
+<td>Use CPF real.</td>
+</tr>
+<tr class="odd">
+<td><code>CPF duplicado</code></td>
+<td>Esse CPF já está cadastrado</td>
+<td>Use o cadastro existente (busca pelo CPF).</td>
+</tr>
+<tr class="even">
+<td>Médico Prescritor não aparece</td>
+<td>O médico não está cadastrado como Prescriber</td>
+<td>Cadastre o médico primeiro como Prescriber (seção 4.2)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cadastro-de-item-produto-ampola">4.4. Cadastro de Item (Produto / Ampola)</h3>
+<h4 id="o-que-é-3">O que é?</h4>
+<p>Item = o <strong>produto</strong> que a empresa vende/fabrica. Ex: “Tirzepatida 60mg/2,4ml”. Tem um código único (ex: <code>TIR00060</code>) que aparece em todos os lugares.</p>
+<h4 id="quando-cadastrar-3">Quando cadastrar?</h4>
+<ul>
+<li>Quando entra um produto novo no catálogo da empresa</li>
+<li><strong>Não é diário</strong> — TI/produção faz raramente</li>
+</ul>
+<h4 id="quem-faz-3">Quem faz?</h4>
+<p>TI ou Gestor de Produto (não é o operador comercial)</p>
+<h4 id="passo-a-passo-referência-rápida">Passo a passo (referência rápida)</h4>
+<p><strong>1.</strong> Menu lateral → <strong>Stock</strong> → <strong>Item</strong> → <strong>+ New</strong></p>
+<p><strong>2.</strong> Preencha:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  Item Code *:         [TIR00060]                              │
+│  ← Código único. Use letras+números curtos. Não muda depois.  │
+│                                                              │
+│  Item Name *:         [Tirzepatida 60mg/2,4ml]                │
+│  ← Nome legível.                                              │
+│                                                              │
+│  Item Group *:        [Products                       ▼]     │
+│                                                              │
+│  Stock UOM *:         [Unit] ou [Nos]                         │
+│  ← Unidade de medida em estoque (unidade, kg, litro…).        │
+│                                                              │
+│  ☑ Maintain Stock                                            │
+│  ← Marque sempre — sem isso, sistema não controla estoque.    │
+│                                                              │
+│  ☑ Has Batch No                                              │
+│  ← ⚠ ESSENCIAL pra nosso processo. Sem isso, FPB não funciona.│
+│                                                              │
+│  ☑ Has Expiry Date                                           │
+│  ← Marque pra medicamento com validade.                       │
+│                                                              │
+│  Shelf Life (days):   [730]                                   │
+│  ← Validade em dias a partir da fabricação (ex: 730 = 2 anos).│
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>3.</strong> <strong>Save</strong></p>
+<p>✓ Item disponível pra uso em pedidos e produção.</p>
+<h4 id="erros-comuns-1">Erros comuns</h4>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Erro</th>
+<th>Causa</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Item já existe</td>
+<td>Código duplicado</td>
+<td>Use código diferente ou edite o existente</td>
+</tr>
+<tr class="even">
+<td>FPB não aceita o item</td>
+<td>Esqueceu de marcar “Has Batch No”</td>
+<td>Edite o Item e marque</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="etapa-a-planejar-lote-de-produção-fpb">5. Etapa A — Planejar Lote de Produção (FPB)</h2>
+<h3 id="o-que-é-um-fpb">O que é um FPB?</h3>
+<p>FPB (Future Production Batch) = “<strong>Lote de Produção Futura</strong>”. É a <strong>promessa</strong> da empresa de fabricar um lote num determinado dia. <strong>Não é estoque real</strong>.</p>
+<p><strong>Analogia</strong>: você reserva uma mesa no restaurante pra sábado às 20h. A mesa não está ocupada ainda — só está <strong>prometida</strong>. Outros não podem reservar ela pra mesma hora. Quando chegar sábado, você ocupa de verdade.</p>
+<p>O FPB funciona igual. O sistema “guarda” uma quantidade de futuras ampolas que ainda não foram fabricadas, e permite vender contra essa promessa.</p>
+<h3 id="por-que-criar-antes-do-pedido">Por que criar antes do pedido?</h3>
+<ul>
+<li><strong>Vender com prazo</strong>: cliente quer 500 ampolas pro mês que vem? Você precisa ter um lote planejado pra reservar contra ele.</li>
+<li><strong>Não dá pra vender o ar</strong>: se nenhum FPB existe, não dá pra prometer entrega futura.</li>
+<li><strong>Controla capacidade</strong>: o lote tem tamanho fixo (ex: 2.000 ampolas). Você não consegue vender mais que isso.</li>
+</ul>
+<h3 id="quem-faz-4">Quem faz?</h3>
+<p>Planejador de Produção (cargo: PCP — Planejamento e Controle de Produção)</p>
+<h3 id="quando-criar">Quando criar?</h3>
+<ul>
+<li>Sempre antes do mês começar (planejamento mensal)</li>
+<li>Sempre que o saldo dos FPBs atuais estiver acabando</li>
+<li>Quando o comercial avisar “vou ter uma demanda grande no mês X”</li>
+</ul>
+<h3 id="passo-a-passo-3">Passo a passo</h3>
+<p><strong>1.</strong> Menu → <strong>Produção Futura</strong> → <strong>Lote de Produção Futura</strong></p>
+<p><strong>2.</strong> Clique <strong>+ New</strong></p>
+<p><strong>3.</strong> Aparece a tela em branco. Preencha cada campo (explico um por um):</p>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  NEW FUTURE PRODUCTION BATCH                                  │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Código da Produção *:                                       │
+│  [AMP-2026-05-20-001___________]                              │
+│  ↑ Identificador legível pra equipe. Use convenção:          │
+│    [SIGLA]-[ANO]-[MES]-[DIA]-[SEQUENCIAL]                    │
+│    Ex: AMP-2026-05-20-001 = primeira fornada do dia 20/05/26 │
+│                                                              │
+│  Empresa *:                                                  │
+│  [Injmedpharma                                       ▼]      │
+│                                                              │
+│  Status *:                                                   │
+│  [Aberta para Reserva                                ▼]      │
+│  ↑ SEMPRE comece com &quot;Aberta para Reserva&quot;.                  │
+│    Outros status só mudam depois automaticamente.            │
+│                                                              │
+│  ── Produto ──                                                │
+│                                                              │
+│  Produto a Produzir *:                                       │
+│  [TIR00060 — Tirzepatida 60mg/2,4ml                   ▼]     │
+│  ↑ Use a busca. Digite TIR e o sistema sugere.               │
+│                                                              │
+│  Nome do Produto:    (preenche sozinho ao escolher o item)    │
+│  Unidade:            (preenche sozinho)                       │
+│                                                              │
+│  BOM (opcional):                                             │
+│  [BOM-TIR00060-001                                   ▼]      │
+│  ↑ Lista de Materiais. Opcional aqui.                        │
+│                                                              │
+│  ── Quantidades e Datas ──                                    │
+│                                                              │
+│  Quantidade Planejada *:                                     │
+│  [2000]                                                       │
+│  ↑ Quantas ampolas você vai fabricar. Bate com capacidade da │
+│    linha (não invente).                                       │
+│                                                              │
+│  Data Prevista de Produção *:                                │
+│  [2026-05-20]                                                 │
+│  ↑ Quando a fabricação vai acontecer.                        │
+│                                                              │
+│  Data Esperada de Liberação:                                 │
+│  [2026-05-25]                                                 │
+│  ↑ Quando as ampolas estarão prontas pra sair (após          │
+│    quarentena/análise). Opcional.                            │
+│                                                              │
+│  ── Depósitos ──                                              │
+│                                                              │
+│  Depósito de Produto Acabado *:                              │
+│  [Produtos Acabados - I                              ▼]      │
+│  ↑ Onde as ampolas prontas vão ficar.                        │
+│                                                              │
+│  Depósito WIP (Work in Progress):                            │
+│  [WIP - I                                            ▼]      │
+│  ↑ Opcional. Onde fica o produto em fabricação.              │
+│                                                              │
+│  ── Avançado (opcional) ──                                    │
+│                                                              │
+│  ☐ Permitir Reserva Acima do Planejado                       │
+│  ↑ MARQUE só se quiser permitir overbooking (vender mais que │
+│    a capacidade). Padrão: NÃO MARCAR.                        │
+│                                                              │
+│  Limite extra: [0]                                            │
+│  ↑ Se permitir overbooking, quanto a mais (ex: 200 = pode    │
+│    reservar até 2200 num lote planejado de 2000).            │
+│                                                              │
+│  Limite pra novas reservas:                                  │
+│  [2026-05-15 18:00:00]                                        │
+│  ↑ Depois dessa data/hora, sistema bloqueia novas reservas.  │
+│    Opcional.                                                  │
+│                                                              │
+│  Observações: [_____________________________________________]│
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>4.</strong> Clique <strong>Save</strong> — o documento fica salvo como <strong>Rascunho</strong> (status visual amarelo)</p>
+<p><strong>5.</strong> Confira tudo. Se algo estiver errado, edite e Save de novo.</p>
+<p><strong>6.</strong> Clique <strong>Submit</strong> (botão azul no canto superior direito)</p>
+<blockquote>
+<p>Sistema pergunta: “Are you sure you want to submit this document?” Confirme.</p>
+</blockquote>
+<p><strong>7.</strong> ✓ <strong>Sucesso</strong>: o documento muda pra <strong>Submitted</strong> (status verde). Agora ele pode receber reservas.</p>
+<h3 id="como-o-fpb-muda-de-status-sozinho">Como o FPB muda de status sozinho</h3>
+<p>Depois de submetido, o FPB muda de status automaticamente conforme os eventos acontecem. Você <strong>não</strong> precisa mudar manualmente.</p>
+<pre><code>   Rascunho
+       │  Save = rascunho amarelo
+       ▼
+   ┌─────────────────────┐
+   │  Save + Submit       │ ──► docstatus=1 (verde)
+   └──────────┬───────────┘
+              ▼
+   ┌─────────────────────────┐
+   │ Aberta para Reserva     │  ← agora aceita reservas
+   │ reserved = 0            │
+   └──────────┬──────────────┘
+              │ vendedor cria reserva
+              ▼
+   ┌─────────────────────────┐
+   │ Reservada Parcialmente  │  ← parte das ampolas já tem dono
+   │ 0 &lt; reserved &lt; planned  │
+   └──────────┬──────────────┘
+              ▼
+   ┌─────────────────────────┐
+   │ Totalmente Reservada    │  ← todas vendidas (no papel)
+   │ reserved &gt;= planned     │
+   └──────────┬──────────────┘
+              │ Work Order criada
+              ▼
+   ┌─────────────────────────┐
+   │ Em Produção             │  ← fabricação começou
+   └──────────┬──────────────┘
+              ▼
+   ┌─────────────────────────┐
+   │ Produzida Parcialmente  │  ← parte saiu da produção
+   └──────────┬──────────────┘
+              ▼
+   ┌─────────────────────────┐
+   │ Produzida Totalmente    │
+   └──────────┬──────────────┘
+              │ supervisor libera
+              ▼
+   ┌─────────────────────────┐
+   │ Liberada Parcial/Total  │  ← pronto pra entregar
+   └─────────────────────────┘</code></pre>
+<h3 id="checklist-antes-de-submeter">Checklist antes de submeter</h3>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+Código da Produção único e legível?</li>
+<li><input type="checkbox" disabled></input>
+Item correto?</li>
+<li><input type="checkbox" disabled></input>
+Quantidade bate com a capacidade real da linha?</li>
+<li><input type="checkbox" disabled></input>
+Data realista (não passada, não muito distante)?</li>
+<li><input type="checkbox" disabled></input>
+Depósito correto?</li>
+<li><input type="checkbox" disabled></input>
+Empresa correta (se multi-empresa)?</li>
+</ul>
+<h3 id="como-conferir-que-ficou-pronto">Como conferir que ficou pronto</h3>
+<p>Abra de novo o FPB. No topo aparece:</p>
+<pre><code>┌────────────────────────────────────────────────────────────┐
+│ Future Production Batch FPB-2026-00003                      │
+│ ● Submitted        Status: Aberta para Reserva              │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│   Planejado:     2000                                       │
+│   Reservado:        0                                       │
+│   Disponível:    2000   ← saldo livre pra reservas          │
+│   Produzido:        0                                       │
+│   Liberado:         0                                       │
+│   Pend. Liber.:     0                                       │
+│                                                            │
+└────────────────────────────────────────────────────────────┘</code></pre>
+<p>✓ “Submitted” + status “Aberta para Reserva” + Disponível=2000 → tudo certo.</p>
+<h3 id="erros-comuns-2">Erros comuns</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Erro</th>
+<th>Causa</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Não consigo submeter</td>
+<td>Falta um campo obrigatório</td>
+<td>Procure o campo em vermelho (geralmente Quantidade Planejada ou Data)</td>
+</tr>
+<tr class="even">
+<td>Quero apagar um FPB</td>
+<td>Tem reservas vinculadas</td>
+<td>Cancele todas as PRs antes (etapa 15.2). Só depois apaga o FPB.</td>
+</tr>
+<tr class="odd">
+<td>Erro “Item must have Has Batch No”</td>
+<td>Item foi mal cadastrado</td>
+<td>Volte na seção 4.3 e marque a checkbox</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="etapa-b-emitir-pedido-de-venda">6. Etapa B — Emitir Pedido de Venda</h2>
+<h3 id="o-que-é-um-sales-order-so">O que é um Sales Order (SO)?</h3>
+<p>Sales Order = “<strong>Pedido de Venda</strong>”. É o documento oficial que diz: “o cliente X comprou Y ampolas por Z reais, com entrega prevista para a data D”.</p>
+<p>A partir dele, todos os próximos passos acontecem (reserva, faturamento, entrega).</p>
+<h3 id="pré-requisitos">Pré-requisitos</h3>
+<p>Antes de criar o SO, <strong>garanta que existem</strong>:</p>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+<strong>Cliente cadastrado</strong> (seção 4.1)</li>
+<li><input type="checkbox" disabled></input>
+<strong>Pacientes cadastrados</strong> (seção 4.2) — um por pessoa que vai receber</li>
+<li><input type="checkbox" disabled></input>
+<strong>Item cadastrado</strong> (seção 4.3)</li>
+<li><input type="checkbox" disabled></input>
+<strong>FPB submetido com saldo</strong> (seção 5) — pra poder reservar depois</li>
+</ul>
+<blockquote>
+<p>Se algum desses não existe, <strong>volte e cadastre primeiro</strong>. Não tente criar o SO sem pré-requisitos — vai dar erro no meio.</p>
+</blockquote>
+<h3 id="quem-faz-5">Quem faz?</h3>
+<p>Comercial (vendedor)</p>
+<h3 id="passo-a-passo-4">Passo a passo</h3>
+<h4 id="passo-6.1-conferir-saldo-nos-lotes-fpb">Passo 6.1 — Conferir saldo nos lotes (FPB)</h4>
+<p>Antes de prometer ao cliente, abra a <strong>lista de FPBs</strong> e veja o que tem disponível.</p>
+<p><strong>1.</strong> Menu → <strong>Produção Futura</strong> → <strong>Lote de Produção Futura</strong></p>
+<p><strong>2.</strong> No topo da lista, clique <strong>Filter</strong> e configure:</p>
+<pre><code>┌─────────────────────────────────────────────────┐
+│ Filter:                                          │
+│ Item Code:        [TIR00060          ]           │
+│ Status:           [Aberta para Reserva, ]        │
+│                   [Reservada Parcialmente]       │
+│ Available Qty:    [&gt; 0                  ]        │
+└─────────────────────────────────────────────────┘</code></pre>
+<p><strong>3.</strong> Clique <strong>Apply</strong></p>
+<p><strong>4.</strong> Apaarece a lista filtrada:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────────┐
+│ Lotes disponíveis (saldo livre)                                    │
+├───────────────┬──────────┬────────┬────────┬────────┬─────────────┤
+│ FPB           │ Item     │ Plan   │ Reserv │ Disp   │ Data prev.  │
+├───────────────┼──────────┼────────┼────────┼────────┼─────────────┤
+│ FPB-2026-001  │ TIR00060 │ 2000   │ 1500   │ 500    │ 2026-05-20  │
+│ FPB-2026-002  │ TIR00060 │ 2000   │ 0      │ 2000   │ 2026-06-15  │
+└───────────────┴──────────┴────────┴────────┴────────┴─────────────┘</code></pre>
+<p><strong>5.</strong> Confirme com o cliente uma data viável (baseado em “Data prev.”).</p>
+<blockquote>
+<p>Se nenhum FPB aparecer com saldo, <strong>não prometa entrega</strong>. Avise o Planejador de Produção pra criar um FPB novo (seção 5).</p>
+</blockquote>
+<h4 id="passo-6.2-criar-o-so">Passo 6.2 — Criar o SO</h4>
+<p><strong>1.</strong> Menu → <strong>Selling</strong> → <strong>Sales Order</strong> → <strong>+ New</strong></p>
+<p><strong>2.</strong> Preencha o <strong>cabeçalho</strong>:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  NEW SALES ORDER                              Save           │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Customer *:           [Dr. José da Silva           ▼]       │
+│  ↑ Digite parte do nome; ele sugere. Se não aparece, volte e │
+│    cadastre antes (seção 4.1).                                │
+│                                                              │
+│  Date *:               [2026-05-17]   (hoje, default)         │
+│                                                              │
+│  Delivery Date *:      [2026-06-17]                           │
+│  ↑ Data prometida ao cliente. Não pode ser antes da data de  │
+│    produção do FPB (não faz sentido).                         │
+│                                                              │
+│  Order Type:           [Sales] (default)                      │
+│                                                              │
+│  ── Currency &amp; Price ──                                      │
+│                                                              │
+│  Currency:             [BRL] (default)                        │
+│  Price List:           [Venda Padrão                   ▼]    │
+│  ↑ Se sua empresa tem várias tabelas de preço, escolha.       │
+│                                                              │
+│  Company:              [Injmedpharma] (default)               │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+<h4 id="passo-6.3-adicionar-items-produtos">Passo 6.3 — Adicionar items (produtos)</h4>
+<p>Role para baixo até a seção <strong>Items</strong>.</p>
+<p><strong>1.</strong> Clique <strong>+ Add Row</strong> (botão verde dentro da tabela)</p>
+<p><strong>2.</strong> Aparece uma linha em branco. Preencha:</p>
+<pre><code>┌────────────────────────────────────────────────────────────────┐
+│  ITEMS                                                          │
+│  ┌──────────┬─────┬──────┬─────────────────────────────────┐  │
+│  │ Item *   │ Qty │ Rate │ Warehouse        │ Delivery Date │  │
+│  ├──────────┼─────┼──────┼──────────────────┼───────────────┤  │
+│  │ TIR00060 │  10 │ 100  │ Produtos Acabados│ 2026-06-17    │  │
+│  │          │     │      │ - I              │               │  │
+│  └──────────┴─────┴──────┴──────────────────┴───────────────┘  │
+│  [+ Add Row]                                                    │
+│                                                                │
+│  Total: R$ 1.000,00  (Qty × Rate)                              │
+└────────────────────────────────────────────────────────────────┘</code></pre>
+<ul>
+<li><strong>Item</strong>: código do produto (use a busca, digite “TIR”)</li>
+<li><strong>Qty</strong>: quantidade total da venda (todas as ampolas, somando pacientes)</li>
+<li><strong>Rate</strong>: preço unitário em R$ (se já tem na Price List, preenche sozinho)</li>
+<li><strong>Warehouse</strong>: depósito de onde vai sair (combina com o FPB)</li>
+<li><strong>Delivery Date</strong>: pode ser igual à data do cabeçalho</li>
+</ul>
+<blockquote>
+<p><strong>Importante</strong>: a <code>Qty</code> aqui é o TOTAL. Ex: se vai pra 4 pacientes (3+2+4+1=10), coloque <code>Qty=10</code> aqui na linha do item. A divisão entre pacientes é a próxima etapa.</p>
+</blockquote>
+<h4 id="passo-6.4-adicionar-pacientes-crítico">Passo 6.4 — Adicionar pacientes (CRÍTICO)</h4>
+<p>Role mais para baixo. Procure a seção <strong>“Pacientes”</strong> (pode estar collapsible — clique pra expandir).</p>
+<p><strong>1.</strong> Clique <strong>+ Add Row</strong> dentro da tabela de Pacientes</p>
+<p><strong>2.</strong> Para cada paciente, preencha 1 linha:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────────────┐
+│  PACIENTES                                                                            │
+│  ┌─────────────────┬───────────────────┬──────────────────┬──────────┬─────┐         │
+│  │ Patient *       │ Patient Name(auto)│ Prescriber *     │ Item *   │ Qty │         │
+│  ├─────────────────┼───────────────────┼──────────────────┼──────────┼─────┤         │
+│  │ PAC-2026-00014▼ │ Maria Aparecida   │ PRES-2026-00007▼ │ TIR00060 │  3  │         │
+│  │                 │                   │ Dr. José (CRM-SP)│          │     │         │
+│  │ PAC-2026-00015▼ │ João Silva        │ PRES-2026-00007▼ │ TIR00060 │  2  │         │
+│  │                 │                   │ Dr. José (CRM-SP)│          │     │         │
+│  │ PAC-2026-00016▼ │ Ana Beatriz       │ PRES-2026-00011▼ │ TIR00060 │  4  │         │
+│  │                 │                   │ Dra. Ana (CRM-RJ)│          │     │         │
+│  │ PAC-2026-00017▼ │ Carlos Souza      │ PRES-2026-00007▼ │ TIR00060 │  1  │         │
+│  │                 │                   │ Dr. José (CRM-SP)│          │     │         │
+│  └─────────────────┴───────────────────┴──────────────────┴──────────┴─────┘         │
+│  [+ Add Row]                                                                          │
+│                                                                                       │
+│  Total pacientes (item TIR00060): 3+2+4+1 = 10  ✓ bate com qty do item                │
+└──────────────────────────────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>Como funciona o Link Field “Patient”</strong>: - Clique na célula → aparece dropdown - Digite o nome ou CPF → ele filtra - Clique no certo → nome e CPF preenchem sozinhos - <strong>Prescriber preenche sozinho</strong> com o médico padrão cadastrado no Patient (seção 4.3 — campo “Médico Prescritor”)</p>
+<p><strong>Como funciona a coluna Prescriber</strong>: - Cada linha de paciente pode ter um <strong>médico diferente</strong> - Sistema sugere automaticamente o médico padrão do Patient - Você pode <strong>sobrescrever</strong> clicando e escolhendo outro Prescriber - Útil quando: hospital/clínica compra pra vários pacientes de médicos distintos no mesmo pedido</p>
+<blockquote>
+<p>⚠ Se um paciente recebeu prescrição de <strong>2 médicos diferentes</strong> pro mesmo item (caso raro), crie <strong>2 linhas</strong> desse paciente no SO, uma com cada Prescriber e dividindo a qty.</p>
+</blockquote>
+<blockquote>
+<p><strong>⚠ REGRA OBRIGATÓRIA</strong>: A <strong>soma das quantidades dos pacientes</strong> PARA CADA ITEM precisa ser <strong>igual</strong> à quantidade do item no cabeçalho.</p>
+<p>Ex: linha de item <code>TIR00060 qty=10</code> → soma das <code>qty</code> dos pacientes do item <code>TIR00060</code> precisa dar <strong>10</strong> (não 9, não 11).</p>
+<p>Se não bater, o Save bloqueia com mensagem: <code>&quot;Item TIR00060: qty do pedido (10) diferente da soma das ampolas dos pacientes (9)&quot;</code></p>
+</blockquote>
+<h4 id="passo-6.5-save-submit">Passo 6.5 — Save → Submit</h4>
+<p><strong>1.</strong> Clique <strong>Save</strong> (canto superior direito)</p>
+<blockquote>
+<p>Se algo estiver errado, aparece erro vermelho. Conserte e Save de novo.</p>
+</blockquote>
+<p><strong>2.</strong> Após Save, aparece o botão <strong>Submit</strong> (azul)</p>
+<p><strong>3.</strong> Clique <strong>Submit</strong></p>
+<p><strong>4.</strong> Sistema pergunta confirmação. Confirme.</p>
+<p><strong>5.</strong> ✓ <strong>Sucesso</strong>: o SO muda pra <strong>Submitted</strong> (verde). Aparece um código tipo <code>SAL-ORD-2026-00031</code>.</p>
+<blockquote>
+<p><strong>Anote esse código</strong>. Vai usar na próxima etapa (Reserva).</p>
+</blockquote>
+<h3 id="como-conferir-que-ficou-pronto-1">Como conferir que ficou pronto</h3>
+<p>Abra o SO novamente. Topo deve estar:</p>
+<pre><code>┌────────────────────────────────────────────────────────────┐
+│ Sales Order SAL-ORD-2026-00031                              │
+│ ● Submitted    Status: To Deliver and Bill                  │
+│ Customer: Dr. José da Silva                                 │
+│ Total: R$ 1.000,00                                          │
+└────────────────────────────────────────────────────────────┘</code></pre>
+<p>✓ Status “To Deliver and Bill” + linha de itens preenchida + tabela de pacientes preenchida.</p>
+<h3 id="erros-comuns-3">Erros comuns</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Erro</th>
+<th>Causa</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Item X: qty diferente da soma dos pacientes</code></td>
+<td>Soma dos pacientes ≠ qty do item</td>
+<td>Recalcule, ajuste qty dos pacientes</td>
+</tr>
+<tr class="even">
+<td><code>Mandatory: Customer</code></td>
+<td>Esqueceu o cliente</td>
+<td>Selecione no campo Customer</td>
+</tr>
+<tr class="odd">
+<td><code>Mandatory: Delivery Date</code></td>
+<td>Esqueceu a data</td>
+<td>Preencha</td>
+</tr>
+<tr class="even">
+<td><code>Item code not found</code></td>
+<td>Item não cadastrado</td>
+<td>Volte e cadastre (seção 4.3)</td>
+</tr>
+<tr class="odd">
+<td>Não consigo escolher um paciente</td>
+<td>Lista vazia</td>
+<td>Cadastre o paciente primeiro (seção 4.2)</td>
+</tr>
+<tr class="even">
+<td><code>Patient item_code não está nos items do SO</code></td>
+<td>Você botou item diferente no paciente</td>
+<td>Use o mesmo item_code do item da linha</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="etapa-c-reservar-lote">7. Etapa C — Reservar Lote</h2>
+<h3 id="o-que-é-uma-reserva">O que é uma Reserva?</h3>
+<p>Reserva = <strong>amarra</strong> uma linha do Pedido de Venda a um Lote de Produção Futura. Cria um documento <strong>Production Reservation (PR)</strong> e <strong>diminui o saldo disponível</strong> do FPB.</p>
+<p><strong>Analogia</strong>: comprou ingresso pro show. O ingresso é a PR. A capacidade do estádio (FPB) tinha 2.000 lugares — agora tem 1.990 (você levou 10).</p>
+<h3 id="por-que-reservar">Por que reservar?</h3>
+<ul>
+<li><strong>Garante a entrega</strong>: sem reserva, outro vendedor pode “tomar” o saldo</li>
+<li><strong>Liga produção a venda</strong>: produção sabe pra quem cada ampola vai</li>
+<li><strong>Rastreabilidade</strong>: depois consegue ver “essa ampola era do paciente X”</li>
+</ul>
+<h3 id="quem-faz-6">Quem faz?</h3>
+<p>Comercial (mesmo vendedor que criou o SO) OU Planejamento</p>
+<h3 id="quando">Quando?</h3>
+<p>Logo depois de submeter o SO. <strong>Não deixe pra depois</strong> — outro pedido pode “engolir” o saldo enquanto isso.</p>
+<h3 id="dois-modos-de-reservar">Dois modos de reservar</h3>
+<h4 id="modo-1-reserva-manual-operador-escolhe-o-fpb">Modo 1 — Reserva manual (operador escolhe o FPB)</h4>
+<p><strong>Use quando</strong>: - Cliente exigiu um lote específico (ex: validade que combina com cronograma do paciente) - Produção quer empurrar primeiro um lote prioritário - Você sabe exatamente qual FPB usar</p>
+<p><strong>Passo a passo</strong>:</p>
+<p><strong>1.</strong> Abra o <strong>Sales Order</strong> submetido (seção 6)</p>
+<p><strong>2.</strong> No topo direito, clique no botão <strong>Produção Futura</strong> (botão customizado)</p>
+<p><strong>3.</strong> Aparece sub-menu. Clique <strong>Reservar em Produção Futura</strong></p>
+<p><strong>4.</strong> Abre um diálogo:</p>
+<pre><code>┌─────────────────────────────────────────────────────┐
+│ Reservar em Produção Futura                          │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  Linha do Pedido:                                   │
+│  [TIR00060 (qty=10)                          ▼]    │
+│  ↑ Se o SO tem mais de 1 item, escolhe qual.       │
+│                                                     │
+│  Lote de Produção Futura:                          │
+│  [FPB-2026-001 (disp=500)                    ▼]    │
+│  ↑ Só mostra FPBs do mesmo item com saldo &gt; 0.     │
+│                                                     │
+│  Quantidade:                                        │
+│  [10]                                                │
+│  ↑ Padrão = qty da linha. Pode reservar parcial.   │
+│                                                     │
+│  Prioridade:                                        │
+│  [100]                                               │
+│  ↑ Menor número = libera primeiro. Padrão 100.     │
+│    Use 50 pra &quot;VIP&quot;, 200 pra &quot;pode esperar&quot;.       │
+│                                                     │
+│           [ Cancelar ]    [ Reservar ]              │
+└─────────────────────────────────────────────────────┘</code></pre>
+<p><strong>5.</strong> Confira e clique <strong>Reservar</strong></p>
+<p><strong>6.</strong> ✓ Sistema confirma com mensagem tipo: “Reserva PR-2026-00027 criada. Saldo do FPB-2026-001: 490 disponíveis.”</p>
+<h4 id="modo-2-reserva-automática-sistema-escolhe">Modo 2 — Reserva automática (sistema escolhe)</h4>
+<p><strong>Use quando</strong>: - Você não se importa em qual lote ficar - Quer ser rápido - Confia na regra FIFO (lote mais antigo primeiro)</p>
+<p><strong>Passo a passo</strong>:</p>
+<p><strong>1.</strong> Abra o <strong>Sales Order</strong> submetido</p>
+<p><strong>2.</strong> Botão <strong>Produção Futura</strong> → <strong>Reservar Automaticamente</strong></p>
+<p><strong>3.</strong> Confirme</p>
+<p><strong>4.</strong> Sistema busca FPBs do item, ordena por <strong>data de produção (mais antigo primeiro)</strong>, e vai distribuindo até completar o pedido. Pode dividir 1 item entre 2 ou mais FPBs se for preciso.</p>
+<p><strong>5.</strong> ✓ Mensagem de sucesso lista quantas reservas foram criadas e em quais FPBs.</p>
+<h3 id="como-conferir-que-deu-certo">Como conferir que deu certo</h3>
+<p><strong>Confira em 2 lugares</strong>:</p>
+<p><strong>1.</strong> Volte ao <strong>Sales Order</strong>. Role até a linha de item e expanda a seção <strong>Produção Futura</strong> (campos espelho):</p>
+<pre><code>┌────────────────────────────────────────────────────────────────┐
+│ Item: TIR00060   qty: 10                                        │
+│                                                                │
+│  ── Produção Futura ─────────────────────────────────────       │
+│  FPB:               FPB-2026-001                                │
+│  Reservado:         10                                          │
+│  Liberado:          0                                           │
+│  Pendente Liber.:   0                                           │
+│  Status Reserva:    Reservado  ✓                                │
+└────────────────────────────────────────────────────────────────┘</code></pre>
+<p>✓ “Status Reserva: Reservado” + FPB preenchido + Reservado=10 → tudo certo.</p>
+<p><strong>2.</strong> Abra o <strong>FPB</strong>. O saldo deve ter caído:</p>
+<pre><code>   Planejado:    2000
+   Reservado:    1510   ← era 1500, agora +10 (esta reserva)
+   Disponível:    490   ← era 500
+   Status:       Reservada Parcialmente</code></pre>
+<h3 id="como-ver-todas-as-reservas-que-existem">Como ver todas as reservas que existem</h3>
+<p>Menu → <strong>Produção Futura</strong> → <strong>Reserva de Produção</strong></p>
+<p>Lista todas as PRs do sistema. Filtre por cliente, FPB, status, etc.</p>
+<h3 id="erros-comuns-4">Erros comuns</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Erro</th>
+<th>Causa</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Saldo insuficiente no FPB</code></td>
+<td>Tentou reservar mais que o disponível</td>
+<td>Reduza a qty ou escolha outro FPB</td>
+</tr>
+<tr class="even">
+<td><code>Sales Order precisa estar submetido</code></td>
+<td>SO ainda é rascunho</td>
+<td>Volte e Submit primeiro</td>
+</tr>
+<tr class="odd">
+<td><code>Item do FPB diferente do item do SO</code></td>
+<td>Você escolheu FPB do produto errado</td>
+<td>Escolha FPB do mesmo item</td>
+</tr>
+<tr class="even">
+<td><code>Não aparece FPB no dropdown</code></td>
+<td>Nenhum FPB com saldo desse item</td>
+<td>Volte na seção 5 e crie um</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="etapa-d-programar-produção">8. Etapa D — Programar Produção</h2>
+<h3 id="o-que-é-uma-work-order">O que é uma Work Order?</h3>
+<p>Work Order = “<strong>Ordem de Produção</strong>”. É o documento que <strong>autoriza a produção a começar</strong>. Diz: “fabricar 2.000 ampolas do item TIR00060 pra suprir o FPB-2026-001”.</p>
+<h3 id="quem-faz-7">Quem faz?</h3>
+<p>Planejador de Produção</p>
+<h3 id="quando-1">Quando?</h3>
+<p>Quando o FPB está totalmente reservado (ou no momento decidido pela equipe — pode ser antes, dependendo da estratégia).</p>
+<h3 id="tem-que-criar-work-order-obrigatoriamente">Tem que criar Work Order obrigatoriamente?</h3>
+<p><strong>Não</strong>. Você pode pular essa etapa se sua empresa não usa Work Order formal. Vai direto pra Etapa E (registrar produção). Mas perde: - Controle automático de matéria-prima (BOM) - Cálculo de custo de produção - Rastreio de tempo</p>
+<blockquote>
+<p><strong>Recomendado</strong>: usar Work Order se sua empresa já tem BOMs cadastrados.</p>
+</blockquote>
+<h3 id="passo-a-passo-com-work-order">Passo a passo (com Work Order)</h3>
+<p><strong>1.</strong> Abra o <strong>FPB</strong> submetido (ex: FPB-2026-001)</p>
+<p><strong>2.</strong> No topo direito, clique <strong>Ações</strong> → <strong>Criar Work Order</strong></p>
+<p><strong>3.</strong> Confirme</p>
+<p><strong>4.</strong> Sistema: - Busca a <strong>BOM padrão ativa</strong> do item - Cria a Work Order vinculada - Atualiza o FPB para status “Em Produção” - Mostra mensagem com o código da WO criada (ex: <code>MFG-WO-2026-00001</code>)</p>
+<p><strong>5.</strong> ✓ Abra a Work Order pra conferir e (se necessário) ajustar: - Quantidade total - Data de início/fim planejadas - Operações (etapas de produção) - Material Request (requisição de matéria-prima)</p>
+<h3 id="o-que-acontece-após-criar-a-wo">O que acontece após criar a WO</h3>
+<p>A WO segue um fluxo próprio do ERPNext: - <strong>Not Started</strong> → <strong>In Process</strong> → <strong>Completed</strong></p>
+<p>A produção real (etapa 9) só vai começar quando a equipe física iniciar de fato.</p>
+<h3 id="erros-comuns-5">Erros comuns</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Erro</th>
+<th>Causa</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Item sem BOM ativa</code></td>
+<td>Não tem BOM cadastrado pro item</td>
+<td>Cadastre BOM em <em>Manufacturing → BOM → + New</em></td>
+</tr>
+<tr class="even">
+<td><code>FPB não submetido</code></td>
+<td>FPB ainda é rascunho</td>
+<td>Submit primeiro</td>
+</tr>
+<tr class="odd">
+<td><code>WO já existe pra esse FPB</code></td>
+<td>Já criou antes</td>
+<td>Use a existente (não duplique)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="etapa-e-registrar-produção-real">9. Etapa E — Registrar Produção Real</h2>
+<h3 id="o-que-acontece-nessa-etapa">O que acontece nessa etapa?</h3>
+<p>A produção física <strong>terminou</strong>. As ampolas existem de verdade agora. Você precisa:</p>
+<ol type="1">
+<li><strong>Criar o Batch (lote físico)</strong> no sistema — registra a identidade do lote</li>
+<li><strong>Atualizar o FPB</strong> com a quantidade real produzida + número do batch</li>
+<li><strong>Dar entrada do estoque</strong> (Stock Entry) — pra o sistema saber que existem N ampolas no depósito</li>
+</ol>
+<h3 id="quem-faz-8">Quem faz?</h3>
+<p>Operador de Produção (ou Apontador da fábrica)</p>
+<h3 id="quando-2">Quando?</h3>
+<p>Imediatamente após o batch sair da linha de produção e passar pelo controle de qualidade.</p>
+<h3 id="passo-a-passo-5">Passo a passo</h3>
+<h4 id="passo-9.1-criar-batch-físico">Passo 9.1 — Criar Batch físico</h4>
+<p><strong>1.</strong> Menu → <strong>Stock</strong> → <strong>Batch</strong> → <strong>+ New</strong></p>
+<p><strong>2.</strong> Preencha:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  NEW BATCH                                                    │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Batch ID *:           [LOT-AMP-2026-05-20-001]               │
+│  ↑ Código físico do lote. Use convenção:                     │
+│    LOT-[SIGLA]-[ANO-MES-DIA]-[SEQ]                            │
+│                                                              │
+│  Item *:               [TIR00060                       ▼]    │
+│                                                              │
+│  Batch Qty *:          [1850]                                 │
+│  ↑ Quantidade REAL produzida (pode ser menor que planejado). │
+│                                                              │
+│  Manufacturing Date:   [2026-05-20]                           │
+│  ↑ Data de fabricação real.                                  │
+│                                                              │
+│  Expiry Date:          [2027-05-20]                           │
+│  ↑ Data de validade (já sai do sistema se você cadastrou     │
+│    Shelf Life no Item).                                      │
+│                                                              │
+│  Description:          [Lote 1 da fornada 2026-05-20]         │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>3.</strong> <strong>Save</strong></p>
+<p>✓ Batch criado. Anote o código (ex: <code>LOT-AMP-2026-05-20-001</code>).</p>
+<h4 id="passo-9.2-atualizar-o-fpb-com-produção-real">Passo 9.2 — Atualizar o FPB com produção real</h4>
+<p><strong>1.</strong> Abra o <strong>FPB</strong> correspondente (busque por nome ou pelo Workspace)</p>
+<p><strong>2.</strong> Mesmo já submetido, <strong>2 campos podem ser editados</strong> (estão habilitados pra isso):</p>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  Quantidade Produzida:  [1850]    ← coloque o real           │
+│  Lote Real Produzido:   [LOT-AMP-2026-05-20-001  ▼]          │
+│                         ↑ Link Field, escolhe o Batch criado │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>3.</strong> Clique <strong>Save</strong></p>
+<p><strong>4.</strong> ✓ Sistema: - Atualiza o status do FPB pra “Produzida Parcialmente” (porque 1850 &lt; 2000) ou “Produzida Totalmente” - Recalcula <code>pending_release_qty</code></p>
+<h4 id="passo-9.3-dar-entrada-do-estoque-stock-entry">Passo 9.3 — Dar entrada do estoque (Stock Entry)</h4>
+<blockquote>
+<p><strong>Por que esse passo?</strong>: o FPB sozinho <strong>não move estoque</strong>. Sem Stock Entry, o ERPNext não sabe que existem 1850 ampolas no depósito — não vai conseguir emitir Pick List ou Delivery Note depois.</p>
+</blockquote>
+<p><strong>1.</strong> Menu → <strong>Stock</strong> → <strong>Stock Entry</strong> → <strong>+ New</strong></p>
+<p><strong>2.</strong> Preencha:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────┐
+│  NEW STOCK ENTRY                                              │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Stock Entry Type *:   [Manufacture                  ▼]      │
+│  ↑ Importante: &quot;Manufacture&quot;, não &quot;Material Receipt&quot;.         │
+│                                                              │
+│  Posting Date *:       [2026-05-20]                           │
+│                                                              │
+│  Company:              [Injmedpharma]                         │
+│                                                              │
+│  Work Order:           [MFG-WO-2026-00001          ▼]        │
+│  ↑ Se tem Work Order (etapa 8), linka aqui — o sistema       │
+│    importa automaticamente as matérias-primas da BOM.        │
+│                                                              │
+│  BOM No:               (preenche sozinho se vincular WO)     │
+│  For Quantity:         [1850]                                 │
+│                                                              │
+│  ── Items ──                                                  │
+│                                                              │
+│  ┌──────────┬───────────────────────┬──────┬──────────┐      │
+│  │ Item     │ Target Warehouse      │ Qty  │ Batch No │      │
+│  ├──────────┼───────────────────────┼──────┼──────────┤      │
+│  │ TIR00060 │ Produtos Acabados - I │ 1850 │ LOT-...  │      │
+│  └──────────┴───────────────────────┴──────┴──────────┘      │
+│                                                              │
+│  (se vinculou WO, aparece também a saída das matérias-primas │
+│   automaticamente — confira)                                  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>3.</strong> <strong>Save</strong> → <strong>Submit</strong></p>
+<p><strong>4.</strong> ✓ Sistema: - Cria <code>Stock Ledger Entry</code> - Atualiza <code>Bin.actual_qty</code> do (TIR00060, Produtos Acabados - I, LOT-…) = 1850 - Agora as ampolas existem oficialmente no estoque do sistema</p>
+<h3 id="como-conferir">Como conferir</h3>
+<p><strong>No FPB</strong>:</p>
+<pre><code>   Planejado:    2000
+   Produzido:    1850   ← atualizou
+   Lote:         LOT-AMP-2026-05-20-001
+   Status:       Produzida Parcialmente
+   Liberado:     0
+   Pend. Liber.: 1850   ← tudo aguardando liberação</code></pre>
+<p><strong>No menu Stock → Stock Balance</strong> (relatório):</p>
+<pre><code>   Item: TIR00060
+   Warehouse: Produtos Acabados - I
+   Batch: LOT-AMP-2026-05-20-001
+   Actual Qty: 1850</code></pre>
+<h3 id="erros-comuns-6">Erros comuns</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Erro</th>
+<th>Causa</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>produced_qty maior que planned_qty</code></td>
+<td>Você produziu mais que planejou (overbooking)</td>
+<td>Marque “Permitir Reserva Acima do Planejado” no FPB primeiro</td>
+</tr>
+<tr class="even">
+<td><code>Batch ID já existe</code></td>
+<td>Código duplicado</td>
+<td>Use código diferente</td>
+</tr>
+<tr class="odd">
+<td>Stock Entry não aceita batch</td>
+<td>Item sem “Has Batch No”</td>
+<td>Volte na seção 4.3 e marque</td>
+</tr>
+<tr class="even">
+<td>Não consigo editar produced_qty no FPB</td>
+<td>Algum bug ou campo não habilitado pra allow_on_submit</td>
+<td>Avise TI/admin</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="etapa-f-liberar-reservas">10. Etapa F — Liberar Reservas</h2>
+<h3 id="o-que-é-liberar">O que é “liberar”?</h3>
+<p>“Liberar” = pegar a quantidade <strong>produzida</strong> e distribuir entre as <strong>reservas existentes</strong>, seguindo a regra <strong>FIFO</strong> (quem chegou primeiro leva primeiro).</p>
+<p>Cada reserva (PR) recebe sua parcela. O campo <code>released_qty</code> da PR é atualizado. O campo <code>release_batch_no</code> aponta pra o lote físico.</p>
+<p>A partir daqui, a expedição sabe <strong>quais ampolas vão pra cada pedido</strong>.</p>
+<h3 id="por-que-precisa-liberar">Por que precisa liberar?</h3>
+<p>Sem liberar, as reservas continuam “no ar” — abstratas. Liberar é o passo que <strong>transforma promessa em compromisso real</strong> de entrega.</p>
+<h3 id="quem-faz-9">Quem faz?</h3>
+<p>Supervisor de Produção (ou alguém com permissão Manufacturing Manager)</p>
+<h3 id="quando-3">Quando?</h3>
+<p>Logo após registrar a produção real (etapa 9). Não deixe pra depois — a expedição precisa disso pra começar a separar.</p>
+<h3 id="passo-a-passo-6">Passo a passo</h3>
+<p><strong>1.</strong> Abra o <strong>FPB</strong> com <code>produced_qty &gt; 0</code> (ex: FPB-2026-001 com produzido=1850)</p>
+<p><strong>2.</strong> Confira: - [ ] <code>produced_qty</code> &gt; 0 (etapa 9 feita) - [ ] <code>batch_no</code> preenchido (etapa 9 feita)</p>
+<p><strong>3.</strong> No topo direito, clique <strong>Ações</strong> → <strong>Liberar Reservas</strong></p>
+<p><strong>4.</strong> Sistema pergunta confirmação. Confirme.</p>
+<p><strong>5.</strong> Sistema executa o algoritmo FIFO (explicado abaixo).</p>
+<p><strong>6.</strong> ✓ Mensagem de sucesso tipo: “4 reservas processadas. Total liberado: 1850. Pendente: 0.”</p>
+<h3 id="como-funciona-o-fifo">Como funciona o FIFO</h3>
+<pre><code>   Ordenar PRs ativas do FPB por (nessa ordem):
+       1. priority ASC          (menor número = primeiro)
+       2. payment_date ASC      (quem pagou antes leva antes)
+       3. reservation_date ASC  (quem reservou antes)
+       4. creation ASC          (criação no sistema mais antiga)
+   
+   take = produced_qty disponível pra distribuir
+   
+   Pra cada PR na ordem:
+       parte = min(pending_qty da PR, take)
+       PR.released_qty += parte
+       PR.release_batch_no = batch_no do FPB
+       take -= parte
+       Se take == 0: parar
+   
+   PRs não atendidas ficam com pending_qty &gt; 0 → &quot;Parcialmente Liberado&quot;</code></pre>
+<h3 id="exemplo-numérico">Exemplo numérico</h3>
+<pre><code>   FPB.produced_qty = 1850
+   FPB.batch_no     = LOT-AMP-2026-05-20-001
+   
+   Reservas (em ordem FIFO):
+   ┌────────────┬──────────┬─────────┬─────────────────────────────────┐
+   │ PR         │ SO       │ Reserv  │ Após liberar 1850               │
+   ├────────────┼──────────┼─────────┼─────────────────────────────────┤
+   │ PR-...027  │ SO-001   │  300    │  Liberado 300, Pendente 0       │
+   │ PR-...028  │ SO-002   │  500    │  Liberado 500, Pendente 0       │
+   │ PR-...029  │ SO-003   │  700    │  Liberado 700, Pendente 0       │
+   │ PR-...030  │ SO-004   │  500    │  Liberado 350, Pendente 150  ⚠  │
+   └────────────┴──────────┴─────────┴─────────────────────────────────┘
+   Total liberado: 1850
+   Sobrou pendente: 150 (na PR-030, do SO-004)</code></pre>
+<p>A PR-030 fica com <strong>status “Parcialmente Liberado”</strong> e <code>pending_qty=150</code>.</p>
+<h3 id="o-que-conferir">O que conferir</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Tela</th>
+<th>O que olhar</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>FPB</strong></td>
+<td><code>released_qty = 1850</code>, <code>pending_release_qty = 0</code></td>
+</tr>
+<tr class="even">
+<td><strong>Cada PR</strong></td>
+<td><code>released_qty</code>, <code>release_batch_no</code> preenchido, status correto</td>
+</tr>
+<tr class="odd">
+<td><strong>Cada SO Item</strong></td>
+<td><code>fp_released_qty</code>, <code>fp_pending_release_qty</code> atualizado</td>
+</tr>
+</tbody>
+</table>
+<h3 id="se-sobrou-pendente-alguém-ficou-sem">Se sobrou pendente (alguém ficou sem)</h3>
+<p>Vai pra <strong>etapa 15.1 — Replanejar pendência</strong>. Você pode mover o saldo pendente pra um próximo FPB que ainda vai produzir.</p>
+<h3 id="erros-comuns-7">Erros comuns</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Erro</th>
+<th>Causa</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Nada a liberar</code></td>
+<td><code>produced_qty = 0</code> ou tudo já foi liberado</td>
+<td>Confira etapa 9</td>
+</tr>
+<tr class="even">
+<td><code>Batch não preenchido</code></td>
+<td>Esqueceu de informar o <code>batch_no</code> no FPB</td>
+<td>Edite o FPB e preencha o batch (etapa 9.2)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="etapa-g-picking-pick-list">11. Etapa G — Picking (Pick List)</h2>
+<h3 id="o-que-é-pick-list">O que é Pick List?</h3>
+<p>Pick List = “<strong>Lista de Separação</strong>”. Documento que diz ao operador de expedição: “vai no depósito X, prateleira Y, pega N ampolas do lote Z”.</p>
+<p>É o que se imprime e leva pro armazém pra separar fisicamente.</p>
+<h3 id="quem-faz-10">Quem faz?</h3>
+<p>Expedição / Logística</p>
+<h3 id="quando-4">Quando?</h3>
+<p>Depois que as reservas do SO foram liberadas (etapa 10).</p>
+<h3 id="pré-requisitos-1">Pré-requisitos</h3>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+Etapa 10 executada (existe <code>fp_released_qty &gt; 0</code> em algum item do SO)</li>
+<li><input type="checkbox" disabled></input>
+Batch físico existe no depósito (etapa 9)</li>
+</ul>
+<h3 id="passo-a-passo-7">Passo a passo</h3>
+<p><strong>1.</strong> Abra o <strong>Sales Order</strong> que vai entregar</p>
+<p><strong>2.</strong> No topo direito, clique <strong>Create</strong> → <strong>Pick List</strong></p>
+<p><strong>3.</strong> Aparece a tela do Pick List com os dados pré-preenchidos:</p>
+<pre><code>┌────────────────────────────────────────────────────────────────────┐
+│  NEW PICK LIST                                                      │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│  Purpose:    [Delivery                                  ▼]         │
+│  ↑ &quot;Delivery&quot; pra preparar pra entrega.                            │
+│                                                                    │
+│  Company:    [Injmedpharma]                                         │
+│                                                                    │
+│  ── Locations ──                                                    │
+│                                                                    │
+│  ┌──────────────┬──────────┬─────┬─────────────────┬────────────┐ │
+│  │ Sales Order  │ Item     │ Qty │ Warehouse       │ Batch No   │ │
+│  ├──────────────┼──────────┼─────┼─────────────────┼────────────┤ │
+│  │ SO-2026-031  │ TIR00060 │  10 │ Produtos Acab-I │ LOT-...    │ │
+│  └──────────────┴──────────┴─────┴─────────────────┴────────────┘ │
+│                                                                    │
+│  ↑ Sistema sugere automaticamente o batch que foi liberado pra     │
+│    esse SO. NÃO MUDE manualmente, salvo se souber o que faz.       │
+│                                                                    │
+└────────────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>4.</strong> Confira: - Item correto - Qty correta - Warehouse certo - Batch no certo (o que foi liberado)</p>
+<p><strong>5.</strong> <strong>Save</strong> → <strong>Submit</strong></p>
+<p><strong>6.</strong> <strong>Imprima</strong> (botão <strong>Print</strong> no menu ▼) e dê pro operador de armazém.</p>
+<h3 id="conferência-física-no-chão-de-fábrica">Conferência física (no chão de fábrica)</h3>
+<p>Operador de armazém faz:</p>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+Lê o batch_no impresso na Pick List</li>
+<li><input type="checkbox" disabled></input>
+Vai até a prateleira correspondente</li>
+<li><input type="checkbox" disabled></input>
+Confere o lote físico bate</li>
+<li><input type="checkbox" disabled></input>
+Conta as ampolas (qty)</li>
+<li><input type="checkbox" disabled></input>
+Confere embalagem (não rasgada, sem dano)</li>
+<li><input type="checkbox" disabled></input>
+Confere validade visível</li>
+<li><input type="checkbox" disabled></input>
+Separa em caixa identificada com o número do SO</li>
+<li><input type="checkbox" disabled></input>
+Avisa que pode emitir Delivery Note (próxima etapa)</li>
+</ul>
+<h3 id="erros-comuns-8">Erros comuns</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Erro</th>
+<th>Causa</th>
+<th>Solução</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Insufficient stock</code></td>
+<td>Batch não tem qty suficiente</td>
+<td>Confira no Stock Balance</td>
+</tr>
+<tr class="even">
+<td><code>Batch não encontrado</code></td>
+<td>Etapa 9 não foi feita</td>
+<td>Volte e crie o Batch + Stock Entry</td>
+</tr>
+<tr class="odd">
+<td>Sistema sugere outro batch</td>
+<td>Você mudou manualmente</td>
+<td>Deixe o que ele sugere (é o que foi liberado)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="etapa-h-entrega-delivery-note">12. Etapa H — Entrega (Delivery Note)</h2>
+<h3 id="o-que-é-delivery-note-dn">O que é Delivery Note (DN)?</h3>
+<p>Delivery Note = “<strong>Nota de Entrega / Romaneio</strong>”. Documento que oficializa <strong>a saída das ampolas do depósito</strong> rumo ao cliente. <strong>Baixa o estoque</strong> do sistema.</p>
+<h3 id="quem-faz-11">Quem faz?</h3>
+<p>Expedição</p>
+<h3 id="quando-5">Quando?</h3>
+<p>Depois do Pick List submetido e da separação física confirmada.</p>
+<h3 id="passo-a-passo-8">Passo a passo</h3>
+<p><strong>1.</strong> Abra o <strong>Pick List</strong> submetido</p>
+<p><strong>2.</strong> Botão <strong>Create</strong> → <strong>Delivery Note</strong></p>
+<p><strong>3.</strong> Sistema cria a DN herdando tudo automaticamente:</p>
+<pre><code>┌────────────────────────────────────────────────────────────────┐
+│  NEW DELIVERY NOTE                                              │
+├────────────────────────────────────────────────────────────────┤
+│                                                                │
+│  Customer:        Dr. José da Silva                             │
+│  Posting Date:    2026-05-22                                    │
+│  Company:         Injmedpharma                                  │
+│                                                                │
+│  ── Items ──                                                    │
+│  TIR00060 × 10  batch=LOT-... warehouse=Produtos Acabados - I   │
+│  (todos os campos vêm do Pick List)                             │
+│                                                                │
+│  ── Shipping ──                                                 │
+│  Shipping Address: (endereço do cliente)                        │
+│  Tracking No:      [se for entrega por transportadora]          │
+│                                                                │
+└────────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>4.</strong> Revise. Se tudo bate, <strong>Save</strong> → <strong>Submit</strong></p>
+<p><strong>5.</strong> ✓ Sistema: - Baixa <code>actual_qty</code> do estoque: -10 do batch LOT-… - Cria <code>Stock Ledger Entry</code> - Atualiza o SO Item: <code>delivered_qty += 10</code></p>
+<p><strong>6.</strong> <strong>Imprima</strong> a DN. Acompanha a mercadoria até o cliente.</p>
+<h3 id="como-conferir-1">Como conferir</h3>
+<p><strong>No SO</strong>:</p>
+<pre><code>   Item: TIR00060   qty: 10
+   Delivered Qty:  10  ← atualizou
+   Status SO:      To Bill   ← muda de &quot;To Deliver and Bill&quot; pra só &quot;To Bill&quot;</code></pre>
+<p><strong>No Stock Balance</strong>:</p>
+<pre><code>   TIR00060 / Produtos Acabados-I / LOT-...
+   Actual Qty:  1840  ← era 1850, agora -10</code></pre>
+<hr />
+<h2 id="etapa-i-faturamento">13. Etapa I — Faturamento</h2>
+<h3 id="o-que-é-sales-invoice">O que é Sales Invoice?</h3>
+<p>Sales Invoice = “<strong>Fatura / Nota Fiscal</strong>”. Documento de cobrança que <strong>gera lançamento contábil</strong> (débito Cliente, crédito Receita).</p>
+<h3 id="quem-faz-12">Quem faz?</h3>
+<p>Financeiro</p>
+<h3 id="quando-6">Quando?</h3>
+<p>Após a entrega (Delivery Note submetida). Pode ser no mesmo dia ou no fim do mês — depende da política da empresa.</p>
+<h3 id="passo-a-passo-9">Passo a passo</h3>
+<p><strong>1.</strong> Abra a <strong>Delivery Note</strong> submetida</p>
+<p><strong>2.</strong> Botão <strong>Create</strong> → <strong>Sales Invoice</strong></p>
+<p><strong>3.</strong> Sistema cria a Sales Invoice herdando tudo:</p>
+<pre><code>┌────────────────────────────────────────────────────────────────┐
+│  NEW SALES INVOICE                                              │
+├────────────────────────────────────────────────────────────────┤
+│                                                                │
+│  Customer:        Dr. José da Silva                             │
+│  Posting Date:    2026-05-22                                    │
+│  Due Date:        2026-06-22  (30 dias)                         │
+│                                                                │
+│  ── Items ──                                                    │
+│  TIR00060 × 10 × R$ 100,00 = R$ 1.000,00                        │
+│                                                                │
+│  ── Taxes ──                                                    │
+│  (impostos calculados automaticamente baseado em Tax Category)  │
+│  ICMS: R$ XXX                                                   │
+│  PIS:  R$ XXX                                                   │
+│                                                                │
+│  Total Geral:    R$ 1.XXX,XX                                    │
+│                                                                │
+│  ── Payment Terms ──                                            │
+│  Vencimento:     2026-06-22                                     │
+│  Modo:           Boleto / Pix / Cartão                          │
+│                                                                │
+└────────────────────────────────────────────────────────────────┘</code></pre>
+<p><strong>4.</strong> Confira: - [ ] Impostos calculados - [ ] Vencimento certo - [ ] Total correto</p>
+<p><strong>5.</strong> <strong>Save</strong> → <strong>Submit</strong></p>
+<p>✓ Sistema gera lançamento contábil + (se integrado com SEFAZ) emite a NFe.</p>
+<h3 id="receber-pagamento-payment-entry">Receber pagamento (Payment Entry)</h3>
+<p>Quando o cliente pagar:</p>
+<p><strong>1.</strong> Abra a <strong>Sales Invoice</strong></p>
+<p><strong>2.</strong> Botão <strong>Create</strong> → <strong>Payment</strong></p>
+<p><strong>3.</strong> Preencha:</p>
+<pre><code>   Posting Date:     [data do pagamento]
+   Payment Type:     Receive
+   Party Type:       Customer
+   Party:            Dr. José da Silva (preenchido)
+   Paid Amount:      [valor recebido]
+   Mode of Payment:  [Pix / Boleto / Transferência / Dinheiro]
+   Bank Account:     [conta de destino]</code></pre>
+<p><strong>4.</strong> <strong>Save</strong> → <strong>Submit</strong></p>
+<p>✓ Sales Invoice fica <strong>Paid</strong> (status verde “Paid”).</p>
+<hr />
+<h2 id="etapa-j-dispensação">14. Etapa J — Dispensação</h2>
+<blockquote>
+<p><strong>Significado</strong>: ato físico de entregar a ampola <strong>ao paciente final</strong>. Cada ampola precisa de <strong>etiqueta paciente</strong> impressa na Zebra.</p>
+</blockquote>
+<h3 id="status-atual-deste-módulo">Status atual deste módulo</h3>
+<p>⚠ <strong>A ser construído</strong>. Hoje o sistema:</p>
+<ul>
+<li>Sabe quais ampolas saíram pra qual <strong>cliente</strong> (via Delivery Note)</li>
+<li>Sabe quais <strong>pacientes</strong> receberão (via tabela <code>fp_patients</code> do SO)</li>
+<li><strong>NÃO</strong> tem ainda: tela de dispensação + integração Zebra</li>
+</ul>
+<p>A ligação atual é indireta — você cruza Delivery Note → Sales Order → fp_patients.</p>
+<h3 id="fluxo-manual-hoje-antes-da-construção">Fluxo manual (hoje, antes da construção)</h3>
+<p><strong>1.</strong> Quando a Delivery Note chega na farmácia, abra o <strong>SO original</strong></p>
+<p><strong>2.</strong> Role até a seção <strong>Pacientes</strong></p>
+<p><strong>3.</strong> Pra cada paciente da lista:</p>
+<pre><code>   ┌─────────────────────────────────────────────────────────┐
+   │  Paciente: Maria Aparecida Silva                         │
+   │  CPF: 111.444.777-35                                     │
+   │  Quantidade: 3 ampolas                                   │
+   │  Lote: LOT-AMP-2026-05-20-001                            │
+   │  Validade: 2027-05-20                                    │
+   └─────────────────────────────────────────────────────────┘</code></pre>
+<ul>
+<li>Confira CPF do paciente que veio retirar (com documento)</li>
+<li>Confira qty (não dá pra entregar 4 se a tabela diz 3)</li>
+<li>Separe as ampolas do batch correto</li>
+<li><strong>Imprima etiqueta de paciente</strong> (hoje: manual, em papel ou pendente)</li>
+<li>Faça o paciente <strong>assinar</strong> o recibo de dispensação</li>
+<li>Anote (manualmente, em caderno ou planilha): data, hora, paciente, lote</li>
+</ul>
+<h3 id="etiqueta-zebra-proposta-etapa-de-construção-futura">Etiqueta Zebra (proposta — etapa de construção futura)</h3>
+<pre><code>┌──────────────────────────────────────────────────┐
+│ Etiqueta 50×30mm (ZPL)                            │
+├──────────────────────────────────────────────────┤
+│                                                   │
+│  Maria Aparecida Silva                            │
+│  CPF: 111.444.777-35                              │
+│                                                   │
+│  Tirzepatida 60mg/2,4ml                           │
+│                                                   │
+│  Lote: LOT-AMP-2026-05-20-001                     │
+│  Validade: 2027-05-20                             │
+│                                                   │
+│  ▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮  (barcode)               │
+│                                                   │
+└──────────────────────────────────────────────────┘</code></pre>
+<h3 id="mecanismo-proposto-a-construir">Mecanismo proposto (a construir)</h3>
+<pre><code>   Sales Order com pacientes
+            │
+            ▼
+   Botão &quot;Imprimir Etiquetas Pacientes&quot;
+            │
+            ▼
+   Server Script gera ZPL por paciente
+            │
+            ▼
+   Browser envia ZPL → Zebra (BrowserPrint)
+            │
+            ▼
+   Marca dispensação concluída</code></pre>
+<p>Detalhes técnicos: ver futuro <code>docs/12-dispensacao-etiquetas.md</code> (a criar).</p>
+<h3 id="por-enquanto-workaround">Por enquanto (workaround)</h3>
+<p>Use o <strong>Print Format</strong> do ERPNext pra gerar uma página simples com os dados do paciente (a partir do SO). Imprima em qualquer impressora. Quando o módulo Zebra estiver pronto, troca por etiqueta térmica.</p>
+<hr />
+<h2 id="exceções">15. Exceções</h2>
+<blockquote>
+<p>Situações fora do fluxo normal. Aqui você encontra o “e se acontecer X”.</p>
+</blockquote>
+<h3 id="produziu-menos-que-o-reservado">15.1. Produziu MENOS que o reservado</h3>
+<p><strong>Como acontece</strong>: planejou produzir 2000, mas só saíram 1850. Sobrou pelo menos uma reserva pendente.</p>
+<p><strong>Sintoma</strong>: depois da etapa F (liberar), alguma PR fica com <code>pending_qty &gt; 0</code>.</p>
+<p><strong>Decisão</strong>: 3 opções.</p>
+<h4 id="opção-a-replanejar-a-pendência-pra-outro-fpb">Opção A — Replanejar a pendência pra outro FPB</h4>
+<blockquote>
+<p>Use quando: existe (ou vai existir) outro FPB do mesmo item.</p>
+</blockquote>
+<p><strong>Passo a passo</strong>:</p>
+<ol type="1">
+<li>Menu → <strong>Produção Futura</strong> → <strong>Reserva de Produção</strong></li>
+<li>Filtre por <code>pending_qty &gt; 0</code> (ou abra a PR pendente direto)</li>
+<li>Abra a PR pendente</li>
+<li>Botão <strong>Ações</strong> → <strong>Replanejar Pendência</strong></li>
+<li>Diálogo:</li>
+</ol>
+<pre><code>┌─────────────────────────────────────────────────┐
+│ Replanejar 150 ampolas pendentes da PR-030       │
+├─────────────────────────────────────────────────┤
+│ Destino:                                         │
+│ [FPB-2026-002 (disp=2000)              ▼]       │
+│                                                  │
+│ Qty:    [150]                                    │
+│                                                  │
+│         [ Cancelar ]    [ Replanejar ]          │
+└─────────────────────────────────────────────────┘</code></pre>
+<ol start="6" type="1">
+<li><strong>Replanejar</strong></li>
+</ol>
+<p>✓ Sistema: - Reduz <code>reserved_qty</code> da PR origem (de 500 vira 350, com 350 já liberado, 0 pendente) - Cria nova PR (PR-031) no FPB destino com mesmos dados + 150 reservadas - Recalcula saldos dos 2 FPBs</p>
+<h4 id="opção-b-avisar-o-cliente-negociar-entrega-parcial">Opção B — Avisar o cliente, negociar entrega parcial</h4>
+<p>Operação manual: telefone, e-mail. Se o cliente aceita receber o parcial, você emite Pick List + DN só com o que tem. O restante fica pendente até nova produção.</p>
+<h4 id="opção-c-cancelar-a-pr-pendente">Opção C — Cancelar a PR pendente</h4>
+<blockquote>
+<p>Use quando: cliente não pode esperar ou quer cancelar.</p>
+</blockquote>
+<ol type="1">
+<li>Abra a PR pendente</li>
+<li>Botão <strong>Cancel</strong> (canto superior direito ou menu ▼)</li>
+<li>Confirme</li>
+</ol>
+<p>✓ Sistema: - PR vira <code>docstatus=2</code> (cancelada) - Saldo volta zero - Espelho no SO Item zera</p>
+<h3 id="cancelar-uma-reserva">15.2. Cancelar uma reserva</h3>
+<p><strong>Quando</strong>: cliente desistiu, pedido errado, troca de lote.</p>
+<ol type="1">
+<li>Abra a <strong>PR</strong> (ou a partir do SO → seção Produção Futura → link)</li>
+<li>Botão <strong>Cancel</strong></li>
+<li>Confirme</li>
+</ol>
+<p>✓ Saldo volta automaticamente ao FPB. Espelho no SO Item atualizado.</p>
+<h3 id="cancelar-um-sales-order">15.3. Cancelar um Sales Order</h3>
+<blockquote>
+<p>Não dá pra cancelar SO se tem PRs ativas vinculadas. Cancele as PRs primeiro.</p>
+</blockquote>
+<p><strong>Ordem correta</strong>: 1. Cancelar <strong>cada PR</strong> vinculada ao SO (etapa 15.2) 2. Se já tem Delivery Note submetida: cancelar DN também 3. Se já tem Sales Invoice: cancelar SI 4. <strong>Aí</strong> cancelar o SO</p>
+<h3 id="cancelar-um-fpb">15.4. Cancelar um FPB</h3>
+<blockquote>
+<p>Mesma lógica: cancele tudo que depende dele primeiro.</p>
+</blockquote>
+<p><strong>Ordem</strong>: 1. Cancelar cada PR do FPB 2. Cancelar Work Order vinculada 3. <strong>Aí</strong> cancelar o FPB</p>
+<h3 id="reconciliação-manual-saldos-parecem-errados">15.5. Reconciliação manual (saldos parecem errados)</h3>
+<blockquote>
+<p>Raro. Pode acontecer se alguém mexeu no banco direto via SQL/console.</p>
+</blockquote>
+<p><strong>Como saber</strong>: os números do FPB não batem com a soma das PRs.</p>
+<p><strong>Solução</strong>:</p>
+<ol type="1">
+<li>Abra o <strong>FPB</strong></li>
+<li>Botão <strong>Ações</strong> → <strong>Recalcular Saldos</strong></li>
+<li>Confirme</li>
+</ol>
+<p>✓ Sistema: - Re-soma todas as PRs submetidas vinculadas ao FPB - Atualiza <code>reserved_qty</code>, <code>released_qty</code>, <code>available_qty</code>, <code>pending_release_qty</code>, <code>status</code></p>
+<h3 id="cliente-quer-trocar-de-lote-já-reservado">15.6. Cliente quer trocar de lote (já reservado)</h3>
+<p><strong>Cenário</strong>: cliente reservou lote A, mas pediu pra trocar pra lote B (validade melhor).</p>
+<p><strong>Passo a passo</strong>: 1. Cancele a PR atual (etapa 15.2) — saldo volta pro FPB A 2. Crie nova reserva pro lote B (etapa 7) 3. Avise comercial pra ajustar comunicação com cliente</p>
+<h3 id="erro-não-consigo-acessar-a-tela">15.7. Erro “Não consigo acessar a tela”</h3>
+<p>Provável <strong>falta de permissão</strong>. Avise TI/admin do sistema com: - Qual tela você tentou abrir - Print da tela de erro (se houver) - Seu usuário/e-mail</p>
+<hr />
+<h2 id="checklist-diário">16. Checklist Diário</h2>
+<blockquote>
+<p>Tarefas que cada papel deve fazer todo dia útil.</p>
+</blockquote>
+<h3 id="comercial-manhã">Comercial (manhã)</h3>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+Abrir lista de FPBs (filtro <code>available_qty &gt; 0</code>)</li>
+<li><input type="checkbox" disabled></input>
+Conferir saldo disponível por item — comunicar produção se baixo</li>
+<li><input type="checkbox" disabled></input>
+Atender pedidos pendentes (criar SO + reservar)</li>
+<li><input type="checkbox" disabled></input>
+Conferir se reservas do dia anterior estão <code>Reservado</code> no SO</li>
+<li><input type="checkbox" disabled></input>
+Revisar leads/prospects do CRM</li>
+</ul>
+<h3 id="planejamento-manhã">Planejamento (manhã)</h3>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+Listar FPBs com <code>Totalmente Reservada</code> há mais de 3 dias sem Work Order → criar WO</li>
+<li><input type="checkbox" disabled></input>
+Listar FPBs sem reservas e <code>planned_production_date - 7 dias &lt;= hoje</code> → revisar com comercial</li>
+<li><input type="checkbox" disabled></input>
+Conferir capacidade da semana (somar <code>planned_qty</code> dos FPBs)</li>
+</ul>
+<h3 id="produção-durante-e-fim-do-turno">Produção (durante e fim do turno)</h3>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+Atualizar <code>produced_qty</code> no FPB ao final de cada batch</li>
+<li><input type="checkbox" disabled></input>
+Criar Batch físico + Stock Entry Manufacture</li>
+<li><input type="checkbox" disabled></input>
+Conferir entrada de matéria-prima/saída de FG bate</li>
+<li><input type="checkbox" disabled></input>
+Ao final do dia, mandar resumo da produção pra Supervisor</li>
+</ul>
+<h3 id="supervisor-final-do-turno-de-produção">Supervisor (final do turno de produção)</h3>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+Validar produção registrada bate com chão de fábrica</li>
+<li><input type="checkbox" disabled></input>
+Acionar <strong>Liberar Reservas</strong> em cada FPB com produção finalizada</li>
+<li><input type="checkbox" disabled></input>
+Conferir se sobrou pendência — alinhar com comercial pra replanejar</li>
+</ul>
+<h3 id="expedição-manhãtarde">Expedição (manhã/tarde)</h3>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+Listar SOs com <code>fp_released_qty &gt; 0</code> (relatório) → criar Pick List</li>
+<li><input type="checkbox" disabled></input>
+Conferência física antes de cada Delivery Note</li>
+<li><input type="checkbox" disabled></input>
+Submeter DN após confirmação física</li>
+<li><input type="checkbox" disabled></input>
+Anotar tracking/transportadora</li>
+</ul>
+<h3 id="financeiro-diário">Financeiro (diário)</h3>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+DNs submetidas sem Sales Invoice → criar SI</li>
+<li><input type="checkbox" disabled></input>
+SIs vencendo nos próximos 5 dias → preparar cobrança</li>
+<li><input type="checkbox" disabled></input>
+Payments recebidos → registrar Payment Entry</li>
+<li><input type="checkbox" disabled></input>
+Relatório de inadimplência semanal</li>
+</ul>
+<h3 id="farmácia-no-recebimento-de-pedido-na-loja">Farmácia (no recebimento de pedido na loja)</h3>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+DN bate com SO?</li>
+<li><input type="checkbox" disabled></input>
+Conferir CPF do paciente que vai retirar</li>
+<li><input type="checkbox" disabled></input>
+Imprimir etiqueta paciente (Zebra) para cada ampola</li>
+<li><input type="checkbox" disabled></input>
+Coletar assinatura na dispensação</li>
+<li><input type="checkbox" disabled></input>
+Arquivar prescrição/receita</li>
+</ul>
+<h3 id="gestor-semanal">Gestor (semanal)</h3>
+<ul class="task-list">
+<li><input type="checkbox" disabled></input>
+Relatório de pendências (etapa 15.1)</li>
+<li><input type="checkbox" disabled></input>
+Saldo geral de FPBs (capacidade próximas semanas)</li>
+<li><input type="checkbox" disabled></input>
+Inadimplência (financeiro)</li>
+<li><input type="checkbox" disabled></input>
+Aging de reservas (PRs muito antigas sem liberação)</li>
+</ul>
+<hr />
+<h2 id="apêndice-resumo-das-transições-de-status">Apêndice — Resumo das transições de status</h2>
+<h3 id="future-production-batch">Future Production Batch</h3>
+<pre><code>   Rascunho ──Save──► Aberta para Reserva ──reserva──► Reservada Parcialmente
+                                                              │
+                                                              ▼
+                                          Totalmente Reservada
+                                                              │
+                                                  cria WO     ▼
+                                                          Em Produção
+                                                              │
+                                                produced_qty  ▼
+                                          Produzida Parcial / Total
+                                                              │
+                                                    libera    ▼
+                                          Liberada Parcial / Total</code></pre>
+<h3 id="production-reservation">Production Reservation</h3>
+<pre><code>   Reservado ──libera parcial──► Parcialmente Liberado
+       │                              │
+       │                              ▼ libera total
+       └──libera total─────────► Liberado
+       │
+       │
+       └──cancelar────────────► Cancelado  (docstatus=2, saldo volta ao FPB)
+       │
+       └──replanejar zerou───► Replanejado</code></pre>
+<h3 id="sales-order-item-campos-espelho">Sales Order Item (campos espelho)</h3>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th><code>fp_reservation_status</code></th>
+<th>Significado em português claro</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>Sem Reserva</code></td>
+<td>Linha do item sem PR vinculada (ainda não reservou)</td>
+</tr>
+<tr class="even">
+<td><code>Reservado</code></td>
+<td>Tem PR ativa, nada liberado ainda — aguardando produção</td>
+</tr>
+<tr class="odd">
+<td><code>Parcialmente Reservado</code></td>
+<td>Reservou parte da qty do item (resto ainda livre)</td>
+</tr>
+<tr class="even">
+<td><code>Liberado</code></td>
+<td>Tudo liberado, pronto pra pickar/entregar</td>
+</tr>
+<tr class="odd">
+<td><code>Parcialmente Liberado</code></td>
+<td>Parte do reservado já saiu da produção (resto pendente)</td>
+</tr>
+<tr class="even">
+<td><code>Pendente</code></td>
+<td>Liberação ficou incompleta — precisa replanejar</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<blockquote>
+<p><strong>Última atualização</strong>: 2026-05-18. Quando construir o módulo Dispensação + Etiquetas Zebra, atualizar seção 14 com tela real e procedimento clique-a-clique.</p>
+</blockquote>
+<hr />
+<h1 id="anexo-i-passo-a-passo-via-integração-api-n8n">Anexo I — Passo a Passo via Integração (API / n8n)</h1>
+<blockquote>
+<p>Para quem <strong>NÃO</strong> vai usar a UI do ERPNext e prefere disparar o fluxo por automação (n8n, Make, scripts, CRM externo, app móvel).</p>
+</blockquote>
+<p>Toda chamada precisa do header:</p>
+<pre><code>Authorization: token &lt;API_KEY&gt;:&lt;API_SECRET&gt;
+Content-Type: application/json
+Accept: application/json</code></pre>
+<p>Como gerar a chave: <em>User → seu usuário → API Access → Generate Keys</em>.</p>
+<hr />
+<h2 id="opção-a-chain-de-endpoints-existentes">Opção A — Chain de endpoints existentes</h2>
+<blockquote>
+<p>Funciona <strong>hoje</strong>, sem nada novo no servidor. Você (n8n) faz 6-8 chamadas em sequência.</p>
+</blockquote>
+<h3 id="a.1.-listar-lotes-com-saldo">A.1. Listar lotes com saldo</h3>
+<pre class="http"><code>GET {{URL}}/api/resource/Future Production Batch
+  ?fields=[&quot;name&quot;,&quot;production_code&quot;,&quot;item_code&quot;,&quot;planned_qty&quot;,&quot;available_qty&quot;,&quot;planned_production_date&quot;,&quot;status&quot;]
+  &amp;filters=[[&quot;docstatus&quot;,&quot;=&quot;,1],
+            [&quot;item_code&quot;,&quot;=&quot;,&quot;TIR00060&quot;],
+            [&quot;status&quot;,&quot;in&quot;,[&quot;Aberta para Reserva&quot;,&quot;Reservada Parcialmente&quot;]],
+            [&quot;available_qty&quot;,&quot;&gt;&quot;,0]]
+  &amp;order_by=planned_production_date asc
+  &amp;limit_page_length=50</code></pre>
+<p>Resposta:</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;data&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">{</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;FPB-2026-00003&quot;</span><span class="fu">,</span> <span class="dt">&quot;available_qty&quot;</span><span class="fu">:</span> <span class="dv">500</span><span class="fu">,</span> <span class="er">...</span> <span class="fu">}</span></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="ot">]</span><span class="fu">}</span></span></code></pre></div>
+<p>Pegue <code>data[0].name</code> para usar na reserva.</p>
+<h3 id="a.2.-criarverificar-customer">A.2. Criar/verificar Customer</h3>
+<pre class="http"><code>GET {{URL}}/api/resource/Customer/DEMO-PF-Customer</code></pre>
+<ul>
+<li><strong>404</strong> → criar:</li>
+</ul>
+<pre class="http"><code>POST {{URL}}/api/resource/Customer
+{
+  &quot;customer_name&quot;: &quot;Cliente Demo&quot;,
+  &quot;customer_type&quot;: &quot;Individual&quot;,
+  &quot;customer_group&quot;: &quot;Comercial&quot;,
+  &quot;territory&quot;: &quot;Brazil&quot;
+}</code></pre>
+<ul>
+<li><strong>200</strong> → já existe, prossiga.</li>
+</ul>
+<h3 id="a.3.-criarverificar-patient-loop-por-paciente">A.3. Criar/verificar Patient (loop por paciente)</h3>
+<pre class="http"><code>GET {{URL}}/api/resource/Patient
+  ?filters=[[&quot;cpf&quot;,&quot;=&quot;,&quot;11144477735&quot;]]
+  &amp;fields=[&quot;name&quot;]&amp;limit_page_length=1</code></pre>
+<ul>
+<li>Lista vazia → criar:</li>
+</ul>
+<pre class="http"><code>POST {{URL}}/api/resource/Patient
+{
+  &quot;patient_name&quot;: &quot;Maria Aparecida Silva&quot;,
+  &quot;cpf&quot;: &quot;11144477735&quot;,
+  &quot;mobile&quot;: &quot;11999990001&quot;,
+  &quot;gender&quot;: &quot;Feminino&quot;,
+  &quot;city&quot;: &quot;São Paulo&quot;,
+  &quot;state&quot;: &quot;SP&quot;,
+  &quot;country&quot;: &quot;Brazil&quot;,
+  &quot;default_prescriber&quot;: &quot;PRES-2026-00007&quot;
+}</code></pre>
+<blockquote>
+<p>Antes era <code>prescribing_doctor</code> apontando pra Customer. Modelo novo: <code>default_prescriber</code> apontando pra <code>Prescriber</code> (DocType a construir — seção 4.2 do manual). Migração mantém compatibilidade enquanto a transição acontece.</p>
+</blockquote>
+<p>Guarde <code>data.name</code> (ex: <code>PAC-2026-00014</code>).</p>
+<h3 id="a.4.-criar-sales-order-rascunho">A.4. Criar Sales Order (rascunho)</h3>
+<pre class="http"><code>POST {{URL}}/api/resource/Sales Order
+{
+  &quot;customer&quot;: &quot;DEMO-PF-Customer&quot;,
+  &quot;company&quot;: &quot;Injmedpharma&quot;,
+  &quot;transaction_date&quot;: &quot;2026-05-17&quot;,
+  &quot;delivery_date&quot;: &quot;2026-06-17&quot;,
+  &quot;currency&quot;: &quot;BRL&quot;,
+  &quot;selling_price_list&quot;: &quot;Venda Padrão&quot;,
+  &quot;price_list_currency&quot;: &quot;BRL&quot;,
+  &quot;plc_conversion_rate&quot;: 1,
+  &quot;conversion_rate&quot;: 1,
+  &quot;items&quot;: [
+    { &quot;item_code&quot;: &quot;TIR00060&quot;, &quot;qty&quot;: 10, &quot;rate&quot;: 100,
+      &quot;delivery_date&quot;: &quot;2026-06-17&quot;,
+      &quot;warehouse&quot;: &quot;Produtos Acabados - I&quot; }
+  ],
+  &quot;fp_patients&quot;: [
+    { &quot;patient&quot;: &quot;PAC-2026-00014&quot;, &quot;prescriber&quot;: &quot;PRES-2026-00007&quot;, &quot;item_code&quot;: &quot;TIR00060&quot;, &quot;qty&quot;: 3 },
+    { &quot;patient&quot;: &quot;PAC-2026-00015&quot;, &quot;prescriber&quot;: &quot;PRES-2026-00007&quot;, &quot;item_code&quot;: &quot;TIR00060&quot;, &quot;qty&quot;: 2 },
+    { &quot;patient&quot;: &quot;PAC-2026-00016&quot;, &quot;prescriber&quot;: &quot;PRES-2026-00011&quot;, &quot;item_code&quot;: &quot;TIR00060&quot;, &quot;qty&quot;: 4 },
+    { &quot;patient&quot;: &quot;PAC-2026-00017&quot;, &quot;prescriber&quot;: &quot;PRES-2026-00007&quot;, &quot;item_code&quot;: &quot;TIR00060&quot;, &quot;qty&quot;: 1 }
+  ]
+}</code></pre>
+<p>Guarde: - <code>data.name</code> (ex: <code>SAL-ORD-2026-00031</code>) - <code>data.items[0].name</code> (row_id da linha — necessário pra reserva manual)</p>
+<blockquote>
+<p><strong>Regras</strong>: - Soma <code>fp_patients.qty</code> por <code>item_code</code> precisa bater com <code>items[].qty</code> do mesmo item. - Campo <code>prescriber</code> opcional na API — se omitido, sistema pega o <code>default_prescriber</code> do Patient. Pra sobrescrever, passe explicitamente. - Campo <code>prescriber</code> aceita o ID do Prescriber (ex: <code>PRES-2026-00007</code>).</p>
+</blockquote>
+<h3 id="a.5.-submeter-sales-order">A.5. Submeter Sales Order</h3>
+<pre class="http"><code>POST {{URL}}/api/method/frappe.client.submit
+{ &quot;doc&quot;: &lt;doc INTEIRO retornado em A.4&gt; }</code></pre>
+<blockquote>
+<p>Mandar o doc completo evita <code>TimestampMismatchError</code>. Em n8n, use o output de A.4 direto.</p>
+</blockquote>
+<h3 id="a.6.-reservar-lote">A.6. Reservar lote</h3>
+<p><strong>Modo 1 — manual</strong> (você escolheu o FPB):</p>
+<pre class="http"><code>POST {{URL}}/api/method/future_production_reserve_sales_order_item
+{
+  &quot;sales_order&quot;: &quot;SAL-ORD-2026-00031&quot;,
+  &quot;sales_order_item&quot;: &quot;&lt;row_id de A.4&gt;&quot;,
+  &quot;future_production_batch&quot;: &quot;FPB-2026-00003&quot;,
+  &quot;qty&quot;: 10,
+  &quot;priority&quot;: 100
+}</code></pre>
+<p><strong>Modo 2 — automático</strong> (sistema escolhe via FIFO):</p>
+<pre class="http"><code>POST {{URL}}/api/method/future_production_auto_reserve_sales_order
+{ &quot;sales_order&quot;: &quot;SAL-ORD-2026-00031&quot; }</code></pre>
+<h3 id="a.7.-confirmar-estado-final">A.7. Confirmar estado final</h3>
+<pre class="http"><code>GET {{URL}}/api/resource/Sales Order/SAL-ORD-2026-00031</code></pre>
+<p>Conferir nos items: <code>fp_reserved_qty</code>, <code>fp_reservation_status=&quot;Reservado&quot;</code>, `fp_future_production_batch=“FPB-…”.</p>
+<h3 id="fluxo-n8n-recomendado">Fluxo n8n recomendado</h3>
+<pre><code>[HTTP GET FPB list] ─► [HTTP GET/POST Customer] ─► [Loop pacientes: GET/POST Patient]
+                                                           │
+                                                           ▼
+                                                  [HTTP POST Sales Order]
+                                                           │
+                                                           ▼
+                                                  [HTTP POST submit]
+                                                           │
+                                                           ▼
+                                                  [HTTP POST reserve (manual ou auto)]
+                                                           │
+                                                           ▼
+                                                  [HTTP GET confirmação]</code></pre>
+<h3 id="demais-etapas-produção-faturamento">Demais etapas (Produção → Faturamento)</h3>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Etapa</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Criar Work Order</td>
+<td><code>POST /api/method/future_production_create_work_order</code></td>
+</tr>
+<tr class="even">
+<td>Criar Batch físico</td>
+<td><code>POST /api/resource/Batch</code></td>
+</tr>
+<tr class="odd">
+<td>Atualizar produced_qty</td>
+<td><code>PUT /api/resource/Future Production Batch/&lt;name&gt;</code></td>
+</tr>
+<tr class="even">
+<td>Stock Entry Manufacture</td>
+<td><code>POST /api/resource/Stock Entry</code> + submit</td>
+</tr>
+<tr class="odd">
+<td>Liberar FIFO</td>
+<td><code>POST /api/method/future_production_release_batch</code></td>
+</tr>
+<tr class="even">
+<td>Pick List</td>
+<td><code>POST /api/resource/Pick List</code> + submit</td>
+</tr>
+<tr class="odd">
+<td>Delivery Note</td>
+<td><code>POST /api/method/erpnext.stock.doctype.pick_list.pick_list.create_delivery_note</code></td>
+</tr>
+<tr class="even">
+<td>Sales Invoice</td>
+<td><code>POST /api/method/erpnext.stock.doctype.delivery_note.delivery_note.make_sales_invoice</code></td>
+</tr>
+<tr class="odd">
+<td>Payment Entry</td>
+<td><code>POST /api/resource/Payment Entry</code> + submit</td>
+</tr>
+<tr class="even">
+<td>Replanejar pendência</td>
+<td><code>POST /api/method/future_production_replan_pending_qty</code></td>
+</tr>
+<tr class="odd">
+<td>Recalcular saldos</td>
+<td><code>POST /api/method/future_production_recalculate_batch</code></td>
+</tr>
+<tr class="even">
+<td>Cancelar reserva</td>
+<td><code>POST /api/method/frappe.client.cancel</code> (doctype=Production Reservation)</td>
+</tr>
+</tbody>
+</table>
+<p>Detalhes de payload de cada um: ver <a href="05-api-reference.md"><code>05-api-reference.md</code></a>.</p>
+<hr />
+<h2 id="opção-b-endpoint-único-custom-a-construir">Opção B — Endpoint único custom (a construir)</h2>
+<blockquote>
+<p><strong>Vantagens</strong>: 1 chamada em vez de 7-8. Atômico (se algo falha, nada persiste). n8n fica trivial: 1 nó HTTP. <strong>Custo</strong>: precisa criar o Server Script (script Python rodando dentro do ERPNext). Roda 1 vez no setup, depois fica disponível como rota.</p>
+</blockquote>
+<h3 id="b.1.-endpoint-future_production_list_available_batches">B.1. Endpoint <code>future_production_list_available_batches</code></h3>
+<pre class="http"><code>POST {{URL}}/api/method/future_production_list_available_batches
+{ &quot;item_code&quot;: &quot;TIR00060&quot; }</code></pre>
+<p>Resposta:</p>
+<div class="sourceCode" id="cb63"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;message&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;item_code&quot;</span><span class="fu">:</span> <span class="st">&quot;TIR00060&quot;</span><span class="fu">,</span></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;batches&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span></span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;FPB-2026-00003&quot;</span><span class="fu">,</span></span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;production_code&quot;</span><span class="fu">:</span> <span class="st">&quot;AMP-2026-05-20-001&quot;</span><span class="fu">,</span></span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;planned_qty&quot;</span><span class="fu">:</span> <span class="dv">2000</span><span class="fu">,</span></span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;available_qty&quot;</span><span class="fu">:</span> <span class="dv">500</span><span class="fu">,</span></span>
+<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;planned_production_date&quot;</span><span class="fu">:</span> <span class="st">&quot;2026-05-20&quot;</span><span class="fu">,</span></span>
+<span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;status&quot;</span><span class="fu">:</span> <span class="st">&quot;Reservada Parcialmente&quot;</span></span>
+<span id="cb63-11"><a href="#cb63-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb63-12"><a href="#cb63-12" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span></span>
+<span id="cb63-13"><a href="#cb63-13" aria-hidden="true" tabindex="-1"></a><span class="fu">}}</span></span></code></pre></div>
+<h3 id="b.2.-endpoint-future_production_issue_order-tudo-em-1">B.2. Endpoint <code>future_production_issue_order</code> (TUDO em 1)</h3>
+<pre class="http"><code>POST {{URL}}/api/method/future_production_issue_order
+{
+  &quot;customer&quot;: {
+    &quot;name&quot;: &quot;DEMO-PF-Customer&quot;,
+    &quot;customer_name&quot;: &quot;Cliente Demo&quot;,
+    &quot;customer_type&quot;: &quot;Individual&quot;,
+    &quot;customer_group&quot;: &quot;Comercial&quot;,
+    &quot;territory&quot;: &quot;Brazil&quot;
+  },
+  &quot;item_code&quot;: &quot;TIR00060&quot;,
+  &quot;qty&quot;: 10,
+  &quot;rate&quot;: 100,
+  &quot;warehouse&quot;: &quot;Produtos Acabados - I&quot;,
+  &quot;company&quot;: &quot;Injmedpharma&quot;,
+  &quot;delivery_date&quot;: &quot;2026-06-17&quot;,
+  &quot;prescriber_default&quot;: {
+    &quot;name&quot;: &quot;PRES-2026-00007&quot;,
+    &quot;cpf&quot;: &quot;12345678909&quot;,
+    &quot;council_type&quot;: &quot;CRM&quot;,
+    &quot;council_number&quot;: &quot;12345&quot;,
+    &quot;council_state&quot;: &quot;SP&quot;,
+    &quot;full_name&quot;: &quot;Dr. José da Silva&quot;
+  },
+  &quot;patients&quot;: [
+    { &quot;patient_name&quot;: &quot;Maria Aparecida&quot;, &quot;cpf&quot;: &quot;11144477735&quot;, &quot;qty&quot;: 3,
+      &quot;mobile&quot;: &quot;11999990001&quot;, &quot;gender&quot;: &quot;Feminino&quot;,
+      &quot;city&quot;: &quot;São Paulo&quot;, &quot;state&quot;: &quot;SP&quot;,
+      &quot;prescriber&quot;: &quot;PRES-2026-00007&quot; },
+    { &quot;patient_name&quot;: &quot;João Silva&quot;, &quot;cpf&quot;: &quot;52998224725&quot;, &quot;qty&quot;: 2,
+      &quot;gender&quot;: &quot;Masculino&quot;, &quot;city&quot;: &quot;São Paulo&quot;, &quot;state&quot;: &quot;SP&quot;,
+      &quot;prescriber&quot;: &quot;PRES-2026-00007&quot; },
+    { &quot;patient_name&quot;: &quot;Ana Beatriz&quot;, &quot;cpf&quot;: &quot;39053344705&quot;, &quot;qty&quot;: 4,
+      &quot;gender&quot;: &quot;Feminino&quot;, &quot;city&quot;: &quot;Campinas&quot;, &quot;state&quot;: &quot;SP&quot;,
+      &quot;prescriber&quot;: &quot;PRES-2026-00011&quot; },
+    { &quot;patient_name&quot;: &quot;Carlos Souza&quot;, &quot;cpf&quot;: &quot;12345678909&quot;, &quot;qty&quot;: 1,
+      &quot;gender&quot;: &quot;Masculino&quot;, &quot;city&quot;: &quot;São Paulo&quot;, &quot;state&quot;: &quot;SP&quot;,
+      &quot;prescriber&quot;: &quot;PRES-2026-00007&quot; }
+  ],
+  &quot;reservation_mode&quot;: &quot;auto&quot;,
+  &quot;future_production_batch&quot;: null,
+  &quot;priority&quot;: 100
+}</code></pre>
+<blockquote>
+<p><strong>Comportamento esperado do endpoint Issue Order</strong>: - Se <code>prescriber</code> em cada paciente for um <strong>ID existente</strong> (<code>PRES-...</code>), usa direto - Se for um <strong>objeto</strong> com CPF + conselho, faz upsert (cria se não existe, reusa se CPF já cadastrado) - Se omitido na linha do paciente, usa <code>default_prescriber</code> do Patient cadastrado - Se Patient não existe ainda (será criado neste call), <code>prescriber</code> é obrigatório</p>
+</blockquote>
+<p>Resposta:</p>
+<div class="sourceCode" id="cb65"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span> <span class="dt">&quot;message&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;sales_order&quot;</span><span class="fu">:</span> <span class="st">&quot;SAL-ORD-2026-00031&quot;</span><span class="fu">,</span></span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;customer&quot;</span><span class="fu">:</span> <span class="st">&quot;DEMO-PF-Customer&quot;</span><span class="fu">,</span></span>
+<span id="cb65-4"><a href="#cb65-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;patients&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb65-5"><a href="#cb65-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">&quot;patient&quot;</span><span class="fu">:</span> <span class="st">&quot;PAC-2026-00014&quot;</span><span class="fu">,</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Maria Aparecida&quot;</span><span class="fu">,</span> <span class="dt">&quot;qty&quot;</span><span class="fu">:</span> <span class="dv">3</span><span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb65-6"><a href="#cb65-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">&quot;patient&quot;</span><span class="fu">:</span> <span class="st">&quot;PAC-2026-00015&quot;</span><span class="fu">,</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;João Silva&quot;</span><span class="fu">,</span> <span class="dt">&quot;qty&quot;</span><span class="fu">:</span> <span class="dv">2</span><span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb65-7"><a href="#cb65-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">&quot;patient&quot;</span><span class="fu">:</span> <span class="st">&quot;PAC-2026-00016&quot;</span><span class="fu">,</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Ana Beatriz&quot;</span><span class="fu">,</span> <span class="dt">&quot;qty&quot;</span><span class="fu">:</span> <span class="dv">4</span><span class="fu">}</span><span class="ot">,</span></span>
+<span id="cb65-8"><a href="#cb65-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">&quot;patient&quot;</span><span class="fu">:</span> <span class="st">&quot;PAC-2026-00017&quot;</span><span class="fu">,</span> <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Carlos Souza&quot;</span><span class="fu">,</span> <span class="dt">&quot;qty&quot;</span><span class="fu">:</span> <span class="dv">1</span><span class="fu">}</span></span>
+<span id="cb65-9"><a href="#cb65-9" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb65-10"><a href="#cb65-10" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;reservations&quot;</span><span class="fu">:</span> <span class="ot">[</span></span>
+<span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">{</span><span class="dt">&quot;reservation&quot;</span><span class="fu">:</span> <span class="st">&quot;PR-2026-00027&quot;</span><span class="fu">,</span></span>
+<span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;future_production_batch&quot;</span><span class="fu">:</span> <span class="st">&quot;FPB-2026-00003&quot;</span><span class="fu">,</span></span>
+<span id="cb65-13"><a href="#cb65-13" aria-hidden="true" tabindex="-1"></a>     <span class="dt">&quot;qty&quot;</span><span class="fu">:</span> <span class="dv">10</span><span class="fu">}</span></span>
+<span id="cb65-14"><a href="#cb65-14" aria-hidden="true" tabindex="-1"></a>  <span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb65-15"><a href="#cb65-15" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;available_qty_after&quot;</span><span class="fu">:</span> <span class="dv">1990</span></span>
+<span id="cb65-16"><a href="#cb65-16" aria-hidden="true" tabindex="-1"></a><span class="fu">}}</span></span></code></pre></div>
+<h3 id="comparação-rápida">Comparação rápida</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Critério</th>
+<th>Opção A (chain)</th>
+<th>Opção B (endpoint único)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Calls do n8n</td>
+<td>6-8 + loop pacientes</td>
+<td><strong>1</strong></td>
+</tr>
+<tr class="even">
+<td>Funciona hoje?</td>
+<td>✅ Sim</td>
+<td>❌ Precisa setup_07</td>
+</tr>
+<tr class="odd">
+<td>Erro parcial</td>
+<td>Difícil rollback manual</td>
+<td>Atômico (transação)</td>
+</tr>
+<tr class="even">
+<td>Idempotência</td>
+<td>Você implementa</td>
+<td>Server faz (upsert)</td>
+</tr>
+<tr class="odd">
+<td>Mudança de regra</td>
+<td>Editar fluxo n8n</td>
+<td>Editar Server Script</td>
+</tr>
+</tbody>
+</table>
+<h3 id="quando-usar-cada-uma">Quando usar cada uma</h3>
+<ul>
+<li><strong>A</strong> se: quer começar <strong>já</strong>, não pode mexer no servidor agora, time conhece n8n bem</li>
+<li><strong>B</strong> se: quer fluxo limpo a longo prazo, vai escalar pra dezenas de chamadas/dia, quer auditoria centralizada</li>
+</ul>
+<hr />
+<h1 id="anexo-ii-disponibilizar-este-manual-dentro-do-erpnext">Anexo II — Disponibilizar este Manual dentro do ERPNext</h1>
+<blockquote>
+<p>Como subir este documento (HTML) <strong>dentro</strong> do ERPNext para os usuários acessarem direto no menu.</p>
+</blockquote>
+<h2 id="caminho-1-web-page-recomendado">Caminho 1 — Web Page (recomendado)</h2>
+<p>ERPNext tem o DocType nativo <code>Web Page</code> que serve HTML em <code>/&lt;slug&gt;</code>.</p>
+<ol type="1">
+<li><p>Menu → <em>Website → Web Page → + New</em></p></li>
+<li><p>Preencher:</p>
+<pre><code>Title:      Manual Operacional — Produção Futura
+Route:      manual-operacional        (vira /manual-operacional)
+Published:  ☑
+Main Section: &lt; cole o HTML gerado aqui &gt;</code></pre></li>
+<li><p><strong>Save</strong></p></li>
+</ol>
+<p>Acesso: <code>https://erp.suaempresa.com.br/manual-operacional</code>.</p>
+<blockquote>
+<p><strong>Atenção CSS</strong>: o <code>Web Page</code> aplica o tema do site por cima. Se o HTML estiver com CSS inline (como o gerado), respeita as cores. Se conflitar, use seção <em>Header</em> + <em>Footer</em> só com o <code>&lt;body&gt;</code> interno.</p>
+</blockquote>
+<h2 id="caminho-2-file-anexado-a-workspace">Caminho 2 — File anexado a Workspace</h2>
+<ol type="1">
+<li><p>Menu → <em>Build → File → + New → Upload</em> → suba <code>manual-operacional.html</code></p></li>
+<li><p>Copie a URL retornada (ex: <code>/files/manual-operacional.html</code>)</p></li>
+<li><p>Vá no Workspace <strong>Produção Futura</strong></p></li>
+<li><p><em>Edit → Add Custom Block → Header com link</em>:</p>
+<div class="sourceCode" id="cb67"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="kw">&lt;a</span><span class="ot"> href=</span><span class="st">&quot;/files/manual-operacional.html&quot;</span><span class="ot"> target=</span><span class="st">&quot;_blank&quot;</span><span class="kw">&gt;</span></span>
+<span id="cb67-2"><a href="#cb67-2" aria-hidden="true" tabindex="-1"></a>  📖 Abrir Manual Operacional</span>
+<span id="cb67-3"><a href="#cb67-3" aria-hidden="true" tabindex="-1"></a><span class="kw">&lt;/a&gt;</span></span></code></pre></div></li>
+<li><p><strong>Save</strong> workspace</p></li>
+</ol>
+<h2 id="caminho-3-help-article-knowledge-base">Caminho 3 — Help Article (knowledge base)</h2>
+<p>Se o site ERPNext tem app <em>Help Desk</em> / <em>Knowledge Base</em> instalado:</p>
+<ol type="1">
+<li><em>Knowledge Base → New Article</em></li>
+<li>Cole o markdown direto (renderiza pra HTML)</li>
+<li>Categoria: “Produção Futura”</li>
+</ol>
+<h2 id="caminho-4-api-custom-para-servir-o-html">Caminho 4 — API custom para servir o HTML</h2>
+<p>Server Script (script type API):</p>
+<div class="sourceCode" id="cb68"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="co"># api_method: get_manual_operacional</span></span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(frappe.get_site_path(<span class="st">&quot;public&quot;</span>, <span class="st">&quot;files&quot;</span>, <span class="st">&quot;manual-operacional.html&quot;</span>)) <span class="im">as</span> f:</span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>    frappe.response[<span class="st">&quot;type&quot;</span>] <span class="op">=</span> <span class="st">&quot;page&quot;</span></span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a>    frappe.response[<span class="st">&quot;data&quot;</span>] <span class="op">=</span> f.read()</span></code></pre></div>
+<p>Acesso: <code>GET /api/method/get_manual_operacional</code>.</p>
+<hr />
+<h1 id="anexo-iii-onde-encontrar-os-arquivos-gerados">Anexo III — Onde encontrar os arquivos gerados</h1>
+<table>
+<thead>
+<tr class="header">
+<th>Formato</th>
+<th>Arquivo</th>
+<th>Uso</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Markdown (fonte)</td>
+<td><code>docs/11-manual-operacional.md</code></td>
+<td>Editar e regerar</td>
+</tr>
+<tr class="even">
+<td>HTML</td>
+<td><code>docs/dist/manual-operacional.html</code></td>
+<td>Upload no ERPNext / browser</td>
+</tr>
+<tr class="odd">
+<td>DOCX</td>
+<td><code>docs/dist/manual-operacional.docx</code></td>
+<td>Editar no Word/Google Docs</td>
+</tr>
+<tr class="even">
+<td>PDF</td>
+<td><code>docs/dist/manual-operacional.pdf</code></td>
+<td>Imprimir / distribuir</td>
+</tr>
+</tbody>
+</table>
+<p>Pra regerar após mudar o Markdown, ver <code>docs/dist/README.md</code>.</p>
+</body>
+</html>

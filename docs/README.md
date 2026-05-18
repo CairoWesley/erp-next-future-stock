@@ -18,6 +18,7 @@ implantado 100% via API REST.
 | [`08-troubleshooting.md`](08-troubleshooting.md)| Erros conhecidos e soluções (server_script_enabled, etc.). |
 | [`09-testing.md`](09-testing.md)                | Como rodar `test_scenario.py` e variações. |
 | [`10-changelog.md`](10-changelog.md)            | Histórico de versões. |
+| [`11-manual-operacional.md`](11-manual-operacional.md) | Manual visual de uso humano dentro do ERPNext (clique a clique). |
 
 ## Quickstart
 
