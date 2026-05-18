@@ -684,7 +684,9 @@ else:
                 (r.sales_order_item,),
             )[0]
             rt = float(item_total[0] or 0)
-            rl = float(item_total[1] or 0) - float(r.released_qty or 0) + new_released
+            # SQL sum ja inclui o set_value anterior (frappe.db.set_value commitou
+            # released_qty da PR atual). Usar direto, sem ajuste de delta.
+            rl = float(item_total[1] or 0)
             soi_qty = float(frappe.db.get_value("Sales Order Item", r.sales_order_item, "qty") or 0)
             if rl >= rt:
                 status_label = "Liberado"
