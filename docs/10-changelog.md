@@ -4,6 +4,61 @@ Histórico de versões. Segue [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.0] — 2026-05-18
+
+### Modelo Customer / Prescriber / Patient + Batch por paciente + Faturamento
+
+#### Adicionado
+
+**Módulo Prescriber** (`setup_07_prescribers.py`):
+- `DocType Prescriber` com 25 campos (CPF, conselho profissional, UF, contato, endereço)
+- Suporte a 8 tipos de conselho: CRM, CRO, CRF, CRBM, CRN, CRBio, CRP, Outro
+- `Patient.default_prescriber` (Custom Field Link/Prescriber)
+- `Sales Order Patient.prescriber` (Custom Field Link/Prescriber) + `.prescriber_council` (fetch read-only)
+- Server Scripts: validação CPF único, unicidade `(council_type, number, state)`,
+  bloqueio de uso quando `council_status=Cassado`
+- `test_scenario_prescribers.py` cobrindo todas validações negativas
+
+**Módulo Batch por Paciente** (`setup_08_patient_batch.py`):
+- Custom Fields em `Sales Order Patient`:
+  - `batch_no` (Link/Batch) — lote físico alocado
+  - `allocated_qty` (Float) — quanto da qty já tem batch
+  - `batch_status` (Select) — Pendente / Parcialmente Alocado / Alocado / Entregue / Cancelado
+- Endpoint `future_production_allocate_patient_batches(sales_order)`:
+  - FIFO sobre PRs liberadas
+  - Distribui `release_batch_no` para cada linha de paciente
+  - Idempotente
+
+**Smoke Tests**:
+- `mini_flow.py` — validação 1 FPB / 1 SO / 2 pacientes com check automático por fase
+- `smoke_test_large.py` — 10 FPBs × 2000 ampolas, 22 SOs, 3 full + 7 parciais
+- `smoke_test_huge.py` — 100 FPBs × 2000, 30 SOs, 10 produzidos full, com fases:
+  - setup, fpbs, orders, produce, release, stock_in, allocate, invoice, report, cleanup
+- `lib/visibility.py` — helpers de inspeção (tabelas FPB/PR/SO) + URLs UI por contexto
+- `tools/deep_cleanup.py` — remoção em ordem de dependência
+
+**Faturamento end-to-end**:
+- Phase `stock_in`: Stock Entry Manufacture pra cada FPB produzido (entrada física no Bin)
+- Phase `invoice`: Delivery Note direta + Sales Invoice via `make_sales_invoice`
+- Validado em escala: 10 SEs + 19 DNs + 19 SIs no smoke huge
+
+**Documentação**:
+- `docs/11-manual-operacional.md` — manual visual de uso humano (~2950 linhas)
+- `docs/12-smoke-test-grande.md` — guia do smoke large
+- `docs/13-status-e-roadmap.md` — estado atual + pendências (este release)
+- 3 formatos gerados em `docs/dist/`: HTML (197 KB) + DOCX (65 KB) + PDF (2.5 MB)
+- Anexo I com integração API (chain n8n vs endpoint único)
+- Anexo II com upload do manual dentro do ERPNext (Web Page DocType)
+
+#### Corrigido
+
+- **bug fp_released_qty dobrava**: `future_production_release_batch` aplicava
+  delta sobre SQL sum que já tinha o set_value commitado. Cálculo agora confia
+  no sum direto. Bug não pego antes porque testes assertavam só PR-level
+  (correto), não SOI mirror. Descoberto via `mini_flow.py`.
+
+---
+
 ## [0.1.0] — 2026-05-18
 
 ### Versão inicial — implementação completa
