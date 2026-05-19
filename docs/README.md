@@ -21,6 +21,7 @@ implantado 100% via API REST.
 | [`11-manual-operacional.md`](11-manual-operacional.md) | Manual visual de uso humano dentro do ERPNext (clique a clique). |
 | [`12-smoke-test-grande.md`](12-smoke-test-grande.md) | Smoke test de volume realista (10 FPBs × 2k ampolas, 22 SOs, 30 patients). |
 | [`13-status-e-roadmap.md`](13-status-e-roadmap.md) | Estado atual completo + tudo que aguarda aprovação/credenciais + sprints sugeridos. |
+| [`14-diagrama-processo-completo.md`](14-diagrama-processo-completo.md) | Diagrama visual simples — todas etapas + telas + dados visíveis + API. |
 
 ## Quickstart
 
