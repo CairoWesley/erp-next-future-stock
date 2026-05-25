@@ -37,6 +37,7 @@ STEPS: list[tuple[int, str, str]] = [
     (8, "setup_08_patient_batch",   "Batch por Paciente (alocação)"),
     (9, "setup_09_form_visibility", "Form Visibility (fetch fields)"),
     (10, "setup_10_dispensation",   "Dispensação + Etiqueta Zebra"),
+    (11, "setup_11_so_dispensation_buttons", "Botões UI no Sales Order"),
 ]
 
 
