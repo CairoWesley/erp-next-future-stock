@@ -24,9 +24,9 @@ from typing import Any
 from lib.erpnext_api import client_from_env, log_error, log_ok, log_section
 
 
-COMPANY = "Injmedpharma"
+COMPANY = os.environ.get("ERPNEXT_COMPANY", "Injmedpharma")
 ITEM_CODE = "TIR00060"
-TARGET_WAREHOUSE = "Produtos Acabados - I"
+TARGET_WAREHOUSE = os.environ.get("ERPNEXT_WAREHOUSE", "Produtos Acabados - I")
 DOCTOR = "TEST-PF-Alfa"  # médico/clínica
 TODAY = dt.date.today().isoformat()
 DELIVERY_DATE = (dt.date.today() + dt.timedelta(days=30)).isoformat()

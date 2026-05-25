@@ -44,9 +44,9 @@ from lib.erpnext_api import (
 
 
 TAG = "TEST-MINI"
-COMPANY = "Injmedpharma"
+COMPANY = os.environ.get("ERPNEXT_COMPANY", "Injmedpharma")
 ITEM_CODE = "TIR00060"
-WAREHOUSE = "Produtos Acabados - I"
+WAREHOUSE = os.environ.get("ERPNEXT_WAREHOUSE", "Produtos Acabados - I")
 RATE = 100.0
 
 FPB_PLANNED = 100

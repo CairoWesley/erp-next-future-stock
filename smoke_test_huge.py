@@ -64,9 +64,9 @@ from lib.visibility import (
 # Constantes
 # ---------------------------------------------------------------------------
 
-COMPANY = "Injmedpharma"
+COMPANY = os.environ.get("ERPNEXT_COMPANY", "Injmedpharma")
 ITEM_CODE = "TIR00060"
-TARGET_WAREHOUSE = "Produtos Acabados - I"
+TARGET_WAREHOUSE = os.environ.get("ERPNEXT_WAREHOUSE", "Produtos Acabados - I")
 RATE = 100.0
 
 TAG = "DEMO-HUGE"

@@ -27,9 +27,9 @@ from urllib.parse import quote
 from lib.erpnext_api import client_from_env, log_error, log_ok, log_section, ErpnextApiError
 
 
-COMPANY = "Injmedpharma"
+COMPANY = os.environ.get("ERPNEXT_COMPANY", "Injmedpharma")
 ITEM_CODE = "TIR00060"
-TARGET_WAREHOUSE = "Produtos Acabados - I"
+TARGET_WAREHOUSE = os.environ.get("ERPNEXT_WAREHOUSE", "Produtos Acabados - I")
 
 
 def call(client, method: str, path: str, **kwargs):
