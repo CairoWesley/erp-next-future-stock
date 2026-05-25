@@ -50,7 +50,7 @@ não existem em estoque).
 Ele funciona pelo navegador (Chrome, Firefox, Edge, Safari). Não precisa
 instalar nada na sua máquina — basta acessar um endereço web.
 
-> **Endereço de acesso**: `https://erp.injemedpharma.com.br` (ou o que sua
+> **Endereço de acesso**: `https://erp.suaempresa.com.br` (ou o que sua
 > empresa configurou). Anote esse endereço — vai usar todos os dias.
 
 ### 0.2. Glossário rápido
@@ -87,7 +87,7 @@ eles, nada faz sentido.
 ### 0.3. Como entrar no sistema
 
 1. Abra o navegador (Chrome, Edge, etc.)
-2. Digite o endereço: `https://erp.injemedpharma.com.br` (ou o seu)
+2. Digite o endereço: `https://erp.suaempresa.com.br` (ou o seu)
 3. Aparece a tela de login:
 
 ```
@@ -1096,7 +1096,7 @@ Planejador de Produção (cargo: PCP — Planejamento e Controle de Produção)
 │    Ex: AMP-2026-05-20-001 = primeira fornada do dia 20/05/26 │
 │                                                              │
 │  Empresa *:                                                  │
-│  [Injmedpharma                                       ▼]      │
+│  [Sua Empresa Ltda                                       ▼]      │
 │                                                              │
 │  Status *:                                                   │
 │  [Aberta para Reserva                                ▼]      │
@@ -1359,7 +1359,7 @@ disponível.
 │  Price List:           [Venda Padrão                   ▼]    │
 │  ↑ Se sua empresa tem várias tabelas de preço, escolha.       │
 │                                                              │
-│  Company:              [Injmedpharma] (default)               │
+│  Company:              [Sua Empresa Ltda] (default)               │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -1820,7 +1820,7 @@ de qualidade.
 │                                                              │
 │  Posting Date *:       [2026-05-20]                           │
 │                                                              │
-│  Company:              [Injmedpharma]                         │
+│  Company:              [Sua Empresa Ltda]                         │
 │                                                              │
 │  Work Order:           [MFG-WO-2026-00001          ▼]        │
 │  ↑ Se tem Work Order (etapa 8), linka aqui — o sistema       │
@@ -2027,7 +2027,7 @@ Depois que as reservas do SO foram liberadas (etapa 10).
 │  Purpose:    [Delivery                                  ▼]         │
 │  ↑ "Delivery" pra preparar pra entrega.                            │
 │                                                                    │
-│  Company:    [Injmedpharma]                                         │
+│  Company:    [Sua Empresa Ltda]                                         │
 │                                                                    │
 │  ── Locations ──                                                    │
 │                                                                    │
@@ -2106,7 +2106,7 @@ Depois do Pick List submetido e da separação física confirmada.
 │                                                                │
 │  Customer:        Dr. José da Silva                             │
 │  Posting Date:    2026-05-22                                    │
-│  Company:         Injmedpharma                                  │
+│  Company:         Sua Empresa Ltda                                  │
 │                                                                │
 │  ── Items ──                                                    │
 │  TIR00060 × 10  batch=LOT-... warehouse=Produtos Acabados - I   │
@@ -2294,7 +2294,7 @@ Sistema cria 1 `Dispensation` com 1 linha por paciente alocado:
 │                                                               │
 │ Dispensação                                                   │
 │  Data/Hora:        2026-05-18 14:30                           │
-│  Farmacêutico:     wesley.cairo@injemedpharma.com.br          │
+│  Farmacêutico:     farmaceutico@suaempresa.com.br          │
 │  Total de Ampolas: 770                                        │
 │  Total Pacientes:  5                                          │
 │                                                               │
@@ -2755,7 +2755,7 @@ Guarde `data.name` (ex: `PAC-2026-00014`).
 POST {{URL}}/api/resource/Sales Order
 {
   "customer": "DEMO-PF-Customer",
-  "company": "Injmedpharma",
+  "company": "Sua Empresa Ltda",
   "transaction_date": "2026-05-17",
   "delivery_date": "2026-06-17",
   "currency": "BRL",
@@ -2913,7 +2913,7 @@ POST {{URL}}/api/method/future_production_issue_order
   "qty": 10,
   "rate": 100,
   "warehouse": "Produtos Acabados - I",
-  "company": "Injmedpharma",
+  "company": "Sua Empresa Ltda",
   "delivery_date": "2026-06-17",
   "prescriber_default": {
     "name": "PRES-2026-00007",

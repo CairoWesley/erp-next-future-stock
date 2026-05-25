@@ -86,7 +86,7 @@ Três camadas dentro do próprio ERPNext, criadas como DocTypes customizados:
 
 ## Status
 
-Versão 0.1.0 — instalada e validada contra `https://erp.injemedpharma.com.br`
+Versão 0.1.0 — instalada e validada contra `https://erp.suaempresa.com.br`
 com o cenário de aceite da seção 23 da documentação original
 (2.000 planejados, 4 reservas de 300/500/700/500, produção real de 1.850 →
 distribuição FIFO com 150 pendentes para o último pedido).

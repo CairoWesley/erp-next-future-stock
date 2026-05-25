@@ -287,7 +287,7 @@ labelary.com (preview) ou Zebra Setup Utilities.
 
 | O que | URL |
 |---|---|
-| Lista de Dispensações | `https://erp.injemedpharma.com.br/app/dispensation` |
+| Lista de Dispensações | `https://erp.suaempresa.com.br/app/dispensation` |
 | Filtro por status Pendente | `?status=Pendente` |
 | Filtro por cliente | `?customer=<nome>` |
 | 1 Dispensação | `/app/dispensation/DISP-2026-00079` |
@@ -299,7 +299,7 @@ labelary.com (preview) ou Zebra Setup Utilities.
 
 **1)** Abre Dispensation:
 ```
-https://erp.injemedpharma.com.br/app/dispensation/DISP-2026-00079
+https://erp.suaempresa.com.br/app/dispensation/DISP-2026-00079
 ```
 
 **2)** Confira no header:

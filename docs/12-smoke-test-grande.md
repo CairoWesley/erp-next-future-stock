@@ -59,8 +59,8 @@ Após executar, **todos** os 10 FPBs:
 | Inspeção | Como |
 |---|---|
 | API | `GET /api/resource/Future Production Batch?filters=[["production_code","like","TEST-LRG-%"]]` |
-| UI Lista | `https://erp.injemedpharma.com.br/app/future-production-batch` |
-| UI Workspace | `https://erp.injemedpharma.com.br/app/producao-futura` |
+| UI Lista | `https://erp.suaempresa.com.br/app/future-production-batch` |
+| UI Workspace | `https://erp.suaempresa.com.br/app/producao-futura` |
 
 **Estado esperado**: planned=20000, reserved=0, available=20000
 
@@ -77,7 +77,7 @@ Após executar, **todos** os 10 FPBs:
 |---|---|
 | API SOs | `GET /api/resource/Sales Order?filters=[["customer","like","TEST-LRG-%"]]` |
 | API PRs | `GET /api/resource/Production Reservation?filters=[["future_production_batch","in",[FPB names]]]` |
-| UI SO | `https://erp.injemedpharma.com.br/app/sales-order/SAL-ORD-2026-XXXXX` |
+| UI SO | `https://erp.suaempresa.com.br/app/sales-order/SAL-ORD-2026-XXXXX` |
 
 ### Phase 4 — Produce
 - 3 primeiros FPBs (1-3): `produced_qty = 2000` (full)
@@ -130,7 +130,7 @@ Imprime tabela final consolidada + pendências.
 ```bash
 # Todos FPBs do teste
 curl -X GET \
-  "https://erp.injemedpharma.com.br/api/resource/Future Production Batch" \
+  "https://erp.suaempresa.com.br/api/resource/Future Production Batch" \
   --data-urlencode 'fields=["name","production_code","planned_qty","reserved_qty","available_qty","produced_qty","released_qty","pending_release_qty","status"]' \
   --data-urlencode 'filters=[["production_code","like","TEST-LRG-%"]]' \
   --data-urlencode 'order_by=planned_production_date asc' \
@@ -139,7 +139,7 @@ curl -X GET \
 
 # Todas reservas pendentes (não só do teste)
 curl -X GET \
-  "https://erp.injemedpharma.com.br/api/resource/Production Reservation" \
+  "https://erp.suaempresa.com.br/api/resource/Production Reservation" \
   --data-urlencode 'filters=[["docstatus","=",1],["pending_qty",">",0]]' \
   --data-urlencode 'fields=["name","sales_order","future_production_batch","pending_qty","customer"]' \
   -H "Authorization: token API_KEY:API_SECRET" \

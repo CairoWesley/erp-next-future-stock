@@ -3,6 +3,19 @@
 Módulo de **Reserva de Produção Futura** + **Lote × Pacientes** para o ERPNext,
 implantado 100% via API REST.
 
+> **⚠ Valores nesta documentação são FICTÍCIOS.**
+> URL, e-mail, CNPJ e nome de empresa são placeholders. Em produção, substitua
+> pelos seus reais via `.env` (gitignored). Ver tabela abaixo:
+>
+> | Placeholder | Significado |
+> |---|---|
+> | `erp.suaempresa.com.br` | URL do ERPNext da sua empresa |
+> | `farmaceutico@suaempresa.com.br` | E-mail do farmacêutico/usuário |
+> | `Sua Empresa Ltda` | Razão social (campo `company` no ERPNext) |
+> | `12345678000190` | CNPJ fictício de exemplo |
+> | `11144477735` etc | CPFs sintéticos (não validam pelo DV — só pra teste) |
+> | `<sua-api-key>` | API key real (em `.env`, nunca commitada) |
+
 ## Índice
 
 | Arquivo | Quando ler |

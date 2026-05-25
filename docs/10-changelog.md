@@ -124,7 +124,7 @@ Histórico de versões. Segue [Semantic Versioning](https://semver.org/).
 
 ### Versão inicial — implementação completa
 
-Instalada e validada em `https://erp.injemedpharma.com.br`.
+Instalada e validada em `https://erp.suaempresa.com.br`.
 
 #### Adicionado
 

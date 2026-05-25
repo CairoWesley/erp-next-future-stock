@@ -124,7 +124,7 @@ POST /api/resource/Patient
 POST /api/resource/Sales Order
 {
   "customer": "TEST-PF-Alfa",
-  "company": "Injmedpharma",
+  "company": "Sua Empresa Ltda",
   "transaction_date": "2026-05-17",
   "delivery_date": "2026-06-17",
   "currency": "BRL",
@@ -318,7 +318,7 @@ Para registrar a entrada física do FG no depósito (se não usou Work Order):
 POST /api/resource/Stock Entry
 {
   "stock_entry_type": "Manufacture",
-  "company": "Injmedpharma",
+  "company": "Sua Empresa Ltda",
   "posting_date": "2026-05-20",
   "items": [{
     "t_warehouse": "Produtos Acabados - I",
@@ -338,7 +338,7 @@ POST /api/method/frappe.client.submit
 ```http
 POST /api/resource/Pick List
 {
-  "company": "Injmedpharma",
+  "company": "Sua Empresa Ltda",
   "purpose": "Delivery",
   "locations": [{
     "sales_order": "SAL-ORD-2026-00031",

@@ -8,7 +8,7 @@ Content-Type: application/json
 Accept: application/json
 ```
 
-URL base nos exemplos: `$ERPNEXT_URL` (ex: `https://erp.injemedpharma.com.br`).
+URL base nos exemplos: `$ERPNEXT_URL` (ex: `https://erp.suaempresa.com.br`).
 
 ## Sumário
 
@@ -242,7 +242,7 @@ Move parte do saldo pendente de uma PR para outra FPB.
 POST /api/resource/Future Production Batch
 {
   "production_code": "AMP-2026-05-20-001",
-  "company": "Injmedpharma",
+  "company": "Sua Empresa Ltda",
   "item_code": "TIR00060",
   "planned_qty": 2000,
   "planned_production_date": "2026-05-20",

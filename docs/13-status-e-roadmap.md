@@ -18,7 +18,7 @@
 
 ## 1. Estado Atual
 
-### Implementação ✅ (já em produção em `erp.injemedpharma.com.br`)
+### Implementação ✅ (já em produção em `erp.suaempresa.com.br`)
 
 | # | Módulo | Status | Arquivo de Setup |
 |---|---|---|---|
@@ -153,7 +153,7 @@ Distribuíveis em `docs/dist/`: HTML (197 KB) + DOCX (65 KB) + PDF (2.5 MB)
 | **B2** | Validação CPF dígito verificador | Implementar agora ou só auditoria? |
 | **B3** | Migração `prescribing_doctor → default_prescriber` | Quando rodar? Forçar ou opcional? |
 | **B4** | ASAAS sandbox ou prod | Recomendado: sandbox primeiro |
-| **B5** | Dados fiscais Injmedpharma | Stub OK por enquanto. Quando completar? |
+| **B5** | Dados fiscais Sua Empresa Ltda | Stub OK por enquanto. Quando completar? |
 
 ### C. Construção de código (sem deps externas)
 
@@ -345,10 +345,10 @@ python setup_all.py --uninstall
 
 ```bash
 # UI
-https://erp.injemedpharma.com.br/app/future-production-batch
+https://erp.suaempresa.com.br/app/future-production-batch
 
 # API
-curl -X GET "https://erp.injemedpharma.com.br/api/resource/Future Production Batch" \
+curl -X GET "https://erp.suaempresa.com.br/api/resource/Future Production Batch" \
   -H "Authorization: token API_KEY:API_SECRET" \
   --data-urlencode 'fields=["name","planned_qty","available_qty","produced_qty","released_qty","status"]' \
   -G
@@ -365,7 +365,7 @@ print_fpb_table(list_fpbs(c))
 #### Production Reservation
 
 ```
-UI:     https://erp.injemedpharma.com.br/app/production-reservation
+UI:     https://erp.suaempresa.com.br/app/production-reservation
 API:    GET /api/resource/Production Reservation
         ?filters=[["docstatus","=",1],["pending_qty",">",0]]
 ```
@@ -373,28 +373,28 @@ API:    GET /api/resource/Production Reservation
 #### Prescriber
 
 ```
-UI:     https://erp.injemedpharma.com.br/app/prescriber
+UI:     https://erp.suaempresa.com.br/app/prescriber
         Filtre por council_type=CRM, council_state=SP, council_status=Ativo
 ```
 
 #### Sales Order com fp_patients
 
 ```
-UI:     https://erp.injemedpharma.com.br/app/sales-order/<name>
+UI:     https://erp.suaempresa.com.br/app/sales-order/<name>
         Role até "Pacientes" → vê batch_no/allocated_qty/batch_status por linha
 ```
 
 #### Stock Balance (verificar entrada física)
 
 ```
-UI:     https://erp.injemedpharma.com.br/app/stock-balance
+UI:     https://erp.suaempresa.com.br/app/stock-balance
         Filtre item_code=TIR00060 → vê qty por batch + warehouse
 ```
 
 #### Sales Invoice
 
 ```
-UI:     https://erp.injemedpharma.com.br/app/sales-invoice
+UI:     https://erp.suaempresa.com.br/app/sales-invoice
         Status: Unpaid (até Payment Entry)
 ```
 
@@ -435,7 +435,7 @@ Pra desbloquear próximas etapas, preciso de:
 ### Pra ASAAS (Sprint 2)
 
 1. **API key ASAAS** (prod ou sandbox)
-2. **CNPJ Injmedpharma** (pra ASAAS validar emissor)
+2. **CNPJ Sua Empresa Ltda** (pra ASAAS validar emissor)
 3. **Inscrição Estadual** + **regime tributário**
 4. **NCM** do TIR00060
 5. **CFOP** padrão de venda (interna ou interestadual)

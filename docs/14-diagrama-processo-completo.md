@@ -161,7 +161,7 @@
 #### Cliente (quem paga)
 
 **Tela**: *Selling → Customer*
-**URL**: `https://erp.injemedpharma.com.br/app/customer`
+**URL**: `https://erp.suaempresa.com.br/app/customer`
 
 **Dados visíveis ao abrir um cliente**:
 - Customer Name + Type (Individual ou Company)
@@ -174,7 +174,7 @@
 #### Médico Prescritor
 
 **Tela**: *Produção Futura → Prescriber*
-**URL**: `https://erp.injemedpharma.com.br/app/prescriber`
+**URL**: `https://erp.suaempresa.com.br/app/prescriber`
 
 **Dados visíveis ao abrir um Prescriber**:
 - Nome completo + CPF
@@ -188,7 +188,7 @@
 #### Paciente
 
 **Tela**: *Produção Futura → Patient*
-**URL**: `https://erp.injemedpharma.com.br/app/patient`
+**URL**: `https://erp.suaempresa.com.br/app/patient`
 
 **Dados visíveis ao abrir um Paciente**:
 - Nome + CPF + RG
@@ -204,7 +204,7 @@
 
 **Quem usa**: Planejamento
 **Tela**: *Produção Futura → Lote de Produção Futura → + New*
-**URL**: `https://erp.injemedpharma.com.br/app/future-production-batch`
+**URL**: `https://erp.suaempresa.com.br/app/future-production-batch`
 
 **O que preencher**:
 - Código da Produção (ex: AMP-2026-05-20-001)
@@ -232,7 +232,7 @@
 
 **Quem usa**: Comercial
 **Tela**: *Selling → Sales Order → + New*
-**URL**: `https://erp.injemedpharma.com.br/app/sales-order`
+**URL**: `https://erp.suaempresa.com.br/app/sales-order`
 
 **O que preencher**:
 1. Customer
@@ -519,7 +519,7 @@ POST /api/resource/Patient
 POST /api/resource/Future Production Batch
 {
   "production_code": "AMP-2026-05-20-001",
-  "company": "Injmedpharma",
+  "company": "Sua Empresa Ltda",
   "item_code": "TIR00060",
   "planned_qty": 2000,
   "planned_production_date": "2026-05-20",
@@ -540,7 +540,7 @@ POST /api/method/frappe.client.submit
 POST /api/resource/Sales Order
 {
   "customer": "Clínica São Paulo Ltda",
-  "company": "Injmedpharma",
+  "company": "Sua Empresa Ltda",
   "transaction_date": "2026-05-17",
   "delivery_date": "2026-06-17",
   "currency": "BRL",
@@ -622,7 +622,7 @@ PUT /api/resource/Future Production Batch/FPB-2026-00003
 POST /api/resource/Stock Entry
 {
   "stock_entry_type": "Manufacture",
-  "company": "Injmedpharma",
+  "company": "Sua Empresa Ltda",
   "posting_date": "2026-05-20",
   "items": [{
     "item_code": "TIR00060",
@@ -687,7 +687,7 @@ POST /api/method/future_production_allocate_patient_batches
 POST /api/resource/Delivery Note
 {
   "customer": "Clínica São Paulo Ltda",
-  "company": "Injmedpharma",
+  "company": "Sua Empresa Ltda",
   "posting_date": "2026-05-22",
   "items": [{
     "item_code": "TIR00060",
@@ -759,7 +759,7 @@ POST /api/method/future_production_create_dispensation
 {
   "sales_order": "SAL-ORD-2026-00031",
   "patient_row": "<row_id de fp_patients>",
-  "pharmacist": "wesley.cairo@injemedpharma.com.br"
+  "pharmacist": "farmaceutico@suaempresa.com.br"
 }
 
 # Retorna nome da Dispensation criada

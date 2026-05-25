@@ -166,7 +166,7 @@
 <p>O <strong>ERPNext</strong> é o sistema onde sua empresa registra tudo: clientes, pedidos, produção, entregas, faturas. Pense nele como um <strong>caderno gigante e inteligente</strong> — tudo que acontece no negócio fica anotado lá, organizado, e o sistema <strong>avisa</strong> se algo não bate (ex: você tenta vender ampolas que não existem em estoque).</p>
 <p>Ele funciona pelo navegador (Chrome, Firefox, Edge, Safari). Não precisa instalar nada na sua máquina — basta acessar um endereço web.</p>
 <blockquote>
-<p><strong>Endereço de acesso</strong>: <code>https://erp.injemedpharma.com.br</code> (ou o que sua empresa configurou). Anote esse endereço — vai usar todos os dias.</p>
+<p><strong>Endereço de acesso</strong>: <code>https://erp.suaempresa.com.br</code> (ou o que sua empresa configurou). Anote esse endereço — vai usar todos os dias.</p>
 </blockquote>
 <h3 id="glossário-rápido">0.2. Glossário rápido</h3>
 <p>Termos que aparecem o tempo todo neste manual. Decore os 6 primeiros — sem eles, nada faz sentido.</p>
@@ -279,7 +279,7 @@
 <h3 id="como-entrar-no-sistema">0.3. Como entrar no sistema</h3>
 <ol type="1">
 <li>Abra o navegador (Chrome, Edge, etc.)</li>
-<li>Digite o endereço: <code>https://erp.injemedpharma.com.br</code> (ou o seu)</li>
+<li>Digite o endereço: <code>https://erp.suaempresa.com.br</code> (ou o seu)</li>
 <li>Aparece a tela de login:</li>
 </ol>
 <pre><code>   ┌─────────────────────────────────────┐
@@ -1448,7 +1448,7 @@
 │    Ex: AMP-2026-05-20-001 = primeira fornada do dia 20/05/26 │
 │                                                              │
 │  Empresa *:                                                  │
-│  [Injmedpharma                                       ▼]      │
+│  [Sua Empresa Ltda                                       ▼]      │
 │                                                              │
 │  Status *:                                                   │
 │  [Aberta para Reserva                                ▼]      │
@@ -1697,7 +1697,7 @@ Empresa correta (se multi-empresa)?</li>
 │  Price List:           [Venda Padrão                   ▼]    │
 │  ↑ Se sua empresa tem várias tabelas de preço, escolha.       │
 │                                                              │
-│  Company:              [Injmedpharma] (default)               │
+│  Company:              [Sua Empresa Ltda] (default)               │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘</code></pre>
 <h4 id="passo-6.3-adicionar-items-produtos">Passo 6.3 — Adicionar items (produtos)</h4>
@@ -2097,7 +2097,7 @@ Empresa correta (se multi-empresa)?</li>
 │                                                              │
 │  Posting Date *:       [2026-05-20]                           │
 │                                                              │
-│  Company:              [Injmedpharma]                         │
+│  Company:              [Sua Empresa Ltda]                         │
 │                                                              │
 │  Work Order:           [MFG-WO-2026-00001          ▼]        │
 │  ↑ Se tem Work Order (etapa 8), linka aqui — o sistema       │
@@ -2301,7 +2301,7 @@ Batch físico existe no depósito (etapa 9)</li>
 │  Purpose:    [Delivery                                  ▼]         │
 │  ↑ &quot;Delivery&quot; pra preparar pra entrega.                            │
 │                                                                    │
-│  Company:    [Injmedpharma]                                         │
+│  Company:    [Sua Empresa Ltda]                                         │
 │                                                                    │
 │  ── Locations ──                                                    │
 │                                                                    │
@@ -2388,7 +2388,7 @@ Avisa que pode emitir Delivery Note (próxima etapa)</li>
 │                                                                │
 │  Customer:        Dr. José da Silva                             │
 │  Posting Date:    2026-05-22                                    │
-│  Company:         Injmedpharma                                  │
+│  Company:         Sua Empresa Ltda                                  │
 │                                                                │
 │  ── Items ──                                                    │
 │  TIR00060 × 10  batch=LOT-... warehouse=Produtos Acabados - I   │
@@ -2528,7 +2528,7 @@ Zebra A       Zebra B       Zebra C       Zebra D</code></pre>
 │                                                               │
 │ Dispensação                                                   │
 │  Data/Hora:        2026-05-18 14:30                           │
-│  Farmacêutico:     wesley.cairo@injemedpharma.com.br          │
+│  Farmacêutico:     farmaceutico@suaempresa.com.br          │
 │  Total de Ampolas: 770                                        │
 │  Total Pacientes:  5                                          │
 │                                                               │
@@ -2945,7 +2945,7 @@ Accept: application/json</code></pre>
 <pre class="http"><code>POST {{URL}}/api/resource/Sales Order
 {
   &quot;customer&quot;: &quot;DEMO-PF-Customer&quot;,
-  &quot;company&quot;: &quot;Injmedpharma&quot;,
+  &quot;company&quot;: &quot;Sua Empresa Ltda&quot;,
   &quot;transaction_date&quot;: &quot;2026-05-17&quot;,
   &quot;delivery_date&quot;: &quot;2026-06-17&quot;,
   &quot;currency&quot;: &quot;BRL&quot;,
@@ -3105,7 +3105,7 @@ Accept: application/json</code></pre>
   &quot;qty&quot;: 10,
   &quot;rate&quot;: 100,
   &quot;warehouse&quot;: &quot;Produtos Acabados - I&quot;,
-  &quot;company&quot;: &quot;Injmedpharma&quot;,
+  &quot;company&quot;: &quot;Sua Empresa Ltda&quot;,
   &quot;delivery_date&quot;: &quot;2026-06-17&quot;,
   &quot;prescriber_default&quot;: {
     &quot;name&quot;: &quot;PRES-2026-00007&quot;,
