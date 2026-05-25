@@ -1,57 +1,97 @@
-# 15 — Dispensação + Etiqueta Zebra
+# 15 — Dispensação + Etiqueta Zebra (v2)
 
-> Módulo final do fluxo. Cada ato físico de entregar ampolas ao paciente vira
-> um documento `Dispensation` rastreável + uma etiqueta Zebra impressa.
+> Modelo: **1 Sales Order = 1 Dispensação** (a entrega completa).
+> Dispensação tem **child table** com 1 linha por paciente.
+> Cada linha gera 1 etiqueta Zebra individual.
 
 ---
 
 ## O que é
 
-`Dispensation` = registro de UM ato de entrega de ampola(s) a UM paciente
-identificado. Contém: paciente, prescritor, lote, qty, data/hora, farmacêutico
-responsável, assinatura, status da impressão.
+`Dispensation` = registro da **entrega de um pedido inteiro**. Contém todas as
+informações da entrega + child table `Dispensation Patient` com 1 linha por
+paciente que recebe ampolas.
 
-Equivalente regulatório: prescrição → dispensação. Fecha a cadeia de
-custódia: **planejamento → produção → lote físico → reserva → paciente
-→ dispensação assinada**.
+Cada linha da child table = 1 etiqueta Zebra individual com os dados daquele
+paciente (CPF, item, lote, validade, qty).
+
+Fluxo:
+
+```
+1 Sales Order (com fp_patients[] alocados)
+                │
+                ▼
+1 Dispensation criada
+                │
+   ┌────────────┼────────────┬────────────┐
+   ▼            ▼            ▼            ▼
+Patient A   Patient B   Patient C   Patient D
+3 ampolas   2 ampolas   4 ampolas   1 ampola
+LOT-001     LOT-001     LOT-001     LOT-001
+   │            │            │            │
+   ▼            ▼            ▼            ▼
+Etiqueta    Etiqueta    Etiqueta    Etiqueta
+Zebra A     Zebra B     Zebra C     Zebra D
+```
 
 ---
 
-## DocType `Dispensation` — campos
+## DocTypes
+
+### `Dispensation` (parent, submetível)
 
 | Seção | Campo | Tipo | Origem |
 |---|---|---|---|
 | Identificação | naming_series | Select | `DISP-.YYYY.-.#####` |
-| | status | Select | Rascunho / Pendente / Dispensado / Cancelado |
-| Origem | sales_order | Link → Sales Order | manual |
-| | sales_order_patient_row | Data | row name do fp_patients |
-| | customer | Link → Customer | fetch_from sales_order |
-| Paciente | patient | Link → Patient | manual |
-| | patient_name, cpf, mobile, email | Data | fetch_from patient |
-| Prescritor | prescriber | Link → Prescriber | manual |
-| | prescriber_name, council, number, state | Data | fetch_from prescriber |
-| Produto | item_code, item_name, qty | mix | manual + fetch |
-| | batch_no, batch_expiry, batch_manufacturing | mix | manual + fetch |
+| | status | Select | Rascunho / Pendente / Parcialmente Dispensado / Dispensado / Cancelado |
+| Origem | sales_order | Link → Sales Order | 1 SO = 1 Dispensation |
+| | delivery_note | Link → Delivery Note | opcional |
+| | customer | Link → Customer | fetch |
+| | customer_name | Data | fetch |
 | Dispensação | dispensed_at | Datetime | default `now` |
 | | pharmacist | Link → User | default `__user` |
-| | signature | Attach Image | upload |
+| | total_qty | Float | calculado |
+| | total_patients | Int | calculado |
+| Pacientes | **patients** | **Table** | **child Dispensation Patient** |
 | Etiqueta | label_template | Select | 50x30mm / 100x50mm |
-| | printed | Check | atualiza após print |
-| | printed_at | Datetime | idem |
-| | zpl_preview | Code | ZPL último gerado |
-| | notes | Small Text | livre |
+| | all_printed | Check | atualiza automaticamente |
+| | printed_count | Data | "X/Y" |
+| Observações | notes | Small Text | livre |
 
-`Sales Order Patient.dispensation` (Link/Dispensation) = espelho da
-linha → dispensação criada.
+### `Dispensation Patient` (child table)
+
+Cada linha = 1 paciente:
+
+| Campo | Tipo | Origem |
+|---|---|---|
+| patient | Link → Patient | manual |
+| patient_name, cpf, mobile | Data | fetch_from patient |
+| prescriber | Link → Prescriber | manual |
+| prescriber_name, council, number, state | Data | fetch_from prescriber |
+| item_code, item_name | Link + Data | manual + fetch |
+| qty | Float | manual |
+| batch_no, batch_expiry, batch_manufacturing | Link + 2 Data | manual + fetch |
+| sales_order_patient_row | Data | row origem (hidden) |
+| **printed** | Check | impressão individual |
+| **printed_at** | Datetime | quando imprimiu |
+| **signature** | Attach Image | assinatura do paciente |
+| row_notes | Small Text | livre |
 
 ---
 
-## Endpoints API (3 novos)
+## Custom Field
 
-### 1. Criar dispensações em lote a partir de um SO
+`Sales Order.dispensation` (Link → Dispensation, read-only) = espelho do SO
+pra dispensação criada.
+
+---
+
+## Endpoints API (5)
+
+### 1. Criar Dispensation do SO
 
 ```http
-POST /api/method/future_production_create_dispensations_from_so
+POST /api/method/future_production_create_dispensation_from_so
 { "sales_order": "SAL-ORD-2026-00060" }
 ```
 
@@ -60,55 +100,79 @@ POST /api/method/future_production_create_dispensations_from_so
 {
   "message": {
     "sales_order": "SAL-ORD-2026-00060",
-    "created_count": 5,
-    "skipped_count": 0,
-    "dispensations": [
-      {"name": "DISP-2026-00001", "patient": "PAC-...", "patient_name": "Maria", "qty": 154, "batch_no": "LOT-..."},
-      ...
-    ]
+    "dispensation": "DISP-2026-00079",
+    "created": true,
+    "rows_count": 5,
+    "total_qty": 770
   }
 }
 ```
 
-Idempotente: pula linhas que já têm `dispensation` preenchido.
+Idempotente: se SO já tem dispensation, retorna a existente (`created: false`).
 
-### 2. Gerar ZPL
+### 2. Gerar ZPL de 1 linha
 
 ```http
 POST /api/method/future_production_generate_zpl_label
-{ "dispensation": "DISP-2026-00001" }
+{ "dispensation": "DISP-2026-00079", "row_name": "<row_name opcional>" }
+```
+
+Se `row_name` omitido, gera ZPL da primeira linha.
+
+### 3. Gerar ZPL de TODAS as linhas
+
+```http
+POST /api/method/future_production_generate_all_zpl_labels
+{ "dispensation": "DISP-2026-00079" }
 ```
 
 **Resposta**:
 ```json
 {
   "message": {
-    "dispensation": "DISP-2026-00001",
+    "dispensation": "DISP-2026-00079",
     "label_template": "50x30mm",
-    "zpl": "^XA^CI28^PW400^LL240^FO15,10^A0N,24,24^FDMaria...^XZ",
-    "patient_name": "Maria Aparecida",
-    "cpf": "111.444.777-35",
-    "batch_no": "LOT-AMP-2026-05-20-001",
-    "qty": 3,
-    "expiry": "20/05/2027"
+    "labels_count": 5,
+    "zpl": "^XA...^XZ\n^XA...^XZ\n^XA...^XZ\n^XA...^XZ\n^XA...^XZ",
+    "labels": [
+      {"row_name": "...", "patient_name": "Maria", "cpf": "111.444.777-35", "qty": 3},
+      ...
+    ]
   }
 }
 ```
 
-Salva ZPL gerado em `Dispensation.zpl_preview` (read-only, allow_on_submit).
+Zebra imprime N etiquetas seguidas no envio.
 
-### 3. Marcar como impressa
+### 4. Marcar 1 linha como impressa
 
 ```http
-POST /api/method/future_production_mark_dispensation_printed
-{
-  "dispensation": "DISP-2026-00001",
-  "mark_dispensed": 1
-}
+POST /api/method/future_production_mark_label_printed
+{ "dispensation": "DISP-2026-00079", "row_name": "<row_name>" }
 ```
 
-- `printed=1`, `printed_at=now`
-- Se `mark_dispensed=1`: status → "Dispensado" + atualiza `Sales Order Patient.batch_status` = "Entregue"
+Atualiza `printed=1` + `printed_at=now` na linha. Recalcula `printed_count`
+e `all_printed` no parent.
+
+### 5. Marcar Dispensation como Dispensado
+
+```http
+POST /api/method/future_production_mark_dispensation_completed
+{ "dispensation": "DISP-2026-00079" }
+```
+
+- Status → "Dispensado"
+- Para cada paciente, atualiza `Sales Order Patient.batch_status = "Entregue"`
+
+---
+
+## UI — Botões no Dispensation Form
+
+| Botão | Onde | O que faz |
+|---|---|---|
+| **Imprimir Todas as Etiquetas Zebra** | Header (menu Zebra) | Gera ZPL multi + envia via BrowserPrint + marca todas printed |
+| **Marcar como Dispensado** | Header (menu Zebra) | Confirmação + atualiza espelhos |
+| **Imprimir Esta Linha** | Grid child (botão custom) | Imprime 1 etiqueta da linha selecionada |
 
 ---
 
@@ -118,7 +182,7 @@ POST /api/method/future_production_mark_dispensation_printed
 
 ```
 ^XA
-^CI28                       (UTF-8)
+^CI28
 ^PW400^LL240
 ^FO15,10^A0N,24,24^FDMaria Aparecida Silva^FS
 ^FO15,40^A0N,18,18^FDCPF: 111.444.777-35^FS
@@ -129,7 +193,7 @@ POST /api/method/future_production_mark_dispensation_printed
 ^XZ
 ```
 
-### 100x50mm — 800×400 dots @ 203dpi
+### 100x50mm — 800×400 dots @ 203dpi (mais informações)
 
 ```
 ^XA
@@ -148,100 +212,74 @@ POST /api/method/future_production_mark_dispensation_printed
 ^XZ
 ```
 
-Barcode (Code128): `<sales_order>|<patient>|<batch_no>`
-
 ---
 
-## Fluxo de uso (UI)
+## Smoke test (validado)
 
 ```
-1. SO já tem fp_patients alocados (batch_no preenchido — etapa 7)
-                  │
-                  ▼
-2. Operador abre o SO
-                  │
-                  ▼
-3. (UI futura) Botão "Criar Dispensações" no SO
-   OU chama API future_production_create_dispensations_from_so
-                  │
-                  ▼
-4. Sistema cria N Dispensations (1 por paciente)
-                  │
-                  ▼
-5. Farmacêutico abre cada Dispensation
-                  │
-                  ▼
-6. Confere paciente (CPF visível) + lote (validade)
-                  │
-                  ▼
-7. Clica "Imprimir Etiqueta Zebra"
-                  │
-                  ▼
-8. Client Script chama generate_zpl + envia via BrowserPrint
-                  │
-                  ▼
-9. Etiqueta sai na impressora local
-                  │
-                  ▼
-10. Sistema marca printed=1 + (opcional) status=Dispensado
-                  │
-                  ▼
-11. Paciente assina (upload signature) + Submit
+$ python smoke_test_huge.py --phase dispense
+
+Dispensations criadas: 19  (1 por SO alocado)
+Total de etiquetas potenciais: 79  (soma das linhas)
+Amostra: DISP-2026-00079 (SO SAL-ORD-2026-00060) → 5 etiquetas, 1719 bytes ZPL
 ```
 
 ---
 
-## Pré-requisito Cliente (PC do farmacêutico)
+## Fluxo de uso na UI
 
-Instalar **Zebra BrowserPrint**:
-
-1. Download: https://www.zebra.com/us/en/products/software/barcode-printers/link-os/browser-print.html
-2. Instalar no PC do farmacêutico (Windows/Mac)
-3. Conectar Zebra via USB ou rede
-4. Abrir o BrowserPrint local (fica em system tray)
-5. No browser, ERPNext detecta automaticamente quando carrega o Client Script
-
-> Se BrowserPrint **não estiver instalado**: Client Script abre diálogo com o
-> ZPL pra copiar e colar em [labelary.com](http://labelary.com) (preview) ou
-> Zebra Setup Utilities.
+```
+1. SO já alocado (fp_patients[] com batch_no)
+                  │
+                  ▼
+2. (Botão futuro) "Criar Dispensação" no SO
+   OU chama API future_production_create_dispensation_from_so
+                  │
+                  ▼
+3. Sistema cria 1 Dispensation com N linhas (1 por paciente)
+                  │
+                  ▼
+4. Farmacêutico abre a Dispensation
+                  │
+                  ▼
+5. Vê todas as linhas com nome, CPF, item, lote, validade
+                  │
+                  ▼
+6. Clica "Imprimir Todas as Etiquetas Zebra"
+                  │
+                  ▼
+7. Sistema gera ZPL multi (todas etiquetas) + envia via BrowserPrint
+                  │
+                  ▼
+8. Zebra imprime N etiquetas seguidas
+                  │
+                  ▼
+9. Farmacêutico cola cada etiqueta na ampola correspondente
+                  │
+                  ▼
+10. Coleta assinatura de cada paciente (upload por linha)
+                  │
+                  ▼
+11. Clica "Marcar como Dispensado"
+                  │
+                  ▼
+12. Status → Dispensado + espelha em Sales Order Patient
+```
 
 ---
 
-## Como rodar agora (sem Zebra física)
+## Pré-requisito: Zebra BrowserPrint
 
-```bash
-# Criar dispensações pra 1 SO
-curl -X POST \
-  "https://erp.injemedpharma.com.br/api/method/future_production_create_dispensations_from_so" \
-  -H "Authorization: token API_KEY:API_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"sales_order": "SAL-ORD-2026-00060"}'
+Instalar no PC do farmacêutico:
+https://www.zebra.com/us/en/products/software/barcode-printers/link-os/browser-print.html
 
-# Gerar ZPL de uma dispensação
-curl -X POST \
-  "https://erp.injemedpharma.com.br/api/method/future_production_generate_zpl_label" \
-  -H "Authorization: token API_KEY:API_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"dispensation": "DISP-2026-00001"}'
-```
+- Windows ou Mac
+- Conecta Zebra USB ou rede
+- Roda no system tray
+- Browser detecta automaticamente
 
-Cole o ZPL em **http://labelary.com/viewer.html** pra ver preview da etiqueta.
-
----
-
-## Smoke test
-
-```bash
-python smoke_test_huge.py --phase dispense
-```
-
-Saída esperada:
-```
-74 Dispensations criadas em 18 SOs (8.7s)
-Amostra ZPL: DISP-2026-00006 → 343 bytes
-Amostra ZPL: DISP-2026-00009 → 343 bytes
-Amostra ZPL: DISP-2026-00012 → 343 bytes
-```
+**Sem BrowserPrint**: Client Script abre dialog com ZPL pra copiar e colar em
+labelary.com (preview) ou Zebra Setup Utilities.
 
 ---
 
@@ -251,38 +289,40 @@ Amostra ZPL: DISP-2026-00012 → 343 bytes
 |---|---|
 | Lista de Dispensações | `https://erp.injemedpharma.com.br/app/dispensation` |
 | Filtro por status Pendente | `?status=Pendente` |
-| Filtro por farmacêutico | `?pharmacist=<email>` |
-| 1 Dispensação | `/app/dispensation/DISP-2026-00001` |
-| Lista filtrada por paciente | `/app/dispensation?patient=PAC-...` |
-
----
-
-## Próximos passos sugeridos
-
-| # | Item | Esforço |
-|---|---|---|
-| 1 | Adicionar botão "Criar Dispensações" no Sales Order (Client Script) | Pequeno |
-| 2 | Workspace add link "Dispensação" | Trivial |
-| 3 | Print Format ERPNext nativo pra A4 (alternativa Zebra) | Médio |
-| 4 | Server Script no Submit do Dispensation: bloqueia se `signature` vazio | Pequeno |
-| 5 | Report "Dispensações por Lote" (auditoria ANVISA) | Pequeno |
-| 6 | Report "Dispensações por Paciente" (histórico) | Pequeno |
-| 7 | Endpoint webhook quando farmácia externa entrega | Médio |
+| Filtro por cliente | `?customer=<nome>` |
+| 1 Dispensação | `/app/dispensation/DISP-2026-00079` |
+| SO com link pra Dispensation | role até campo `dispensation` no SO |
 
 ---
 
 ## Validação manual
 
-**1)** Abra Dispensation no UI:
-https://erp.injemedpharma.com.br/app/dispensation/DISP-2026-00001
+**1)** Abre Dispensation:
+```
+https://erp.injemedpharma.com.br/app/dispensation/DISP-2026-00079
+```
 
-**2)** Confira:
-- patient_name, CPF, item, batch, validade preenchidos automaticamente
-- Botão "Imprimir Etiqueta Zebra" visível no topo
-- Status = "Pendente"
+**2)** Confira no header:
+- Sales Order vinculado
+- Customer + customer_name
+- Total de Ampolas (soma das linhas)
+- Total de Pacientes (count linhas)
+- Status = Pendente
+- printed_count = 0/5
 
-**3)** Clique "Imprimir Etiqueta Zebra":
-- Se BrowserPrint instalado + Zebra conectada → imprime
-- Senão → modal com ZPL pra copiar
+**3)** Role até "Pacientes da Entrega" — vê tabela com 5 linhas, cada uma com:
+- Patient + Nome + CPF + Celular
+- Prescriber + Nome do Médico + Conselho + Nº + UF
+- Item + Nome do Item + Qtd
+- Lote + Validade + Fabricação
+- printed (checkbox, vazio)
 
-**4)** Após imprimir → `printed=1` + `printed_at` preenchido
+**4)** Clica **"Imprimir Todas as Etiquetas Zebra"** no header:
+- Se BrowserPrint OK → imprime 5 etiquetas
+- Senão → dialog com ZPL pra copiar
+
+**5)** Após imprimir → `printed=1` em cada linha + `all_printed=1` + `printed_count=5/5`
+
+**6)** Clica **"Marcar como Dispensado"**:
+- Status → Dispensado
+- `Sales Order Patient.batch_status` de cada linha vira "Entregue"

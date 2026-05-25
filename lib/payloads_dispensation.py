@@ -1,11 +1,12 @@
 """
-Definições do módulo Dispensação + Etiqueta Zebra.
+Definições do módulo Dispensação + Etiqueta Zebra (v2).
 
-  - DocType Dispensation: cada ato físico de entrega de ampola(s) ao paciente
-  - Custom Field Sales Order Patient.dispensation (espelho)
-  - Server Scripts (endpoints):
-      future_production_create_dispensations_from_so
-      future_production_generate_zpl_label
+Modelo:
+  - 1 Sales Order → 1 Dispensation (a entrega completa do pedido)
+  - Dispensation tem child table `Dispensation Patient`:
+      cada linha = 1 paciente que recebeu N ampolas do lote X
+  - Cada linha do child gera 1 etiqueta Zebra
+  - Existe também botão "imprimir todas" que envia ZPL múltiplo
 """
 
 from __future__ import annotations
@@ -31,13 +32,10 @@ def _reader_perm(role: str) -> dict:
     return {"role": role, "read": 1, "report": 1, "export": 1, "print": 1}
 
 
-# ---------------------------------------------------------------------------
-# Dispensation — DocType submetível
-# ---------------------------------------------------------------------------
-
 STATUS_DISPENSATION = "\n".join([
     "Rascunho",
     "Pendente",
+    "Parcialmente Dispensado",
     "Dispensado",
     "Cancelado",
 ])
@@ -48,75 +46,21 @@ LABEL_TEMPLATES = "\n".join([
 ])
 
 
-DISPENSATION = {
+# ---------------------------------------------------------------------------
+# Dispensation Patient — child table
+# ---------------------------------------------------------------------------
+
+DISPENSATION_PATIENT = {
     "doctype": "DocType",
-    "name": "Dispensation",
+    "name": "Dispensation Patient",
     "module": MODULE,
     "custom": 1,
-    "is_submittable": 1,
-    "track_changes": 1,
-    "allow_rename": 0,
-    "autoname": "naming_series:",
-    "title_field": "patient_name",
-    "search_fields": "patient_name,cpf,batch_no,sales_order",
+    "istable": 1,
+    "editable_grid": 1,
     "sort_field": "modified",
     "sort_order": "DESC",
-    "document_type": "Document",
     "fields": [
-        # ----- Identificação -----
-        {
-            "fieldname": "naming_series",
-            "label": "Série",
-            "fieldtype": "Select",
-            "options": "DISP-.YYYY.-.#####",
-            "default": "DISP-.YYYY.-.#####",
-            "reqd": 1,
-        },
-        {
-            "fieldname": "status",
-            "label": "Status",
-            "fieldtype": "Select",
-            "options": STATUS_DISPENSATION,
-            "default": "Pendente",
-            "reqd": 1,
-            "in_list_view": 1,
-            "in_standard_filter": 1,
-            "allow_on_submit": 1,
-        },
-
-        # ----- Origem -----
-        {
-            "fieldname": "section_origin",
-            "label": "Origem",
-            "fieldtype": "Section Break",
-        },
-        {
-            "fieldname": "sales_order",
-            "label": "Sales Order",
-            "fieldtype": "Link",
-            "options": "Sales Order",
-            "reqd": 1,
-            "in_list_view": 1,
-            "in_standard_filter": 1,
-        },
-        {
-            "fieldname": "sales_order_patient_row",
-            "label": "Linha de Paciente (row id)",
-            "fieldtype": "Data",
-            "description": "Row name da tabela fp_patients no SO de origem.",
-        },
-        {"fieldname": "column_break_orig", "fieldtype": "Column Break"},
-        {
-            "fieldname": "customer",
-            "label": "Cliente",
-            "fieldtype": "Link",
-            "options": "Customer",
-            "fetch_from": "sales_order.customer",
-            "read_only": 1,
-        },
-
-        # ----- Paciente -----
-        {"fieldname": "section_patient", "label": "Paciente", "fieldtype": "Section Break"},
+        # Patient
         {
             "fieldname": "patient",
             "label": "Paciente",
@@ -124,7 +68,6 @@ DISPENSATION = {
             "options": "Patient",
             "reqd": 1,
             "in_list_view": 1,
-            "in_standard_filter": 1,
         },
         {
             "fieldname": "patient_name",
@@ -142,24 +85,15 @@ DISPENSATION = {
             "read_only": 1,
             "in_list_view": 1,
         },
-        {"fieldname": "column_break_pat", "fieldtype": "Column Break"},
         {
-            "fieldname": "patient_mobile",
+            "fieldname": "mobile",
             "label": "Celular",
             "fieldtype": "Data",
             "fetch_from": "patient.mobile",
             "read_only": 1,
         },
-        {
-            "fieldname": "patient_email",
-            "label": "E-mail",
-            "fieldtype": "Data",
-            "fetch_from": "patient.email",
-            "read_only": 1,
-        },
 
-        # ----- Prescritor -----
-        {"fieldname": "section_pres", "label": "Prescritor", "fieldtype": "Section Break"},
+        # Prescriber
         {
             "fieldname": "prescriber",
             "label": "Médico",
@@ -173,7 +107,6 @@ DISPENSATION = {
             "fetch_from": "prescriber.full_name",
             "read_only": 1,
         },
-        {"fieldname": "column_break_pres", "fieldtype": "Column Break"},
         {
             "fieldname": "prescriber_council",
             "label": "Conselho",
@@ -196,8 +129,7 @@ DISPENSATION = {
             "read_only": 1,
         },
 
-        # ----- Produto / Lote -----
-        {"fieldname": "section_product", "label": "Produto", "fieldtype": "Section Break"},
+        # Produto
         {
             "fieldname": "item_code",
             "label": "Item",
@@ -215,13 +147,14 @@ DISPENSATION = {
         },
         {
             "fieldname": "qty",
-            "label": "Quantidade Dispensada",
+            "label": "Qtd",
             "fieldtype": "Float",
             "reqd": 1,
             "non_negative": 1,
             "in_list_view": 1,
         },
-        {"fieldname": "column_break_prod", "fieldtype": "Column Break"},
+
+        # Batch
         {
             "fieldname": "batch_no",
             "label": "Lote",
@@ -246,11 +179,123 @@ DISPENSATION = {
             "read_only": 1,
         },
 
-        # ----- Dispensação -----
+        # Sales Order Patient origem
+        {
+            "fieldname": "sales_order_patient_row",
+            "label": "SOP Row",
+            "fieldtype": "Data",
+            "read_only": 1,
+            "hidden": 1,
+        },
+
+        # Etiqueta individual
+        {
+            "fieldname": "printed",
+            "label": "Etiq. Impressa",
+            "fieldtype": "Check",
+            "default": 0,
+            "in_list_view": 1,
+        },
+        {
+            "fieldname": "printed_at",
+            "label": "Impressa em",
+            "fieldtype": "Datetime",
+            "read_only": 1,
+        },
+        {
+            "fieldname": "signature",
+            "label": "Assinatura",
+            "fieldtype": "Attach Image",
+        },
+        {
+            "fieldname": "row_notes",
+            "label": "Obs",
+            "fieldtype": "Small Text",
+        },
+    ],
+}
+
+
+# ---------------------------------------------------------------------------
+# Dispensation — DocType principal
+# ---------------------------------------------------------------------------
+
+DISPENSATION = {
+    "doctype": "DocType",
+    "name": "Dispensation",
+    "module": MODULE,
+    "custom": 1,
+    "is_submittable": 1,
+    "track_changes": 1,
+    "allow_rename": 0,
+    "autoname": "naming_series:",
+    "title_field": "sales_order",
+    "search_fields": "sales_order,customer",
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "document_type": "Document",
+    "fields": [
+        {
+            "fieldname": "naming_series",
+            "label": "Série",
+            "fieldtype": "Select",
+            "options": "DISP-.YYYY.-.#####",
+            "default": "DISP-.YYYY.-.#####",
+            "reqd": 1,
+        },
+        {
+            "fieldname": "status",
+            "label": "Status",
+            "fieldtype": "Select",
+            "options": STATUS_DISPENSATION,
+            "default": "Pendente",
+            "reqd": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "allow_on_submit": 1,
+        },
+
+        # Origem
+        {"fieldname": "section_origin", "label": "Origem", "fieldtype": "Section Break"},
+        {
+            "fieldname": "sales_order",
+            "label": "Sales Order",
+            "fieldtype": "Link",
+            "options": "Sales Order",
+            "reqd": 1,
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "description": "1 Sales Order = 1 Dispensation (a entrega do pedido). Unicidade validada no endpoint.",
+        },
+        {
+            "fieldname": "delivery_note",
+            "label": "Nota de Entrega",
+            "fieldtype": "Link",
+            "options": "Delivery Note",
+        },
+        {"fieldname": "column_break_orig", "fieldtype": "Column Break"},
+        {
+            "fieldname": "customer",
+            "label": "Cliente",
+            "fieldtype": "Link",
+            "options": "Customer",
+            "fetch_from": "sales_order.customer",
+            "read_only": 1,
+            "in_list_view": 1,
+        },
+        {
+            "fieldname": "customer_name",
+            "label": "Nome do Cliente",
+            "fieldtype": "Data",
+            "fetch_from": "customer.customer_name",
+            "read_only": 1,
+        },
+
+        # Dispensação
         {"fieldname": "section_disp", "label": "Dispensação", "fieldtype": "Section Break"},
         {
             "fieldname": "dispensed_at",
-            "label": "Data/Hora Dispensação",
+            "label": "Data/Hora",
             "fieldtype": "Datetime",
             "default": "now",
             "allow_on_submit": 1,
@@ -264,14 +309,30 @@ DISPENSATION = {
         },
         {"fieldname": "column_break_disp", "fieldtype": "Column Break"},
         {
-            "fieldname": "signature",
-            "label": "Assinatura do Paciente",
-            "fieldtype": "Attach Image",
-            "allow_on_submit": 1,
+            "fieldname": "total_qty",
+            "label": "Total de Ampolas",
+            "fieldtype": "Float",
+            "read_only": 1,
+        },
+        {
+            "fieldname": "total_patients",
+            "label": "Total de Pacientes",
+            "fieldtype": "Int",
+            "read_only": 1,
         },
 
-        # ----- Etiqueta -----
-        {"fieldname": "section_label", "label": "Etiqueta Zebra", "fieldtype": "Section Break"},
+        # Pacientes (child table)
+        {"fieldname": "section_patients", "label": "Pacientes da Entrega", "fieldtype": "Section Break"},
+        {
+            "fieldname": "patients",
+            "label": "Pacientes",
+            "fieldtype": "Table",
+            "options": "Dispensation Patient",
+            "reqd": 1,
+        },
+
+        # Etiqueta
+        {"fieldname": "section_label", "label": "Etiquetas Zebra", "fieldtype": "Section Break"},
         {
             "fieldname": "label_template",
             "label": "Template Etiqueta",
@@ -280,36 +341,28 @@ DISPENSATION = {
             "default": "50x30mm",
         },
         {
-            "fieldname": "printed",
-            "label": "Etiqueta Impressa",
+            "fieldname": "all_printed",
+            "label": "Todas Etiquetas Impressas",
             "fieldtype": "Check",
             "default": 0,
+            "read_only": 1,
             "in_list_view": 1,
             "allow_on_submit": 1,
         },
         {"fieldname": "column_break_lab", "fieldtype": "Column Break"},
         {
-            "fieldname": "printed_at",
-            "label": "Data Impressão",
-            "fieldtype": "Datetime",
+            "fieldname": "printed_count",
+            "label": "Etiquetas Impressas / Total",
+            "fieldtype": "Data",
             "read_only": 1,
             "allow_on_submit": 1,
-        },
-        {
-            "fieldname": "zpl_preview",
-            "label": "ZPL Gerado (preview)",
-            "fieldtype": "Code",
-            "options": "Text",
-            "read_only": 1,
-            "allow_on_submit": 1,
-            "description": "ZPL último gerado. Use o botão 'Imprimir Etiqueta Zebra'.",
         },
 
-        # ----- Observações -----
+        # Observações
         {"fieldname": "section_notes", "label": "Observações", "fieldtype": "Section Break"},
         {
             "fieldname": "notes",
-            "label": "Observações",
+            "label": "Observações Gerais",
             "fieldtype": "Small Text",
         },
     ],
@@ -324,19 +377,18 @@ DISPENSATION = {
 
 
 # ---------------------------------------------------------------------------
-# Custom Field em Sales Order Patient: espelho da dispensação
+# Custom Field — Sales Order.dispensation (espelho 1:1)
 # ---------------------------------------------------------------------------
 
-DISPENSATION_SOP_FIELDS = [
+DISPENSATION_SO_FIELDS = [
     {
-        "dt": "Sales Order Patient",
+        "dt": "Sales Order",
         "fieldname": "dispensation",
         "label": "Dispensação",
         "fieldtype": "Link",
         "options": "Dispensation",
-        "insert_after": "batch_status",
+        "insert_after": "fp_patients",
         "read_only": 1,
-        "in_list_view": 0,
-        "description": "Documento de dispensação criado para esta linha.",
+        "description": "Documento de entrega/dispensação criado pra este pedido.",
     },
 ]
