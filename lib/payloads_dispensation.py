@@ -235,6 +235,9 @@ DISPENSATION = {
     "sort_order": "DESC",
     "document_type": "Document",
     "fields": [
+        # Section explícita no topo (Frappe v15 às vezes não renderiza
+        # campos antes da primeira Section Break)
+        {"fieldname": "section_header", "label": "Identificação", "fieldtype": "Section Break"},
         {
             "fieldname": "naming_series",
             "label": "Série",
@@ -243,6 +246,7 @@ DISPENSATION = {
             "default": "DISP-.YYYY.-.#####",
             "reqd": 1,
         },
+        {"fieldname": "column_break_header", "fieldtype": "Column Break"},
         {
             "fieldname": "status",
             "label": "Status",
@@ -389,6 +393,7 @@ DISPENSATION_SO_FIELDS = [
         "options": "Dispensation",
         "insert_after": "fp_patients",
         "read_only": 1,
+        "allow_on_submit": 1,
         "description": "Documento de entrega/dispensação criado pra este pedido.",
     },
 ]
