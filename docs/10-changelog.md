@@ -59,6 +59,67 @@ Histórico de versões. Segue [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.3.0] — 2026-05-18
+
+### Form Visibility + Dispensação v2 + Zebra ZPL
+
+#### Adicionado
+
+**Form Visibility** (`setup_09_form_visibility.py`):
+- 11 Custom Fields `fetch_from` no `Sales Order Patient` mostram dados
+  completos linkados sem precisar clicar:
+  * Patient: gender, birth_date, email, city, state
+  * Prescriber: full_name, council_number, council_state, council_status
+  * Batch: expiry_date, manufacturing_date
+- Total 17 dados visíveis por linha de paciente no SO
+
+**Módulo Dispensação + Zebra (v2)** (`setup_10_dispensation.py`):
+- Modelo: **1 Sales Order = 1 Dispensation** (entrega completa)
+- DocType `Dispensation` (submetível) com:
+  * sales_order (Link), customer (fetch), pharmacist, dispensed_at
+  * total_qty, total_patients (calculados)
+  * label_template (50x30mm / 100x50mm), all_printed, printed_count
+- DocType `Dispensation Patient` (child table) com fetch fields completos:
+  * patient + name + cpf + mobile
+  * prescriber + name + council_type + number + state
+  * item + name + qty
+  * batch_no + expiry + manufacturing
+  * printed (Check) + printed_at + signature (Attach Image)
+- Custom Field `Sales Order.dispensation` (Link) — espelho 1:1
+- 5 Server Scripts (endpoints API):
+  * `create_dispensation_from_so` — 1 chamada cria Dispensation com N rows
+  * `generate_zpl_label` — ZPL de 1 linha
+  * `generate_all_zpl_labels` — ZPL multi (todas N linhas concatenadas)
+  * `mark_label_printed` — marca 1 linha + atualiza counter
+  * `mark_dispensation_completed` — status Dispensado + espelha em SOP
+- Client Script com 3 botões:
+  * "Imprimir Todas as Etiquetas Zebra" (header)
+  * "Marcar como Dispensado" (header)
+  * "Imprimir Esta Linha" (grid child)
+- BrowserPrint integration com fallback dialog (cola ZPL manualmente)
+
+**Documentação**:
+- `docs/14-diagrama-processo-completo.md` — fluxo visual 11 etapas com
+  tela + dados visíveis + URL + payload API por etapa
+- `docs/15-dispensacao-zebra.md` — guia completo Dispensação v2
+
+#### Validado em smoke test huge
+
+- 19 Dispensations criadas (1 por SO alocado)
+- 79 etiquetas potenciais totais
+- ZPL multi: 1719 bytes (5 etiquetas), 1031 bytes (3 etiquetas)
+- 11 SOs sem alocação rejeitados com erro claro (esperado)
+
+#### Notas técnicas
+
+- Frappe restricted Python rejeita `list of dict` em campos Table.
+  Solução: `new_doc.append("patients", row)` por item.
+- DocType com `unique: 1` em campo Link falha re-instalação quando
+  tabela tem dados antigos órfãos. Solução: removido unique constraint,
+  validação movida para endpoint.
+
+---
+
 ## [0.1.0] — 2026-05-18
 
 ### Versão inicial — implementação completa

@@ -22,6 +22,7 @@ implantado 100% via API REST.
 | [`12-smoke-test-grande.md`](12-smoke-test-grande.md) | Smoke test de volume realista (10 FPBs × 2k ampolas, 22 SOs, 30 patients). |
 | [`13-status-e-roadmap.md`](13-status-e-roadmap.md) | Estado atual completo + tudo que aguarda aprovação/credenciais + sprints sugeridos. |
 | [`14-diagrama-processo-completo.md`](14-diagrama-processo-completo.md) | Diagrama visual simples — todas etapas + telas + dados visíveis + API. |
+| [`15-dispensacao-zebra.md`](15-dispensacao-zebra.md) | Módulo Dispensação v2 (1 SO = 1 entrega com child de pacientes) + ZPL Zebra. |
 | [`15-dispensacao-zebra.md`](15-dispensacao-zebra.md) | Módulo Dispensação + Etiqueta Zebra (DocType, endpoints, ZPL templates). |
 
 ## Quickstart

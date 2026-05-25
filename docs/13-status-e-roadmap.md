@@ -30,8 +30,10 @@
 | 6 | Patients (mestres + child table) | ✅ Instalado | `setup_06_patients.py` |
 | 7 | Prescribers (CRM/CRO/CRF/CRBM/...) | ✅ Instalado | `setup_07_prescribers.py` |
 | 8 | Batch por Paciente (alocação) | ✅ Instalado | `setup_08_patient_batch.py` |
+| 9 | Form Visibility (11 fetch fields) | ✅ Instalado | `setup_09_form_visibility.py` |
+| 10 | Dispensação + Zebra (v2: 1 SO = 1 entrega + child) | ✅ Instalado | `setup_10_dispensation.py` |
 
-### Endpoints REST disponíveis ✅
+### Endpoints REST disponíveis ✅ (12 endpoints)
 
 ```
 POST /api/method/future_production_reserve_sales_order_item
@@ -41,6 +43,11 @@ POST /api/method/future_production_create_work_order
 POST /api/method/future_production_release_batch
 POST /api/method/future_production_replan_pending_qty
 POST /api/method/future_production_allocate_patient_batches
+POST /api/method/future_production_create_dispensation_from_so
+POST /api/method/future_production_generate_zpl_label
+POST /api/method/future_production_generate_all_zpl_labels
+POST /api/method/future_production_mark_label_printed
+POST /api/method/future_production_mark_dispensation_completed
 ```
 
 ### Testes ✅ (todos passando)
@@ -150,18 +157,20 @@ Distribuíveis em `docs/dist/`: HTML (197 KB) + DOCX (65 KB) + PDF (2.5 MB)
 
 ### C. Construção de código (sem deps externas)
 
-| # | Item | Esforço | Prioridade |
-|---|---|---|---|
-| **C1** | Payment Entry phase no smoke huge | Pequeno | Alta |
-| **C2** | DocType `Dispensation` + Server Script ZPL | Médio | Alta |
-| **C3** | Client Script botão "Imprimir Etiqueta Zebra" + BrowserPrint JS | Médio | Alta |
-| **C4** | Endpoint único `future_production_issue_order` (1 call cria SO + reserva) | Médio | Média |
-| **C5** | Server Script RB-007 (delivery_qty ≤ released_qty) | Pequeno | Média |
-| **C6** | Server Script RB-008 (bloqueia cancel FPB com PR ativa) | Pequeno | Média |
-| **C7** | Migração script `prescribing_doctor` → `default_prescriber` | Pequeno | Baixa |
-| **C8** | Workspace add link "Médico Prescritor" no menu | Pequeno | Baixa |
-| **C9** | Smoke test replan + cancel | Pequeno | Baixa |
-| **C10** | Tabela `fp_dispensations` (registro de dispensação por paciente + data + assinatura) | Médio | Alta |
+| # | Item | Esforço | Prioridade | Status |
+|---|---|---|---|---|
+| **C1** | Payment Entry phase no smoke huge | Pequeno | Alta | ⏳ pendente |
+| **C2** | DocType `Dispensation` + Server Script ZPL | Médio | Alta | ✅ feito (v2 com child) |
+| **C3** | Client Script botão "Imprimir Etiqueta Zebra" + BrowserPrint JS | Médio | Alta | ✅ feito |
+| **C4** | Endpoint único `future_production_issue_order` (1 call cria SO + reserva) | Médio | Média | ⏳ pendente |
+| **C5** | Server Script RB-007 (delivery_qty ≤ released_qty) | Pequeno | Média | ⏳ pendente |
+| **C6** | Server Script RB-008 (bloqueia cancel FPB com PR ativa) | Pequeno | Média | ⏳ pendente |
+| **C7** | Migração script `prescribing_doctor` → `default_prescriber` | Pequeno | Baixa | ⏳ pendente |
+| **C8** | Workspace add link "Médico Prescritor" no menu | Pequeno | Baixa | ⏳ pendente |
+| **C9** | Smoke test replan + cancel | Pequeno | Baixa | ⏳ pendente |
+| **C10** | Tabela `fp_dispensations` (registro de dispensação por paciente + data + assinatura) | Médio | Alta | ✅ feito (child table) |
+| **C11** | Botão "Criar Dispensação" no Sales Order (Client Script) | Pequeno | Média | ⏳ pendente |
+| **C12** | Form Visibility (fetch fields completos no fp_patients) | Pequeno | Alta | ✅ feito |
 
 ### D. Construção de código (precisam credentials)
 
@@ -240,11 +249,15 @@ Hoje: ERPNext nativo bloqueia. Decisão: workflow de reverso explícito ou usar 
 
 Pode rodar agora sem esperar credentials.
 
+- [x] **C2**: DocType `Dispensation` + endpoint ZPL genérico ✅
+- [x] **C3**: Client Script "Imprimir Etiqueta Zebra" (com Zebra BrowserPrint) ✅
+- [x] **C10**: Child table de pacientes na Dispensação ✅
+- [x] **C12**: Form Visibility (fetch fields) ✅
 - [ ] **C1**: Payment Entry phase no smoke
-- [ ] **C2**: DocType `Dispensation` + endpoint ZPL genérico
-- [ ] **C3**: Client Script "Imprimir Etiqueta Zebra" (com Zebra BrowserPrint)
+- [ ] **C4**: Endpoint único `issue_order`
 - [ ] **C5**: RB-007 (delivery_qty ≤ released_qty)
 - [ ] **C8**: Workspace Prescriber
+- [ ] **C11**: Botão "Criar Dispensação" no Sales Order
 
 ### Sprint 2 — ASAAS (precisa A1)
 
@@ -399,6 +412,10 @@ UI:     https://erp.injemedpharma.com.br/app/sales-invoice
 ## Anexo — Resumo de commits
 
 ```
+b5ad483 refactor: Dispensation v2 — 1 per SO with child table of patients
+9499566 feat: add Dispensation DocType + Zebra ZPL labels (setup_10)
+4339ac4 feat: add form visibility fetch fields + complete process diagram doc
+24e4c0b docs: comprehensive status + roadmap + pending approvals (v0.2.0)
 10728e9 feat: add invoice + stock-in phases to huge smoke test
 0b918bf feat: add huge-scale smoke test (100 FPBs, 30 SOs) + deep cleanup
 8bb29e4 fix: correct fp_released_qty double-counting in release_batch

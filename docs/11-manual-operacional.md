@@ -2230,91 +2230,184 @@ Quando o cliente pagar:
 
 ---
 
-## 14. Etapa J — Dispensação
+## 14. Etapa J — Dispensação + Etiqueta Zebra
 
-> **Significado**: ato físico de entregar a ampola **ao paciente final**.
-> Cada ampola precisa de **etiqueta paciente** impressa na Zebra.
+> **Significado**: ato físico de entregar as ampolas **aos pacientes finais**.
+> **1 Sales Order = 1 Dispensação** (a entrega completa do pedido).
+> Cada paciente da dispensação ganha **1 etiqueta Zebra individual**.
 
-### Status atual deste módulo
-
-⚠ **A ser construído**. Hoje o sistema:
-
-- Sabe quais ampolas saíram pra qual **cliente** (via Delivery Note)
-- Sabe quais **pacientes** receberão (via tabela `fp_patients` do SO)
-- **NÃO** tem ainda: tela de dispensação + integração Zebra
-
-A ligação atual é indireta — você cruza Delivery Note → Sales Order → fp_patients.
-
-### Fluxo manual (hoje, antes da construção)
-
-**1.** Quando a Delivery Note chega na farmácia, abra o **SO original**
-
-**2.** Role até a seção **Pacientes**
-
-**3.** Pra cada paciente da lista:
+### Modelo
 
 ```
-   ┌─────────────────────────────────────────────────────────┐
-   │  Paciente: Maria Aparecida Silva                         │
-   │  CPF: 111.444.777-35                                     │
-   │  Quantidade: 3 ampolas                                   │
-   │  Lote: LOT-AMP-2026-05-20-001                            │
-   │  Validade: 2027-05-20                                    │
-   └─────────────────────────────────────────────────────────┘
+1 Sales Order (com pacientes alocados em batches)
+                  │
+                  ▼
+1 Dispensation criada (DISP-2026-NNNNN)
+                  │
+   ┌──────────────┼──────────────┬──────────────┐
+   ▼              ▼              ▼              ▼
+Paciente A    Paciente B    Paciente C    Paciente D
+3 ampolas     2 ampolas     4 ampolas     1 ampola
+   │              │              │              │
+   ▼              ▼              ▼              ▼
+Etiqueta      Etiqueta      Etiqueta      Etiqueta
+Zebra A       Zebra B       Zebra C       Zebra D
 ```
 
-- Confira CPF do paciente que veio retirar (com documento)
-- Confira qty (não dá pra entregar 4 se a tabela diz 3)
-- Separe as ampolas do batch correto
-- **Imprima etiqueta de paciente** (hoje: manual, em papel ou pendente)
-- Faça o paciente **assinar** o recibo de dispensação
-- Anote (manualmente, em caderno ou planilha): data, hora, paciente, lote
+### Pré-requisito
 
-### Etiqueta Zebra (proposta — etapa de construção futura)
+SO precisa ter `fp_patients[].batch_no` preenchido. Isso acontece após
+**Etapa F (Liberar)** + **Alocação** (botão "Alocar Batch por Paciente"
+ou endpoint `future_production_allocate_patient_batches`).
+
+### Quem usa
+Farmacêutico responsável.
+
+### Telas
+
+| Tela | URL | O que faz |
+|---|---|---|
+| Lista de Dispensações | `/app/dispensation` | Vê todas, filtra por status |
+| 1 Dispensação | `/app/dispensation/DISP-2026-NNNNN` | Header + child de pacientes |
+
+### Passo a passo
+
+#### 14.1. Criar Dispensação a partir do SO
+
+Via API (botão UI futuro — C11):
+
+```http
+POST /api/method/future_production_create_dispensation_from_so
+{ "sales_order": "SAL-ORD-2026-00060" }
+```
+
+Sistema cria 1 `Dispensation` com 1 linha por paciente alocado:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Dispensation DISP-2026-00079                                  │
+│ Status: Pendente                                              │
+│                                                               │
+│ Origem                                                        │
+│  Sales Order:      SAL-ORD-2026-00060                         │
+│  Cliente:          Clínica X (CNPJ)                           │
+│                                                               │
+│ Dispensação                                                   │
+│  Data/Hora:        2026-05-18 14:30                           │
+│  Farmacêutico:     wesley.cairo@injemedpharma.com.br          │
+│  Total de Ampolas: 770                                        │
+│  Total Pacientes:  5                                          │
+│                                                               │
+│ Etiquetas                                                     │
+│  Template:         50x30mm   (ou 100x50mm)                    │
+│  Impressas:        0/5                                        │
+│                                                               │
+│ Pacientes da Entrega                                          │
+│ ┌──────────────────┬─────┬────────────┬──────────┬────────┐  │
+│ │ Paciente         │ Qty │ Lote       │ Validade │ Print  │  │
+│ ├──────────────────┼─────┼────────────┼──────────┼────────┤  │
+│ │ Maria Aparecida  │ 154 │ LOT-AMP-.. │20/05/2027│  ☐     │  │
+│ │ João Silva       │ 154 │ LOT-AMP-.. │20/05/2027│  ☐     │  │
+│ │ Ana Beatriz      │ 154 │ LOT-AMP-.. │20/05/2027│  ☐     │  │
+│ │ Carlos Souza     │ 154 │ LOT-AMP-.. │20/05/2027│  ☐     │  │
+│ │ Paula Costa      │ 154 │ LOT-AMP-.. │20/05/2027│  ☐     │  │
+│ └──────────────────┴─────┴────────────┴──────────┴────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Cada linha mostra automaticamente (fetch_from):
+- Nome + CPF + Celular (do Patient)
+- Médico + Nº Conselho (do Prescriber)
+- Item + qty
+- Lote + Validade + Fabricação (do Batch)
+
+#### 14.2. Conferir paciente fisicamente
+
+Pra cada paciente que vem retirar:
+- Confira CPF com documento
+- Confere se qty bate
+- Separa as ampolas do batch correto
+
+#### 14.3. Imprimir Etiquetas Zebra
+
+**3 botões disponíveis** no header e grid:
+
+| Botão | Onde | Função |
+|---|---|---|
+| **Imprimir Todas as Etiquetas Zebra** | Header → menu Zebra | Imprime N etiquetas seguidas (1 por paciente) |
+| **Imprimir Esta Linha** | Grid (após selecionar linha) | Imprime 1 etiqueta da linha |
+| **Marcar como Dispensado** | Header → menu Zebra | Status final + atualiza espelhos |
+
+**Como funciona**:
+
+1. Clique **"Imprimir Todas as Etiquetas Zebra"**
+2. Sistema chama `future_production_generate_all_zpl_labels`
+3. Gera ZPL concatenado (todas N etiquetas)
+4. Envia ao **Zebra BrowserPrint** (extensão local que conecta na impressora USB/rede)
+5. Zebra imprime N etiquetas seguidas
+6. Sistema marca `printed=1` em cada linha + `printed_count="5/5"` + `all_printed=1`
+
+**Sem BrowserPrint instalado**: abre dialog com o ZPL — você copia e cola em
+[labelary.com](https://labelary.com) (preview) ou Zebra Setup Utilities.
+
+#### 14.4. Coletar assinatura + concluir
+
+Cada linha tem campo `signature` (Attach Image) — anexe foto da assinatura
+do paciente recebendo.
+
+Quando todos receberam:
+- Clique **"Marcar como Dispensado"**
+- Confirma
+- Sistema:
+  - Status → "Dispensado"
+  - Para cada paciente, atualiza `Sales Order Patient.batch_status = "Entregue"`
+
+### Templates de etiqueta
+
+**50x30mm (default)** — etiqueta pequena pra ampola individual:
 
 ```
 ┌──────────────────────────────────────────────────┐
-│ Etiqueta 50×30mm (ZPL)                            │
-├──────────────────────────────────────────────────┤
-│                                                   │
-│  Maria Aparecida Silva                            │
-│  CPF: 111.444.777-35                              │
-│                                                   │
-│  Tirzepatida 60mg/2,4ml                           │
-│                                                   │
-│  Lote: LOT-AMP-2026-05-20-001                     │
-│  Validade: 2027-05-20                             │
-│                                                   │
-│  ▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮  (barcode)               │
-│                                                   │
+│ Maria Aparecida Silva                             │
+│ CPF: 111.444.777-35                               │
+│ Tirzepatida 60mg/2,4ml                            │
+│ Lote: LOT-AMP-2026-05-20-001                      │
+│ Val: 20/05/2027  Qty: 3                           │
+│ ▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮  (barcode SAL-ORD|PAC|LOT)      │
 └──────────────────────────────────────────────────┘
 ```
 
-### Mecanismo proposto (a construir)
+**100x50mm** — etiqueta maior pra embalagem secundária:
 
 ```
-   Sales Order com pacientes
-            │
-            ▼
-   Botão "Imprimir Etiquetas Pacientes"
-            │
-            ▼
-   Server Script gera ZPL por paciente
-            │
-            ▼
-   Browser envia ZPL → Zebra (BrowserPrint)
-            │
-            ▼
-   Marca dispensação concluída
+┌────────────────────────────────────────────────────────┐
+│ Maria Aparecida Silva                                   │
+│ CPF: 111.444.777-35                                     │
+│                                                         │
+│ Tirzepatida 60mg/2,4ml                                  │
+│                                                         │
+│ Lote: LOT-AMP-2026-05-20-001                            │
+│ Validade: 20/05/2027                                    │
+│ Fabricacao: 20/05/2026                                  │
+│ Qtd: 3 ampolas                                          │
+│                                                         │
+│ ▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮  (barcode)                │
+│                                                         │
+│                              SAL-ORD-2026-00060         │
+│                              DISP-2026-00079            │
+└────────────────────────────────────────────────────────┘
 ```
 
-Detalhes técnicos: ver futuro `docs/12-dispensacao-etiquetas.md` (a criar).
+### Detalhes técnicos completos
 
-### Por enquanto (workaround)
+Ver [`docs/15-dispensacao-zebra.md`](15-dispensacao-zebra.md).
 
-Use o **Print Format** do ERPNext pra gerar uma página simples com os dados
-do paciente (a partir do SO). Imprima em qualquer impressora. Quando o módulo
-Zebra estiver pronto, troca por etiqueta térmica.
+### Pré-requisitos no PC da farmácia
+
+1. Instalar **Zebra BrowserPrint** (Windows/Mac):
+   https://www.zebra.com/us/en/products/software/barcode-printers/link-os/browser-print.html
+2. Conectar Zebra via USB ou rede
+3. Browser detecta automaticamente
 
 ---
 
