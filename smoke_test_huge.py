@@ -630,6 +630,62 @@ def phase_invoice(client, state: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Phase dispense — Cria Dispensations + gera ZPL
+# ---------------------------------------------------------------------------
+
+def phase_dispense(client, state: dict) -> dict:
+    log_section("Phase Extra — Dispensação + Etiqueta Zebra (ZPL)")
+
+    so_names = state.get("sos") or []
+    if not so_names:
+        log_error("Sem SOs em estado. Rode --phase orders.")
+        return state
+
+    total_disps = 0
+    sos_with = 0
+    zpl_samples = []
+    t0 = time.time()
+
+    for so in so_names:
+        try:
+            resp = client.call_method(
+                "future_production_create_dispensations_from_so",
+                {"sales_order": so},
+            )
+            msg = (resp or {}).get("message") or {}
+            n = int(msg.get("created_count") or 0)
+            if n > 0:
+                total_disps += n
+                sos_with += 1
+                # Pega 1 dispensation pra gerar ZPL como amostra
+                disps = msg.get("dispensations") or []
+                if disps and len(zpl_samples) < 3:
+                    disp_name = disps[0]["name"]
+                    try:
+                        z = client.call_method(
+                            "future_production_generate_zpl_label",
+                            {"dispensation": disp_name},
+                        )
+                        zpl_samples.append({
+                            "dispensation": disp_name,
+                            "patient": disps[0].get("patient_name"),
+                            "zpl_length": len(((z or {}).get("message") or {}).get("zpl") or ""),
+                        })
+                    except ErpnextApiError:
+                        pass
+        except ErpnextApiError as exc:
+            log_error(f"  {so}: {exc}")
+
+    log_ok(f"  {total_disps} Dispensations criadas em {sos_with} SOs ({time.time()-t0:.1f}s)")
+    for s in zpl_samples:
+        log_ok(f"  Amostra ZPL: {s['dispensation']} ({s['patient']}) → {s['zpl_length']} bytes ZPL")
+
+    state["dispensations_created"] = total_disps
+    save_state(state)
+    return state
+
+
+# ---------------------------------------------------------------------------
 # Phase 7 — Relatório consolidado
 # ---------------------------------------------------------------------------
 
@@ -738,12 +794,13 @@ PHASES = {
     "stock_in": phase_stock_in,
     "allocate": phase_allocate,
     "invoice":  phase_invoice,
+    "dispense": phase_dispense,
     "report":   phase_report,
     "cleanup":  phase_cleanup,
 }
 
 ALL_SEQUENCE = ["setup", "fpbs", "orders", "produce", "release",
-                "stock_in", "allocate", "invoice", "report"]
+                "stock_in", "allocate", "invoice", "dispense", "report"]
 
 
 def main():
