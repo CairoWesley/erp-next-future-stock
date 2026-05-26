@@ -64,18 +64,53 @@ if existing:
         "message": "Dispensation ja existia.",
     }
 else:
-    # Constroi rows do child table a partir de fp_patients alocados
+    # Constroi rows. Sem fetch_from no schema (Frappe v15 bug), populamos
+    # patient_name/cpf/prescriber_name/item_name/batch_expiry manualmente.
     rows = []
     total_qty = 0.0
     for p in (so.get("fp_patients") or []):
         if not p.batch_no:
-            continue  # sem batch nao pode dispensar
+            continue
+
+        # Patient data
+        patient_doc = frappe.db.get_value(
+            "Patient", p.patient,
+            ["patient_name", "cpf", "mobile"], as_dict=True
+        ) or {}
+        # Prescriber data
+        pres_doc = {}
+        if p.prescriber:
+            pres_doc = frappe.db.get_value(
+                "Prescriber", p.prescriber,
+                ["full_name", "council_type", "council_number", "council_state"],
+                as_dict=True
+            ) or {}
+        # Item data
+        item_doc = frappe.db.get_value(
+            "Item", p.item_code, "item_name"
+        )
+        # Batch data
+        batch_doc = frappe.db.get_value(
+            "Batch", p.batch_no,
+            ["expiry_date", "manufacturing_date"], as_dict=True
+        ) or {}
+
         rows.append({
             "patient": p.patient,
+            "patient_name": patient_doc.get("patient_name"),
+            "cpf": patient_doc.get("cpf"),
+            "mobile": patient_doc.get("mobile"),
             "prescriber": p.prescriber,
+            "prescriber_name": pres_doc.get("full_name"),
+            "prescriber_council": pres_doc.get("council_type"),
+            "prescriber_number": pres_doc.get("council_number"),
+            "prescriber_state": pres_doc.get("council_state"),
             "item_code": p.item_code,
+            "item_name": item_doc,
             "qty": p.qty,
             "batch_no": p.batch_no,
+            "batch_expiry": batch_doc.get("expiry_date"),
+            "batch_manufacturing": batch_doc.get("manufacturing_date"),
             "sales_order_patient_row": p.name,
             "printed": 0,
         })
@@ -89,6 +124,7 @@ else:
 
     new_disp = frappe.new_doc("Dispensation")
     new_disp.sales_order = so_name
+    new_disp.customer = so.customer
     new_disp.status = "Pendente"
     new_disp.total_qty = total_qty
     new_disp.total_patients = len(rows)

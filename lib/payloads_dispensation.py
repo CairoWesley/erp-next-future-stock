@@ -57,10 +57,7 @@ DISPENSATION_PATIENT = {
     "custom": 1,
     "istable": 1,
     "editable_grid": 1,
-    "sort_field": "modified",
-    "sort_order": "DESC",
     "fields": [
-        # Patient
         {
             "fieldname": "patient",
             "label": "Paciente",
@@ -73,27 +70,19 @@ DISPENSATION_PATIENT = {
             "fieldname": "patient_name",
             "label": "Nome",
             "fieldtype": "Data",
-            "fetch_from": "patient.patient_name",
-            "read_only": 1,
             "in_list_view": 1,
         },
         {
             "fieldname": "cpf",
             "label": "CPF",
             "fieldtype": "Data",
-            "fetch_from": "patient.cpf",
-            "read_only": 1,
             "in_list_view": 1,
         },
         {
             "fieldname": "mobile",
             "label": "Celular",
             "fieldtype": "Data",
-            "fetch_from": "patient.mobile",
-            "read_only": 1,
         },
-
-        # Prescriber
         {
             "fieldname": "prescriber",
             "label": "Médico",
@@ -104,32 +93,22 @@ DISPENSATION_PATIENT = {
             "fieldname": "prescriber_name",
             "label": "Nome do Médico",
             "fieldtype": "Data",
-            "fetch_from": "prescriber.full_name",
-            "read_only": 1,
         },
         {
             "fieldname": "prescriber_council",
             "label": "Conselho",
             "fieldtype": "Data",
-            "fetch_from": "prescriber.council_type",
-            "read_only": 1,
         },
         {
             "fieldname": "prescriber_number",
             "label": "Nº Conselho",
             "fieldtype": "Data",
-            "fetch_from": "prescriber.council_number",
-            "read_only": 1,
         },
         {
             "fieldname": "prescriber_state",
             "label": "UF Conselho",
             "fieldtype": "Data",
-            "fetch_from": "prescriber.council_state",
-            "read_only": 1,
         },
-
-        # Produto
         {
             "fieldname": "item_code",
             "label": "Item",
@@ -142,19 +121,14 @@ DISPENSATION_PATIENT = {
             "fieldname": "item_name",
             "label": "Nome do Item",
             "fieldtype": "Data",
-            "fetch_from": "item_code.item_name",
-            "read_only": 1,
         },
         {
             "fieldname": "qty",
             "label": "Qtd",
             "fieldtype": "Float",
             "reqd": 1,
-            "non_negative": 1,
             "in_list_view": 1,
         },
-
-        # Batch
         {
             "fieldname": "batch_no",
             "label": "Lote",
@@ -167,31 +141,21 @@ DISPENSATION_PATIENT = {
             "fieldname": "batch_expiry",
             "label": "Validade",
             "fieldtype": "Date",
-            "fetch_from": "batch_no.expiry_date",
-            "read_only": 1,
             "in_list_view": 1,
         },
         {
             "fieldname": "batch_manufacturing",
             "label": "Fabricação",
             "fieldtype": "Date",
-            "fetch_from": "batch_no.manufacturing_date",
-            "read_only": 1,
         },
-
-        # Sales Order Patient origem
         {
             "fieldname": "sales_order_patient_row",
             "label": "SOP Row",
             "fieldtype": "Data",
-            "read_only": 1,
-            "hidden": 1,
         },
-
-        # Etiqueta individual
         {
             "fieldname": "printed",
-            "label": "Etiq. Impressa",
+            "label": "Impressa",
             "fieldtype": "Check",
             "default": 0,
             "in_list_view": 1,
@@ -200,7 +164,6 @@ DISPENSATION_PATIENT = {
             "fieldname": "printed_at",
             "label": "Impressa em",
             "fieldtype": "Datetime",
-            "read_only": 1,
         },
         {
             "fieldname": "signature",
@@ -226,27 +189,19 @@ DISPENSATION = {
     "module": MODULE,
     "custom": 1,
     "is_submittable": 1,
-    "track_changes": 1,
-    "allow_rename": 0,
     "autoname": "naming_series:",
     "title_field": "sales_order",
     "search_fields": "sales_order,customer",
     "sort_field": "modified",
     "sort_order": "DESC",
-    "document_type": "Document",
     "fields": [
-        # Section explícita no topo (Frappe v15 às vezes não renderiza
-        # campos antes da primeira Section Break)
-        {"fieldname": "section_header", "label": "Identificação", "fieldtype": "Section Break"},
         {
             "fieldname": "naming_series",
             "label": "Série",
             "fieldtype": "Select",
             "options": "DISP-.YYYY.-.#####",
-            "default": "DISP-.YYYY.-.#####",
             "reqd": 1,
         },
-        {"fieldname": "column_break_header", "fieldtype": "Column Break"},
         {
             "fieldname": "status",
             "label": "Status",
@@ -258,9 +213,6 @@ DISPENSATION = {
             "in_standard_filter": 1,
             "allow_on_submit": 1,
         },
-
-        # Origem
-        {"fieldname": "section_origin", "label": "Origem", "fieldtype": "Section Break"},
         {
             "fieldname": "sales_order",
             "label": "Sales Order",
@@ -269,7 +221,13 @@ DISPENSATION = {
             "reqd": 1,
             "in_list_view": 1,
             "in_standard_filter": 1,
-            "description": "1 Sales Order = 1 Dispensation (a entrega do pedido). Unicidade validada no endpoint.",
+        },
+        {
+            "fieldname": "customer",
+            "label": "Cliente",
+            "fieldtype": "Link",
+            "options": "Customer",
+            "in_list_view": 1,
         },
         {
             "fieldname": "delivery_note",
@@ -277,29 +235,9 @@ DISPENSATION = {
             "fieldtype": "Link",
             "options": "Delivery Note",
         },
-        {"fieldname": "column_break_orig", "fieldtype": "Column Break"},
-        {
-            "fieldname": "customer",
-            "label": "Cliente",
-            "fieldtype": "Link",
-            "options": "Customer",
-            "fetch_from": "sales_order.customer",
-            "read_only": 1,
-            "in_list_view": 1,
-        },
-        {
-            "fieldname": "customer_name",
-            "label": "Nome do Cliente",
-            "fieldtype": "Data",
-            "fetch_from": "customer.customer_name",
-            "read_only": 1,
-        },
-
-        # Dispensação
-        {"fieldname": "section_disp", "label": "Dispensação", "fieldtype": "Section Break"},
         {
             "fieldname": "dispensed_at",
-            "label": "Data/Hora",
+            "label": "Data/Hora Dispensação",
             "fieldtype": "Datetime",
             "default": "now",
             "allow_on_submit": 1,
@@ -311,32 +249,16 @@ DISPENSATION = {
             "options": "User",
             "default": "__user",
         },
-        {"fieldname": "column_break_disp", "fieldtype": "Column Break"},
         {
             "fieldname": "total_qty",
             "label": "Total de Ampolas",
             "fieldtype": "Float",
-            "read_only": 1,
         },
         {
             "fieldname": "total_patients",
             "label": "Total de Pacientes",
             "fieldtype": "Int",
-            "read_only": 1,
         },
-
-        # Pacientes (child table)
-        {"fieldname": "section_patients", "label": "Pacientes da Entrega", "fieldtype": "Section Break"},
-        {
-            "fieldname": "patients",
-            "label": "Pacientes",
-            "fieldtype": "Table",
-            "options": "Dispensation Patient",
-            "reqd": 1,
-        },
-
-        # Etiqueta
-        {"fieldname": "section_label", "label": "Etiquetas Zebra", "fieldtype": "Section Break"},
         {
             "fieldname": "label_template",
             "label": "Template Etiqueta",
@@ -345,28 +267,29 @@ DISPENSATION = {
             "default": "50x30mm",
         },
         {
+            "fieldname": "printed_count",
+            "label": "Etiquetas Impressas",
+            "fieldtype": "Data",
+            "allow_on_submit": 1,
+        },
+        {
             "fieldname": "all_printed",
-            "label": "Todas Etiquetas Impressas",
+            "label": "Todas Impressas",
             "fieldtype": "Check",
             "default": 0,
-            "read_only": 1,
             "in_list_view": 1,
             "allow_on_submit": 1,
         },
-        {"fieldname": "column_break_lab", "fieldtype": "Column Break"},
         {
-            "fieldname": "printed_count",
-            "label": "Etiquetas Impressas / Total",
-            "fieldtype": "Data",
-            "read_only": 1,
-            "allow_on_submit": 1,
+            "fieldname": "patients",
+            "label": "Pacientes da Entrega",
+            "fieldtype": "Table",
+            "options": "Dispensation Patient",
+            "reqd": 1,
         },
-
-        # Observações
-        {"fieldname": "section_notes", "label": "Observações", "fieldtype": "Section Break"},
         {
             "fieldname": "notes",
-            "label": "Observações Gerais",
+            "label": "Observações",
             "fieldtype": "Small Text",
         },
     ],
