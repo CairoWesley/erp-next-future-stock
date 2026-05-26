@@ -444,26 +444,21 @@ frappe.ui.form.on('Dispensacao', {
       () => mark_completed(frm),
       'Zebra'
     );
-  }
-});
 
-frappe.ui.form.on('Dispensacao Paciente', {
-  patients_add(frm, cdt, cdn) { /* nada por enquanto */ },
-});
-
-// Botao por linha (gambiarra via menu de linha — usa "Imprimir Esta Linha")
-frappe.ui.form.on('Dispensacao', {
-  setup(frm) {
-    frm.fields_dict.patients.grid.add_custom_button('Imprimir Esta Linha',
-      function() {
-        const selected = frm.fields_dict.patients.grid.get_selected_children();
+    // Botão "Imprimir Esta Linha" no grid child — registra no refresh
+    // (em Frappe v15, frm.fields_dict.patients.grid pode não existir no setup)
+    const patients_field = frm.fields_dict && frm.fields_dict.patients;
+    if (patients_field && patients_field.grid && !patients_field.grid._zebra_btn_added) {
+      patients_field.grid.add_custom_button('Imprimir Esta Linha', function() {
+        const selected = patients_field.grid.get_selected_children();
         if (!selected.length) {
           frappe.msgprint('Selecione 1 linha primeiro.');
           return;
         }
         print_one_label(frm, selected[0].name);
-      }
-    );
+      });
+      patients_field.grid._zebra_btn_added = true;
+    }
   }
 });
 
