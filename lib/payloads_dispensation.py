@@ -52,7 +52,7 @@ LABEL_TEMPLATES = "\n".join([
 
 DISPENSATION_PATIENT = {
     "doctype": "DocType",
-    "name": "Dispensation Patient",
+    "name": "Dispensacao Paciente",
     "module": MODULE,
     "custom": 1,
     "istable": 1,
@@ -185,7 +185,7 @@ DISPENSATION_PATIENT = {
 
 DISPENSATION = {
     "doctype": "DocType",
-    "name": "Dispensation",
+    "name": "Dispensacao",
     "module": MODULE,
     "custom": 1,
     "is_submittable": 1,
@@ -195,6 +195,11 @@ DISPENSATION = {
     "sort_field": "modified",
     "sort_order": "DESC",
     "fields": [
+        {
+            "fieldname": "sb_main",
+            "label": "",
+            "fieldtype": "Section Break",
+        },
         {
             "fieldname": "naming_series",
             "label": "Série",
@@ -284,7 +289,7 @@ DISPENSATION = {
             "fieldname": "patients",
             "label": "Pacientes da Entrega",
             "fieldtype": "Table",
-            "options": "Dispensation Patient",
+            "options": "Dispensacao Paciente",
             "reqd": 1,
         },
         {
@@ -313,7 +318,7 @@ DISPENSATION_SO_FIELDS = [
         "fieldname": "dispensation",
         "label": "Dispensação",
         "fieldtype": "Link",
-        "options": "Dispensation",
+        "options": "Dispensacao",
         "insert_after": "fp_patients",
         "read_only": 1,
         "allow_on_submit": 1,

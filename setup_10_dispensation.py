@@ -55,7 +55,7 @@ if so.docstatus != 1:
     frappe.throw("Sales Order precisa estar submetido.")
 
 # Verifica se ja tem dispensation
-existing = frappe.db.get_value("Dispensation", {"sales_order": so_name}, "name")
+existing = frappe.db.get_value("Dispensacao", {"sales_order": so_name}, "name")
 if existing:
     frappe.response["message"] = {
         "sales_order": so_name,
@@ -122,7 +122,7 @@ else:
             "Rode future_production_allocate_patient_batches antes."
         )
 
-    new_disp = frappe.new_doc("Dispensation")
+    new_disp = frappe.new_doc("Dispensacao")
     new_disp.sales_order = so_name
     new_disp.customer = so.customer
     new_disp.status = "Pendente"
@@ -161,7 +161,7 @@ row_name = data.get("row_name")
 if not disp_name:
     frappe.throw("dispensation e obrigatorio.")
 
-disp = frappe.get_doc("Dispensation", disp_name)
+disp = frappe.get_doc("Dispensacao", disp_name)
 rows = disp.get("patients") or []
 if not rows:
     frappe.throw("Dispensation sem pacientes.")
@@ -262,7 +262,7 @@ disp_name = data.get("dispensation")
 if not disp_name:
     frappe.throw("dispensation e obrigatorio.")
 
-disp = frappe.get_doc("Dispensation", disp_name)
+disp = frappe.get_doc("Dispensacao", disp_name)
 rows = disp.get("patients") or []
 if not rows:
     frappe.throw("Dispensation sem pacientes.")
@@ -365,19 +365,19 @@ row_name = data.get("row_name")
 if not disp_name or not row_name:
     frappe.throw("dispensation + row_name sao obrigatorios.")
 
-frappe.db.set_value("Dispensation Patient", row_name, {
+frappe.db.set_value("Dispensacao Paciente", row_name, {
     "printed": 1,
     "printed_at": frappe.utils.now(),
 }, update_modified=False)
 
 # Conta quantas linhas impressas / total
-total = frappe.db.count("Dispensation Patient", {"parent": disp_name})
-printed = frappe.db.count("Dispensation Patient", {
+total = frappe.db.count("Dispensacao Paciente", {"parent": disp_name})
+printed = frappe.db.count("Dispensacao Paciente", {
     "parent": disp_name, "printed": 1,
 })
 all_printed = 1 if printed >= total and total > 0 else 0
 
-frappe.db.set_value("Dispensation", disp_name, {
+frappe.db.set_value("Dispensacao", disp_name, {
     "printed_count": str(printed) + "/" + str(total),
     "all_printed": all_printed,
 }, update_modified=False)
@@ -404,9 +404,9 @@ disp_name = data.get("dispensation")
 if not disp_name:
     frappe.throw("dispensation e obrigatorio.")
 
-disp = frappe.get_doc("Dispensation", disp_name)
+disp = frappe.get_doc("Dispensacao", disp_name)
 
-frappe.db.set_value("Dispensation", disp_name, {
+frappe.db.set_value("Dispensacao", disp_name, {
     "status": "Dispensado",
 }, update_modified=False)
 
@@ -433,7 +433,7 @@ CLIENT_SCRIPT_DISPENSATION = r'''
 // Client Script — Dispensation
 // 2 botoes: "Imprimir Todas Etiquetas" e "Imprimir Esta Linha" no child grid
 
-frappe.ui.form.on('Dispensation', {
+frappe.ui.form.on('Dispensacao', {
   refresh(frm) {
     if (frm.doc.docstatus === 2) return;
     frm.add_custom_button('Imprimir Todas as Etiquetas Zebra',
@@ -447,12 +447,12 @@ frappe.ui.form.on('Dispensation', {
   }
 });
 
-frappe.ui.form.on('Dispensation Patient', {
+frappe.ui.form.on('Dispensacao Paciente', {
   patients_add(frm, cdt, cdn) { /* nada por enquanto */ },
 });
 
 // Botao por linha (gambiarra via menu de linha — usa "Imprimir Esta Linha")
-frappe.ui.form.on('Dispensation', {
+frappe.ui.form.on('Dispensacao', {
   setup(frm) {
     frm.fields_dict.patients.grid.add_custom_button('Imprimir Esta Linha',
       function() {
@@ -636,8 +636,8 @@ def install() -> int:
     log_section("5/5 — Client Script Dispensation (botões Zebra)")
     try:
         client.upsert_client_script(
-            name="Dispensation - Print Zebra Labels",
-            dt="Dispensation",
+            name="Dispensacao - Print Zebra Labels",
+            dt="Dispensacao",
             script=CLIENT_SCRIPT_DISPENSATION,
         )
     except Exception as exc:
@@ -654,7 +654,7 @@ def uninstall() -> int:
 
     log_section("Removendo Client Script")
     try:
-        client.delete_client_script("Dispensation - Print Zebra Labels")
+        client.delete_client_script("Dispensacao - Print Zebra Labels")
     except Exception as exc:
         log_error(f"Client Script: {exc}")
 
@@ -680,13 +680,13 @@ def uninstall() -> int:
 
     log_section("Removendo DocType Dispensation")
     try:
-        client.delete_doctype("Dispensation")
+        client.delete_doctype("Dispensacao")
     except Exception as exc:
         log_error(f"Dispensation: {exc}")
 
     log_section("Removendo DocType Dispensation Patient (child)")
     try:
-        client.delete_doctype("Dispensation Patient")
+        client.delete_doctype("Dispensacao Paciente")
     except Exception as exc:
         log_error(f"Dispensation Patient: {exc}")
 
