@@ -208,23 +208,69 @@ qty_f = float(target.qty or 0)
 qty = int(qty_f) if qty_f == int(qty_f) else qty_f
 barcode = (disp.sales_order or "") + "|" + (target.patient or "") + "|" + (target.batch_no or "")
 
-if (disp.label_template or "50x30mm") == "100x50mm":
-    zpl = (
-        "^XA" + "^CI28" + "^PW800^LL400" +
-        "^FO30,20^A0N,36,36^FD" + patient_name + "^FS" +
-        "^FO30,65^A0N,28,28^FDCPF: " + cpf_fmt + "^FS" +
-        "^FO30,105^A0N,32,32^FD" + item_name + "^FS" +
-        "^FO30,150^A0N,26,26^FDLote: " + batch + "^FS" +
-        "^FO30,185^A0N,26,26^FDValidade: " + val + "^FS" +
-        "^FO30,220^A0N,26,26^FDFabricacao: " + fab + "^FS" +
-        "^FO30,255^A0N,28,28^FDQtd: " + str(qty) + " ampolas^FS" +
-        "^FO30,300^BCN,60,Y,N,N^FD" + barcode + "^FS" +
-        "^FO500,20^A0N,18,18^FD" + (disp.sales_order or "") + "^FS" +
-        "^FO500,42^A0N,18,18^FD" + (disp.name or "") + "^FS" +
-        "^XZ"
-    )
-else:
-    zpl = (
+
+def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode, so, disp_name):
+    # Registro de tamanhos: nome -> (largura_mm, altura_mm, orientacao).
+    # Para um novo tamanho: adicione aqui e na opcao do campo label_template
+    # (LABEL_TEMPLATES em lib/payloads_dispensation.py). 203 dpi ~= 8 dots/mm.
+    sizes = {
+        "25x60mm": (25, 60, "portrait"),
+        "50x30mm": (50, 30, "landscape"),
+        "100x50mm": (100, 50, "landscape"),
+    }
+    size = sizes.get(tpl, (25, 60, "portrait"))
+    w_mm = size[0]
+    h_mm = size[1]
+    orient = size[2]
+    pw = w_mm * 8
+    ll = h_mm * 8
+
+    if orient == "portrait":
+        # Texto girado 90 graus (A0R): cabe nome longo ao longo da altura (ll).
+        # A altura da fonte cresce em +x; linhas empilhadas pela largura (pw),
+        # com posicoes proporcionais para escalar a outros tamanhos retrato.
+        m = 16
+        nm_x = int(pw * 0.86)
+        cp_x = int(pw * 0.72)
+        it_x = int(pw * 0.58)
+        lo_x = int(pw * 0.45)
+        va_x = int(pw * 0.32)
+        bc_x = int(pw * 0.09)
+        nm_h = int(pw * 0.14)
+        cp_h = int(pw * 0.10)
+        it_h = int(pw * 0.11)
+        lo_h = int(pw * 0.09)
+        va_h = int(pw * 0.09)
+        bc_h = int(pw * 0.20)
+        return (
+            "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
+            "^FO" + str(nm_x) + "," + str(m) + "^A0R," + str(nm_h) + "," + str(nm_h) + "^FD" + patient_name + "^FS" +
+            "^FO" + str(cp_x) + "," + str(m) + "^A0R," + str(cp_h) + "," + str(cp_h) + "^FDCPF: " + cpf_fmt + "^FS" +
+            "^FO" + str(it_x) + "," + str(m) + "^A0R," + str(it_h) + "," + str(it_h) + "^FD" + item_name + "^FS" +
+            "^FO" + str(lo_x) + "," + str(m) + "^A0R," + str(lo_h) + "," + str(lo_h) + "^FDLote: " + batch + "^FS" +
+            "^FO" + str(va_x) + "," + str(m) + "^A0R," + str(va_h) + "," + str(va_h) + "^FDVal: " + val + "   Qtd: " + str(qty) + "^FS" +
+            "^FO" + str(bc_x) + "," + str(m) + "^BCR," + str(bc_h) + ",N,N,N^FD" + barcode + "^FS" +
+            "^XZ"
+        )
+
+    if w_mm == 100 and h_mm == 50:
+        return (
+            "^XA" + "^CI28" + "^PW800^LL400" +
+            "^FO30,20^A0N,36,36^FD" + patient_name + "^FS" +
+            "^FO30,65^A0N,28,28^FDCPF: " + cpf_fmt + "^FS" +
+            "^FO30,105^A0N,32,32^FD" + item_name + "^FS" +
+            "^FO30,150^A0N,26,26^FDLote: " + batch + "^FS" +
+            "^FO30,185^A0N,26,26^FDValidade: " + val + "^FS" +
+            "^FO30,220^A0N,26,26^FDFabricacao: " + fab + "^FS" +
+            "^FO30,255^A0N,28,28^FDQtd: " + str(qty) + " ampolas^FS" +
+            "^FO30,300^BCN,60,Y,N,N^FD" + barcode + "^FS" +
+            "^FO500,20^A0N,18,18^FD" + so + "^FS" +
+            "^FO500,42^A0N,18,18^FD" + disp_name + "^FS" +
+            "^XZ"
+        )
+
+    # landscape padrao 50x30mm
+    return (
         "^XA" + "^CI28" + "^PW400^LL240" +
         "^FO15,10^A0N,24,24^FD" + patient_name + "^FS" +
         "^FO15,40^A0N,18,18^FDCPF: " + cpf_fmt + "^FS" +
@@ -234,6 +280,13 @@ else:
         "^FO15,140^BCN,55,Y,N,N^FD" + barcode + "^FS" +
         "^XZ"
     )
+
+
+zpl = build_zpl(
+    disp.label_template or "25x60mm",
+    patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode,
+    disp.sales_order or "", disp.name or "",
+)
 
 frappe.response["message"] = {
     "dispensation": disp.name,
@@ -283,7 +336,81 @@ def fmt_date(d):
         return s[8:10] + "/" + s[5:7] + "/" + s[:4]
     return s
 
-template = disp.label_template or "50x30mm"
+
+def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode, so, disp_name):
+    # Registro de tamanhos: nome -> (largura_mm, altura_mm, orientacao).
+    # Para um novo tamanho: adicione aqui e na opcao do campo label_template
+    # (LABEL_TEMPLATES em lib/payloads_dispensation.py). 203 dpi ~= 8 dots/mm.
+    sizes = {
+        "25x60mm": (25, 60, "portrait"),
+        "50x30mm": (50, 30, "landscape"),
+        "100x50mm": (100, 50, "landscape"),
+    }
+    size = sizes.get(tpl, (25, 60, "portrait"))
+    w_mm = size[0]
+    h_mm = size[1]
+    orient = size[2]
+    pw = w_mm * 8
+    ll = h_mm * 8
+
+    if orient == "portrait":
+        # Texto girado 90 graus (A0R): cabe nome longo ao longo da altura (ll).
+        # A altura da fonte cresce em +x; linhas empilhadas pela largura (pw),
+        # com posicoes proporcionais para escalar a outros tamanhos retrato.
+        m = 16
+        nm_x = int(pw * 0.86)
+        cp_x = int(pw * 0.72)
+        it_x = int(pw * 0.58)
+        lo_x = int(pw * 0.45)
+        va_x = int(pw * 0.32)
+        bc_x = int(pw * 0.09)
+        nm_h = int(pw * 0.14)
+        cp_h = int(pw * 0.10)
+        it_h = int(pw * 0.11)
+        lo_h = int(pw * 0.09)
+        va_h = int(pw * 0.09)
+        bc_h = int(pw * 0.20)
+        return (
+            "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
+            "^FO" + str(nm_x) + "," + str(m) + "^A0R," + str(nm_h) + "," + str(nm_h) + "^FD" + patient_name + "^FS" +
+            "^FO" + str(cp_x) + "," + str(m) + "^A0R," + str(cp_h) + "," + str(cp_h) + "^FDCPF: " + cpf_fmt + "^FS" +
+            "^FO" + str(it_x) + "," + str(m) + "^A0R," + str(it_h) + "," + str(it_h) + "^FD" + item_name + "^FS" +
+            "^FO" + str(lo_x) + "," + str(m) + "^A0R," + str(lo_h) + "," + str(lo_h) + "^FDLote: " + batch + "^FS" +
+            "^FO" + str(va_x) + "," + str(m) + "^A0R," + str(va_h) + "," + str(va_h) + "^FDVal: " + val + "   Qtd: " + str(qty) + "^FS" +
+            "^FO" + str(bc_x) + "," + str(m) + "^BCR," + str(bc_h) + ",N,N,N^FD" + barcode + "^FS" +
+            "^XZ"
+        )
+
+    if w_mm == 100 and h_mm == 50:
+        return (
+            "^XA" + "^CI28" + "^PW800^LL400" +
+            "^FO30,20^A0N,36,36^FD" + patient_name + "^FS" +
+            "^FO30,65^A0N,28,28^FDCPF: " + cpf_fmt + "^FS" +
+            "^FO30,105^A0N,32,32^FD" + item_name + "^FS" +
+            "^FO30,150^A0N,26,26^FDLote: " + batch + "^FS" +
+            "^FO30,185^A0N,26,26^FDValidade: " + val + "^FS" +
+            "^FO30,220^A0N,26,26^FDFabricacao: " + fab + "^FS" +
+            "^FO30,255^A0N,28,28^FDQtd: " + str(qty) + " ampolas^FS" +
+            "^FO30,300^BCN,60,Y,N,N^FD" + barcode + "^FS" +
+            "^FO500,20^A0N,18,18^FD" + so + "^FS" +
+            "^FO500,42^A0N,18,18^FD" + disp_name + "^FS" +
+            "^XZ"
+        )
+
+    # landscape padrao 50x30mm
+    return (
+        "^XA" + "^CI28" + "^PW400^LL240" +
+        "^FO15,10^A0N,24,24^FD" + patient_name + "^FS" +
+        "^FO15,40^A0N,18,18^FDCPF: " + cpf_fmt + "^FS" +
+        "^FO15,65^A0N,20,20^FD" + item_name + "^FS" +
+        "^FO15,90^A0N,18,18^FDLote: " + batch + "^FS" +
+        "^FO15,113^A0N,18,18^FDVal: " + val + " Qty: " + str(qty) + "^FS" +
+        "^FO15,140^BCN,55,Y,N,N^FD" + barcode + "^FS" +
+        "^XZ"
+    )
+
+
+template = disp.label_template or "25x60mm"
 all_zpl_parts = []
 labels_info = []
 
@@ -303,32 +430,11 @@ for row in rows:
     qty = int(qty_f) if qty_f == int(qty_f) else qty_f
     barcode = (disp.sales_order or "") + "|" + (row.patient or "") + "|" + (row.batch_no or "")
 
-    if template == "100x50mm":
-        zpl = (
-            "^XA" + "^CI28" + "^PW800^LL400" +
-            "^FO30,20^A0N,36,36^FD" + patient_name + "^FS" +
-            "^FO30,65^A0N,28,28^FDCPF: " + cpf_fmt + "^FS" +
-            "^FO30,105^A0N,32,32^FD" + item_name + "^FS" +
-            "^FO30,150^A0N,26,26^FDLote: " + batch + "^FS" +
-            "^FO30,185^A0N,26,26^FDValidade: " + val + "^FS" +
-            "^FO30,220^A0N,26,26^FDFabricacao: " + fab + "^FS" +
-            "^FO30,255^A0N,28,28^FDQtd: " + str(qty) + " ampolas^FS" +
-            "^FO30,300^BCN,60,Y,N,N^FD" + barcode + "^FS" +
-            "^FO500,20^A0N,18,18^FD" + (disp.sales_order or "") + "^FS" +
-            "^FO500,42^A0N,18,18^FD" + (disp.name or "") + "^FS" +
-            "^XZ"
-        )
-    else:
-        zpl = (
-            "^XA" + "^CI28" + "^PW400^LL240" +
-            "^FO15,10^A0N,24,24^FD" + patient_name + "^FS" +
-            "^FO15,40^A0N,18,18^FDCPF: " + cpf_fmt + "^FS" +
-            "^FO15,65^A0N,20,20^FD" + item_name + "^FS" +
-            "^FO15,90^A0N,18,18^FDLote: " + batch + "^FS" +
-            "^FO15,113^A0N,18,18^FDVal: " + val + " Qty: " + str(qty) + "^FS" +
-            "^FO15,140^BCN,55,Y,N,N^FD" + barcode + "^FS" +
-            "^XZ"
-        )
+    zpl = build_zpl(
+        template,
+        patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode,
+        disp.sales_order or "", disp.name or "",
+    )
 
     all_zpl_parts.append(zpl)
     labels_info.append({
@@ -372,20 +478,22 @@ frappe.db.set_value("Dispensacao Paciente", row_name, {
 
 # Conta quantas linhas impressas / total
 total = frappe.db.count("Dispensacao Paciente", {"parent": disp_name})
-printed = frappe.db.count("Dispensacao Paciente", {
+# NOTA: "printed" e nome reservado no RestrictedPython (mecanismo de print),
+# por isso a variavel se chama printed_n. As chaves de string "printed" sao ok.
+printed_n = frappe.db.count("Dispensacao Paciente", {
     "parent": disp_name, "printed": 1,
 })
-all_printed = 1 if printed >= total and total > 0 else 0
+all_printed = 1 if printed_n >= total and total > 0 else 0
 
 frappe.db.set_value("Dispensacao", disp_name, {
-    "printed_count": str(printed) + "/" + str(total),
+    "printed_count": str(printed_n) + "/" + str(total),
     "all_printed": all_printed,
 }, update_modified=False)
 
 frappe.response["message"] = {
     "dispensation": disp_name,
     "row_name": row_name,
-    "printed": str(printed) + "/" + str(total),
+    "printed": str(printed_n) + "/" + str(total),
     "all_printed": all_printed,
 }
 '''.strip()
@@ -563,12 +671,21 @@ function send_to_zebra(frm, zpl, labels, mark_all) {
       return;
     }
     try {
-      // SEM header Content-Type => text/plain => simple request => sem preflight CORS
-      const wr = await fetch(base + '/write', {
-        method: 'POST',
-        body: JSON.stringify({ device: device, data: zpl })
-      });
-      if (!wr.ok) throw new Error('HTTP ' + wr.status);
+      // SEM header Content-Type => text/plain => simple request => sem preflight CORS.
+      // Retry: o servico as vezes responde 500 quando a impressora ainda processa
+      // o trabalho anterior; tentamos ate 3x antes de cair no fallback do dialog.
+      let wr = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          wr = await fetch(base + '/write', {
+            method: 'POST',
+            body: JSON.stringify({ device: device, data: zpl })
+          });
+          if (wr.ok) break;
+        } catch (e) { wr = null; }
+        await new Promise((res) => setTimeout(res, 400));
+      }
+      if (!wr || !wr.ok) throw new Error('HTTP ' + (wr ? wr.status : 'sem resposta'));
       frappe.show_alert({ message: 'Enviado para a Zebra (' + (device.name || device.uid) + ').', indicator: 'green' });
       mark_printed_rows(frm, labels);
     } catch (e) {

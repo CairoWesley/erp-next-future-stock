@@ -41,6 +41,7 @@ STATUS_DISPENSATION = "\n".join([
 ])
 
 LABEL_TEMPLATES = "\n".join([
+    "25x60mm",
     "50x30mm",
     "100x50mm",
 ])
@@ -269,7 +270,7 @@ DISPENSATION = {
             "label": "Template Etiqueta",
             "fieldtype": "Select",
             "options": LABEL_TEMPLATES,
-            "default": "50x30mm",
+            "default": "25x60mm",
         },
         {
             "fieldname": "printed_count",
