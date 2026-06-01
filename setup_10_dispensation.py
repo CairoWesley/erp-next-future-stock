@@ -210,10 +210,11 @@ barcode = (disp.sales_order or "") + "|" + (target.patient or "") + "|" + (targe
 
 
 def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, prescriber_name, council, state, number):
-    # MODELO UNICO (Receituario) escalado para TODOS os tamanhos.
-    # Referencia 100x50mm (800x400). Fontes escalam pela largura (sx); posicoes
-    # verticais pela altura (sy). Novo tamanho: adicione aqui e em LABEL_TEMPLATES
-    # (lib/payloads_dispensation.py). 203 dpi ~= 8 dots/mm.
+    # MODELO UNICO (Receituario), escalado e ORIENTADO pelo lado MAIOR da etiqueta:
+    #   largura >= altura -> texto horizontal (^A0N) ao longo da largura
+    #   altura  >  largura -> texto girado 90 (^A0R) ao longo da altura
+    # Novo tamanho: adicione aqui e em LABEL_TEMPLATES (lib/payloads_dispensation.py).
+    # 203 dpi ~= 8 dots/mm.
     sizes = {
         "25x60mm": (25, 60),
         "30x60mm": (30, 60),
@@ -232,44 +233,66 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
         pq = 1
     endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
     crm = (council or "CRM") + " " + (state or "") + "/" + (number or "")
-    sx = pw / 800.0
-    sy = ll / 400.0
-    x = int(20 * sx)
-    if x < 6:
-        x = 6
-    fw = pw - 2 * x
-    f_reg = int(24 * sx) if int(24 * sx) >= 6 else 6
-    f_nm = int(32 * sx) if int(32 * sx) >= 8 else 8
-    f_it = int(26 * sx) if int(26 * sx) >= 6 else 6
-    f_lo = int(24 * sx) if int(24 * sx) >= 6 else 6
-    f_fv = int(24 * sx) if int(24 * sx) >= 6 else 6
-    f_dr = int(24 * sx) if int(24 * sx) >= 6 else 6
-    f_crm = int(22 * sx) if int(22 * sx) >= 6 else 6
-    f_uso = int(22 * sx) if int(22 * sx) >= 6 else 6
-    f_man = int(22 * sx) if int(22 * sx) >= 6 else 6
-    f_end = int(20 * sx) if int(20 * sx) >= 6 else 6
-    y_reg = int(14 * sy)
-    y_nm = int(46 * sy)
-    y_it = int(86 * sy)
-    y_lo = int(120 * sy)
-    y_fv = int(152 * sy)
-    y_dr = int(184 * sy)
-    y_crm = int(214 * sy)
-    y_uso = int(246 * sy)
-    y_man = int(276 * sy)
-    y_end = int(316 * sy)
+
+    if w_mm >= h_mm:
+        # HORIZONTAL: referencia 100x50mm (800x400); fontes pela largura (sx),
+        # posicoes verticais pela altura (sy).
+        sx = pw / 800.0
+        sy = ll / 400.0
+        x = int(20 * sx)
+        if x < 6:
+            x = 6
+        fw = pw - 2 * x
+        f_reg = int(24 * sx) if int(24 * sx) >= 6 else 6
+        f_nm = int(32 * sx) if int(32 * sx) >= 8 else 8
+        f_it = int(26 * sx) if int(26 * sx) >= 6 else 6
+        f_lo = int(24 * sx) if int(24 * sx) >= 6 else 6
+        f_fv = int(24 * sx) if int(24 * sx) >= 6 else 6
+        f_dr = int(24 * sx) if int(24 * sx) >= 6 else 6
+        f_crm = int(22 * sx) if int(22 * sx) >= 6 else 6
+        f_uso = int(22 * sx) if int(22 * sx) >= 6 else 6
+        f_man = int(22 * sx) if int(22 * sx) >= 6 else 6
+        f_end = int(20 * sx) if int(20 * sx) >= 6 else 6
+        return (
+            "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
+            "^FO" + str(x) + "," + str(int(14 * sy)) + "^A0N," + str(f_reg) + "," + str(f_reg) + "^FDREGISTRO: " + registro + "^FS" +
+            "^FO" + str(x) + "," + str(int(46 * sy)) + "^A0N," + str(f_nm) + "," + str(f_nm) + "^FD" + patient_name + "^FS" +
+            "^FO" + str(x) + "," + str(int(86 * sy)) + "^A0N," + str(f_it) + "," + str(f_it) + "^FD" + item_name + "^FS" +
+            "^FO" + str(x) + "," + str(int(120 * sy)) + "^A0N," + str(f_lo) + "," + str(f_lo) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
+            "^FO" + str(x) + "," + str(int(152 * sy)) + "^A0N," + str(f_fv) + "," + str(f_fv) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
+            "^FO" + str(x) + "," + str(int(184 * sy)) + "^A0N," + str(f_dr) + "," + str(f_dr) + "^FDDR(A) " + prescriber_name + "^FS" +
+            "^FO" + str(x) + "," + str(int(214 * sy)) + "^A0N," + str(f_crm) + "," + str(f_crm) + "^FD" + crm + "^FS" +
+            "^FO" + str(x) + "," + str(int(246 * sy)) + "^A0N," + str(f_uso) + "," + str(f_uso) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+            "^FO" + str(x) + "," + str(int(276 * sy)) + "^A0N," + str(f_man) + "," + str(f_man) + "^FDMANTER DE 2°C A 8°C^FS" +
+            "^FO" + str(x) + "," + str(int(316 * sy)) + "^A0N," + str(f_end) + "," + str(f_end) + "^FB" + str(fw) + ",2,0,L,0^FD" + endereco + "^FS" +
+            "^PQ" + str(pq) + "^XZ"
+        )
+
+    # GIRADO 90 (^A0R): linhas empilhadas pela largura (pw), texto ao longo da altura (ll).
+    step = pw // 11
+    fb = int(step * 0.72)
+    if fb < 10:
+        fb = 10
+    fn = fb + 4
+    fe = int(fb * 0.85)
+    if fe < 9:
+        fe = 9
+    y = int(ll * 0.03)
+    if y < 8:
+        y = 8
+    top = pw - step
     return (
         "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-        "^FO" + str(x) + "," + str(y_reg) + "^A0N," + str(f_reg) + "," + str(f_reg) + "^FDREGISTRO: " + registro + "^FS" +
-        "^FO" + str(x) + "," + str(y_nm) + "^A0N," + str(f_nm) + "," + str(f_nm) + "^FD" + patient_name + "^FS" +
-        "^FO" + str(x) + "," + str(y_it) + "^A0N," + str(f_it) + "," + str(f_it) + "^FD" + item_name + "^FS" +
-        "^FO" + str(x) + "," + str(y_lo) + "^A0N," + str(f_lo) + "," + str(f_lo) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
-        "^FO" + str(x) + "," + str(y_fv) + "^A0N," + str(f_fv) + "," + str(f_fv) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
-        "^FO" + str(x) + "," + str(y_dr) + "^A0N," + str(f_dr) + "," + str(f_dr) + "^FDDR(A) " + prescriber_name + "^FS" +
-        "^FO" + str(x) + "," + str(y_crm) + "^A0N," + str(f_crm) + "," + str(f_crm) + "^FD" + crm + "^FS" +
-        "^FO" + str(x) + "," + str(y_uso) + "^A0N," + str(f_uso) + "," + str(f_uso) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
-        "^FO" + str(x) + "," + str(y_man) + "^A0N," + str(f_man) + "," + str(f_man) + "^FDMANTER DE 2°C A 8°C^FS" +
-        "^FO" + str(x) + "," + str(y_end) + "^A0N," + str(f_end) + "," + str(f_end) + "^FB" + str(fw) + ",2,0,L,0^FD" + endereco + "^FS" +
+        "^FO" + str(top) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDREGISTRO: " + registro + "^FS" +
+        "^FO" + str(top - step) + "," + str(y) + "^A0R," + str(fn) + "," + str(fn) + "^FD" + patient_name + "^FS" +
+        "^FO" + str(top - 2 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FD" + item_name + "^FS" +
+        "^FO" + str(top - 3 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
+        "^FO" + str(top - 4 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
+        "^FO" + str(top - 5 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDDR(A) " + prescriber_name + "^FS" +
+        "^FO" + str(top - 6 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FD" + crm + "^FS" +
+        "^FO" + str(top - 7 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+        "^FO" + str(top - 8 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDMANTER DE 2°C A 8°C^FS" +
+        "^FO" + str(top - 9 * step) + "," + str(y) + "^A0R," + str(fe) + "," + str(fe) + "^FD" + endereco + "^FS" +
         "^PQ" + str(pq) + "^XZ"
     )
 
@@ -335,10 +358,11 @@ def fmt_date(d):
 
 
 def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, prescriber_name, council, state, number):
-    # MODELO UNICO (Receituario) escalado para TODOS os tamanhos.
-    # Referencia 100x50mm (800x400). Fontes escalam pela largura (sx); posicoes
-    # verticais pela altura (sy). Novo tamanho: adicione aqui e em LABEL_TEMPLATES
-    # (lib/payloads_dispensation.py). 203 dpi ~= 8 dots/mm.
+    # MODELO UNICO (Receituario), escalado e ORIENTADO pelo lado MAIOR da etiqueta:
+    #   largura >= altura -> texto horizontal (^A0N) ao longo da largura
+    #   altura  >  largura -> texto girado 90 (^A0R) ao longo da altura
+    # Novo tamanho: adicione aqui e em LABEL_TEMPLATES (lib/payloads_dispensation.py).
+    # 203 dpi ~= 8 dots/mm.
     sizes = {
         "25x60mm": (25, 60),
         "30x60mm": (30, 60),
@@ -357,44 +381,66 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
         pq = 1
     endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
     crm = (council or "CRM") + " " + (state or "") + "/" + (number or "")
-    sx = pw / 800.0
-    sy = ll / 400.0
-    x = int(20 * sx)
-    if x < 6:
-        x = 6
-    fw = pw - 2 * x
-    f_reg = int(24 * sx) if int(24 * sx) >= 6 else 6
-    f_nm = int(32 * sx) if int(32 * sx) >= 8 else 8
-    f_it = int(26 * sx) if int(26 * sx) >= 6 else 6
-    f_lo = int(24 * sx) if int(24 * sx) >= 6 else 6
-    f_fv = int(24 * sx) if int(24 * sx) >= 6 else 6
-    f_dr = int(24 * sx) if int(24 * sx) >= 6 else 6
-    f_crm = int(22 * sx) if int(22 * sx) >= 6 else 6
-    f_uso = int(22 * sx) if int(22 * sx) >= 6 else 6
-    f_man = int(22 * sx) if int(22 * sx) >= 6 else 6
-    f_end = int(20 * sx) if int(20 * sx) >= 6 else 6
-    y_reg = int(14 * sy)
-    y_nm = int(46 * sy)
-    y_it = int(86 * sy)
-    y_lo = int(120 * sy)
-    y_fv = int(152 * sy)
-    y_dr = int(184 * sy)
-    y_crm = int(214 * sy)
-    y_uso = int(246 * sy)
-    y_man = int(276 * sy)
-    y_end = int(316 * sy)
+
+    if w_mm >= h_mm:
+        # HORIZONTAL: referencia 100x50mm (800x400); fontes pela largura (sx),
+        # posicoes verticais pela altura (sy).
+        sx = pw / 800.0
+        sy = ll / 400.0
+        x = int(20 * sx)
+        if x < 6:
+            x = 6
+        fw = pw - 2 * x
+        f_reg = int(24 * sx) if int(24 * sx) >= 6 else 6
+        f_nm = int(32 * sx) if int(32 * sx) >= 8 else 8
+        f_it = int(26 * sx) if int(26 * sx) >= 6 else 6
+        f_lo = int(24 * sx) if int(24 * sx) >= 6 else 6
+        f_fv = int(24 * sx) if int(24 * sx) >= 6 else 6
+        f_dr = int(24 * sx) if int(24 * sx) >= 6 else 6
+        f_crm = int(22 * sx) if int(22 * sx) >= 6 else 6
+        f_uso = int(22 * sx) if int(22 * sx) >= 6 else 6
+        f_man = int(22 * sx) if int(22 * sx) >= 6 else 6
+        f_end = int(20 * sx) if int(20 * sx) >= 6 else 6
+        return (
+            "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
+            "^FO" + str(x) + "," + str(int(14 * sy)) + "^A0N," + str(f_reg) + "," + str(f_reg) + "^FDREGISTRO: " + registro + "^FS" +
+            "^FO" + str(x) + "," + str(int(46 * sy)) + "^A0N," + str(f_nm) + "," + str(f_nm) + "^FD" + patient_name + "^FS" +
+            "^FO" + str(x) + "," + str(int(86 * sy)) + "^A0N," + str(f_it) + "," + str(f_it) + "^FD" + item_name + "^FS" +
+            "^FO" + str(x) + "," + str(int(120 * sy)) + "^A0N," + str(f_lo) + "," + str(f_lo) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
+            "^FO" + str(x) + "," + str(int(152 * sy)) + "^A0N," + str(f_fv) + "," + str(f_fv) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
+            "^FO" + str(x) + "," + str(int(184 * sy)) + "^A0N," + str(f_dr) + "," + str(f_dr) + "^FDDR(A) " + prescriber_name + "^FS" +
+            "^FO" + str(x) + "," + str(int(214 * sy)) + "^A0N," + str(f_crm) + "," + str(f_crm) + "^FD" + crm + "^FS" +
+            "^FO" + str(x) + "," + str(int(246 * sy)) + "^A0N," + str(f_uso) + "," + str(f_uso) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+            "^FO" + str(x) + "," + str(int(276 * sy)) + "^A0N," + str(f_man) + "," + str(f_man) + "^FDMANTER DE 2°C A 8°C^FS" +
+            "^FO" + str(x) + "," + str(int(316 * sy)) + "^A0N," + str(f_end) + "," + str(f_end) + "^FB" + str(fw) + ",2,0,L,0^FD" + endereco + "^FS" +
+            "^PQ" + str(pq) + "^XZ"
+        )
+
+    # GIRADO 90 (^A0R): linhas empilhadas pela largura (pw), texto ao longo da altura (ll).
+    step = pw // 11
+    fb = int(step * 0.72)
+    if fb < 10:
+        fb = 10
+    fn = fb + 4
+    fe = int(fb * 0.85)
+    if fe < 9:
+        fe = 9
+    y = int(ll * 0.03)
+    if y < 8:
+        y = 8
+    top = pw - step
     return (
         "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-        "^FO" + str(x) + "," + str(y_reg) + "^A0N," + str(f_reg) + "," + str(f_reg) + "^FDREGISTRO: " + registro + "^FS" +
-        "^FO" + str(x) + "," + str(y_nm) + "^A0N," + str(f_nm) + "," + str(f_nm) + "^FD" + patient_name + "^FS" +
-        "^FO" + str(x) + "," + str(y_it) + "^A0N," + str(f_it) + "," + str(f_it) + "^FD" + item_name + "^FS" +
-        "^FO" + str(x) + "," + str(y_lo) + "^A0N," + str(f_lo) + "," + str(f_lo) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
-        "^FO" + str(x) + "," + str(y_fv) + "^A0N," + str(f_fv) + "," + str(f_fv) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
-        "^FO" + str(x) + "," + str(y_dr) + "^A0N," + str(f_dr) + "," + str(f_dr) + "^FDDR(A) " + prescriber_name + "^FS" +
-        "^FO" + str(x) + "," + str(y_crm) + "^A0N," + str(f_crm) + "," + str(f_crm) + "^FD" + crm + "^FS" +
-        "^FO" + str(x) + "," + str(y_uso) + "^A0N," + str(f_uso) + "," + str(f_uso) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
-        "^FO" + str(x) + "," + str(y_man) + "^A0N," + str(f_man) + "," + str(f_man) + "^FDMANTER DE 2°C A 8°C^FS" +
-        "^FO" + str(x) + "," + str(y_end) + "^A0N," + str(f_end) + "," + str(f_end) + "^FB" + str(fw) + ",2,0,L,0^FD" + endereco + "^FS" +
+        "^FO" + str(top) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDREGISTRO: " + registro + "^FS" +
+        "^FO" + str(top - step) + "," + str(y) + "^A0R," + str(fn) + "," + str(fn) + "^FD" + patient_name + "^FS" +
+        "^FO" + str(top - 2 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FD" + item_name + "^FS" +
+        "^FO" + str(top - 3 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
+        "^FO" + str(top - 4 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
+        "^FO" + str(top - 5 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDDR(A) " + prescriber_name + "^FS" +
+        "^FO" + str(top - 6 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FD" + crm + "^FS" +
+        "^FO" + str(top - 7 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+        "^FO" + str(top - 8 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDMANTER DE 2°C A 8°C^FS" +
+        "^FO" + str(top - 9 * step) + "," + str(y) + "^A0R," + str(fe) + "," + str(fe) + "^FD" + endereco + "^FS" +
         "^PQ" + str(pq) + "^XZ"
     )
 
