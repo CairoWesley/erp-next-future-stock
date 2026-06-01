@@ -270,29 +270,34 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
 
     # GIRADO 90 (^A0R): linhas empilhadas pela largura (pw), texto ao longo da altura (ll).
     step = pw // 11
-    fb = int(step * 0.72)
-    if fb < 10:
-        fb = 10
-    fn = fb + 4
-    fe = int(fb * 0.85)
-    if fe < 9:
-        fe = 9
+    fb = int(step * 0.8)
+    if fb < 11:
+        fb = 11
+    fw_c = int(fb * 0.65)
+    if fw_c < 7:
+        fw_c = 7
+    fn = fb + 2
+    fn_c = int(fn * 0.65)
+    fe = fb - 1
+    if fe < 10:
+        fe = 10
+    fe_c = int(fe * 0.65)
     y = int(ll * 0.03)
     if y < 8:
         y = 8
     top = pw - step
     return (
         "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-        "^FO" + str(top) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDREGISTRO: " + registro + "^FS" +
-        "^FO" + str(top - step) + "," + str(y) + "^A0R," + str(fn) + "," + str(fn) + "^FD" + patient_name + "^FS" +
-        "^FO" + str(top - 2 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FD" + item_name + "^FS" +
-        "^FO" + str(top - 3 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
-        "^FO" + str(top - 4 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
-        "^FO" + str(top - 5 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDDR(A) " + prescriber_name + "^FS" +
-        "^FO" + str(top - 6 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FD" + crm + "^FS" +
-        "^FO" + str(top - 7 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
-        "^FO" + str(top - 8 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDMANTER DE 2°C A 8°C^FS" +
-        "^FO" + str(top - 9 * step) + "," + str(y) + "^A0R," + str(fe) + "," + str(fe) + "^FD" + endereco + "^FS" +
+        "^FO" + str(top) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDREGISTRO: " + registro + "^FS" +
+        "^FO" + str(top - step) + "," + str(y) + "^A0R," + str(fn) + "," + str(fn_c) + "^FD" + patient_name + "^FS" +
+        "^FO" + str(top - 2 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + item_name + "^FS" +
+        "^FO" + str(top - 3 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
+        "^FO" + str(top - 4 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
+        "^FO" + str(top - 5 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDDR(A) " + prescriber_name + "^FS" +
+        "^FO" + str(top - 6 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + crm + "^FS" +
+        "^FO" + str(top - 7 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+        "^FO" + str(top - 8 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDMANTER DE 2°C A 8°C^FS" +
+        "^FO" + str(top - 9 * step) + "," + str(y) + "^A0R," + str(fe) + "," + str(fe_c) + "^FD" + endereco + "^FS" +
         "^PQ" + str(pq) + "^XZ"
     )
 
@@ -418,29 +423,34 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
 
     # GIRADO 90 (^A0R): linhas empilhadas pela largura (pw), texto ao longo da altura (ll).
     step = pw // 11
-    fb = int(step * 0.72)
-    if fb < 10:
-        fb = 10
-    fn = fb + 4
-    fe = int(fb * 0.85)
-    if fe < 9:
-        fe = 9
+    fb = int(step * 0.8)
+    if fb < 11:
+        fb = 11
+    fw_c = int(fb * 0.65)
+    if fw_c < 7:
+        fw_c = 7
+    fn = fb + 2
+    fn_c = int(fn * 0.65)
+    fe = fb - 1
+    if fe < 10:
+        fe = 10
+    fe_c = int(fe * 0.65)
     y = int(ll * 0.03)
     if y < 8:
         y = 8
     top = pw - step
     return (
         "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-        "^FO" + str(top) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDREGISTRO: " + registro + "^FS" +
-        "^FO" + str(top - step) + "," + str(y) + "^A0R," + str(fn) + "," + str(fn) + "^FD" + patient_name + "^FS" +
-        "^FO" + str(top - 2 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FD" + item_name + "^FS" +
-        "^FO" + str(top - 3 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
-        "^FO" + str(top - 4 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
-        "^FO" + str(top - 5 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDDR(A) " + prescriber_name + "^FS" +
-        "^FO" + str(top - 6 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FD" + crm + "^FS" +
-        "^FO" + str(top - 7 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
-        "^FO" + str(top - 8 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FDMANTER DE 2°C A 8°C^FS" +
-        "^FO" + str(top - 9 * step) + "," + str(y) + "^A0R," + str(fe) + "," + str(fe) + "^FD" + endereco + "^FS" +
+        "^FO" + str(top) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDREGISTRO: " + registro + "^FS" +
+        "^FO" + str(top - step) + "," + str(y) + "^A0R," + str(fn) + "," + str(fn_c) + "^FD" + patient_name + "^FS" +
+        "^FO" + str(top - 2 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + item_name + "^FS" +
+        "^FO" + str(top - 3 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
+        "^FO" + str(top - 4 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
+        "^FO" + str(top - 5 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDDR(A) " + prescriber_name + "^FS" +
+        "^FO" + str(top - 6 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + crm + "^FS" +
+        "^FO" + str(top - 7 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+        "^FO" + str(top - 8 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDMANTER DE 2°C A 8°C^FS" +
+        "^FO" + str(top - 9 * step) + "," + str(y) + "^A0R," + str(fe) + "," + str(fe_c) + "^FD" + endereco + "^FS" +
         "^PQ" + str(pq) + "^XZ"
     )
 
