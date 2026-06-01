@@ -495,29 +495,87 @@ function print_one_label(frm, row_name) {
   });
 }
 
-function send_to_zebra(frm, zpl, labels, mark_all) {
-  if (typeof BrowserPrint === 'undefined') {
-    show_zpl_dialog(frm, zpl, labels, mark_all);
-    return;
+// ---------------------------------------------------------------------------
+// Zebra Browser Print — comunicacao DIRETA com o servico HTTP local.
+// Nao depende da biblioteca BrowserPrint*.min.js (que nunca era carregada na
+// pagina, por isso o codigo antigo caia sempre no dialog de copiar/colar).
+//
+// Descobertas validadas no ambiente do farmaceutico:
+//  - O servico escuta em http://localhost:9100 (bind IPv6 ::1; 127.0.0.1 NAO
+//    responde). Por isso usar 'localhost'/'[::1]', nunca '127.0.0.1'.
+//  - GET  /default?type=printer  -> device padrao (simple request, sem preflight)
+//  - POST /write  com body=JSON {device,data} e SEM header Content-Type, pois
+//    'application/json' dispara preflight CORS (OPTIONS) que o servico nao trata.
+//    Sem o header, o body string vira text/plain => simple request => funciona.
+//  - http://localhost a partir de pagina HTTPS NAO e bloqueado por mixed-content
+//    (Chrome trata localhost/::1 como origem potencialmente segura).
+// ---------------------------------------------------------------------------
+const ZEBRA_BASES = [
+  'http://localhost:9100',
+  'http://[::1]:9100',
+  'http://127.0.0.1:9100',
+  'https://localhost:9101',
+  'https://[::1]:9101',
+  'https://127.0.0.1:9101'
+];
+
+async function zebra_find_base() {
+  if (window.__zebra_base) return window.__zebra_base;
+  for (const base of ZEBRA_BASES) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 2500);
+      const r = await fetch(base + '/available', { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (r.ok) { window.__zebra_base = base; return base; }
+    } catch (e) { /* tenta a proxima base */ }
   }
-  BrowserPrint.getDefaultDevice('printer', (device) => {
-    if (!device) {
+  return null;
+}
+
+function send_to_zebra(frm, zpl, labels, mark_all) {
+  (async () => {
+    const base = await zebra_find_base();
+    if (!base) {
       frappe.msgprint({
-        title: 'Impressora nao encontrada',
-        message: 'Conecte a Zebra e abra o BrowserPrint.',
-        indicator: 'orange',
+        title: 'Browser Print nao detectado',
+        message: 'Abra o Zebra Browser Print na bandeja do sistema e tente novamente.',
+        indicator: 'orange'
       });
       show_zpl_dialog(frm, zpl, labels, mark_all);
       return;
     }
-    device.send(zpl, () => {
+    let device;
+    try {
+      const dr = await fetch(base + '/default?type=printer');
+      device = await dr.json();
+    } catch (e) {
+      show_zpl_dialog(frm, zpl, labels, mark_all);
+      return;
+    }
+    if (!device || !device.uid) {
+      frappe.msgprint({
+        title: 'Impressora nao encontrada',
+        message: 'Selecione a Zebra como Default Device no Browser Print.',
+        indicator: 'orange'
+      });
+      show_zpl_dialog(frm, zpl, labels, mark_all);
+      return;
+    }
+    try {
+      // SEM header Content-Type => text/plain => simple request => sem preflight CORS
+      const wr = await fetch(base + '/write', {
+        method: 'POST',
+        body: JSON.stringify({ device: device, data: zpl })
+      });
+      if (!wr.ok) throw new Error('HTTP ' + wr.status);
+      frappe.show_alert({ message: 'Enviado para a Zebra (' + (device.name || device.uid) + ').', indicator: 'green' });
       mark_printed_rows(frm, labels);
-    }, (err) => {
-      frappe.msgprint({ title: 'Falha na impressao', message: String(err), indicator: 'red' });
-    });
-  }, (err) => {
-    show_zpl_dialog(frm, zpl, labels, mark_all);
-  });
+    } catch (e) {
+      frappe.msgprint({ title: 'Falha na impressao', message: String((e && e.message) || e), indicator: 'red' });
+      show_zpl_dialog(frm, zpl, labels, mark_all);
+    }
+  })();
 }
 
 function show_zpl_dialog(frm, zpl, labels, mark_all) {
