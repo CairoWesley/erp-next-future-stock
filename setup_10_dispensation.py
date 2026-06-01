@@ -210,78 +210,47 @@ barcode = (disp.sales_order or "") + "|" + (target.patient or "") + "|" + (targe
 
 
 def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode, so, disp_name):
-    # Registro de tamanhos: nome -> (largura_mm, altura_mm, orientacao).
+    # MESMO modelo (vial girado 90 graus) para TODOS os tamanhos; muda so a dimensao.
     # Para um novo tamanho: adicione aqui e na opcao do campo label_template
     # (LABEL_TEMPLATES em lib/payloads_dispensation.py). 203 dpi ~= 8 dots/mm.
     sizes = {
-        "25x60mm": (25, 60, "portrait"),
-        "50x30mm": (50, 30, "landscape"),
-        "100x50mm": (100, 50, "landscape"),
+        "25x60mm": (25, 60),
+        "30x60mm": (30, 60),
+        "50x30mm": (50, 30),
+        "100x50mm": (100, 50),
     }
-    size = sizes.get(tpl, (25, 60, "portrait"))
+    size = sizes.get(tpl, (25, 60))
     w_mm = size[0]
     h_mm = size[1]
-    orient = size[2]
     pw = w_mm * 8
     ll = h_mm * 8
     # qtd da linha -> numero de copias (^PQ). 1 etiqueta por unidade/ampola.
     pq = int(qty)
     if pq < 1:
         pq = 1
-
-    if orient == "portrait":
-        # Texto girado 90 graus (A0R): cabe nome longo ao longo da altura (ll).
-        # A altura da fonte cresce em +x; linhas empilhadas pela largura (pw),
-        # com posicoes proporcionais para escalar a outros tamanhos retrato.
-        m = 16
-        nm_x = int(pw * 0.82)
-        cp_x = int(pw * 0.70)
-        it_x = int(pw * 0.58)
-        lo_x = int(pw * 0.46)
-        va_x = int(pw * 0.34)
-        bc_x = int(pw * 0.08)
-        nm_h = int(pw * 0.13)
-        cp_h = int(pw * 0.09)
-        it_h = int(pw * 0.10)
-        lo_h = int(pw * 0.085)
-        va_h = int(pw * 0.085)
-        bc_h = int(pw * 0.19)
-        return (
-            "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-            "^FO" + str(nm_x) + "," + str(m) + "^A0R," + str(nm_h) + "," + str(nm_h) + "^FD" + patient_name + "^FS" +
-            "^FO" + str(cp_x) + "," + str(m) + "^A0R," + str(cp_h) + "," + str(cp_h) + "^FDCPF: " + cpf_fmt + "^FS" +
-            "^FO" + str(it_x) + "," + str(m) + "^A0R," + str(it_h) + "," + str(it_h) + "^FD" + item_name + "^FS" +
-            "^FO" + str(lo_x) + "," + str(m) + "^A0R," + str(lo_h) + "," + str(lo_h) + "^FDLote: " + batch + "^FS" +
-            "^FO" + str(va_x) + "," + str(m) + "^A0R," + str(va_h) + "," + str(va_h) + "^FDVal: " + val + "   Qtd: " + str(qty) + "^FS" +
-            "^FO" + str(bc_x) + "," + str(m) + "^BCR," + str(bc_h) + ",N,N,N^FD" + barcode + "^FS" +
-            "^PQ" + str(pq) + "^XZ"
-        )
-
-    if w_mm == 100 and h_mm == 50:
-        return (
-            "^XA" + "^CI28" + "^PW800^LL400" +
-            "^FO30,20^A0N,36,36^FD" + patient_name + "^FS" +
-            "^FO30,65^A0N,28,28^FDCPF: " + cpf_fmt + "^FS" +
-            "^FO30,105^A0N,32,32^FD" + item_name + "^FS" +
-            "^FO30,150^A0N,26,26^FDLote: " + batch + "^FS" +
-            "^FO30,185^A0N,26,26^FDValidade: " + val + "^FS" +
-            "^FO30,220^A0N,26,26^FDFabricacao: " + fab + "^FS" +
-            "^FO30,255^A0N,28,28^FDQtd: " + str(qty) + " ampolas^FS" +
-            "^FO30,300^BCN,60,Y,N,N^FD" + barcode + "^FS" +
-            "^FO500,20^A0N,18,18^FD" + so + "^FS" +
-            "^FO500,42^A0N,18,18^FD" + disp_name + "^FS" +
-            "^PQ" + str(pq) + "^XZ"
-        )
-
-    # landscape padrao 50x30mm
+    # Texto girado 90 graus (A0R): a altura da fonte cresce em +x; linhas
+    # empilhadas pela largura (pw), com posicoes proporcionais para escalar.
+    m = 16
+    nm_x = int(pw * 0.82)
+    cp_x = int(pw * 0.70)
+    it_x = int(pw * 0.58)
+    lo_x = int(pw * 0.46)
+    va_x = int(pw * 0.34)
+    bc_x = int(pw * 0.08)
+    nm_h = int(pw * 0.13)
+    cp_h = int(pw * 0.09)
+    it_h = int(pw * 0.10)
+    lo_h = int(pw * 0.085)
+    va_h = int(pw * 0.085)
+    bc_h = int(pw * 0.19)
     return (
-        "^XA" + "^CI28" + "^PW400^LL240" +
-        "^FO15,10^A0N,24,24^FD" + patient_name + "^FS" +
-        "^FO15,40^A0N,18,18^FDCPF: " + cpf_fmt + "^FS" +
-        "^FO15,65^A0N,20,20^FD" + item_name + "^FS" +
-        "^FO15,90^A0N,18,18^FDLote: " + batch + "^FS" +
-        "^FO15,113^A0N,18,18^FDVal: " + val + " Qty: " + str(qty) + "^FS" +
-        "^FO15,140^BCN,55,Y,N,N^FD" + barcode + "^FS" +
+        "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
+        "^FO" + str(nm_x) + "," + str(m) + "^A0R," + str(nm_h) + "," + str(nm_h) + "^FD" + patient_name + "^FS" +
+        "^FO" + str(cp_x) + "," + str(m) + "^A0R," + str(cp_h) + "," + str(cp_h) + "^FDCPF: " + cpf_fmt + "^FS" +
+        "^FO" + str(it_x) + "," + str(m) + "^A0R," + str(it_h) + "," + str(it_h) + "^FD" + item_name + "^FS" +
+        "^FO" + str(lo_x) + "," + str(m) + "^A0R," + str(lo_h) + "," + str(lo_h) + "^FDLote: " + batch + "^FS" +
+        "^FO" + str(va_x) + "," + str(m) + "^A0R," + str(va_h) + "," + str(va_h) + "^FDVal: " + val + "   Qtd: " + str(qty) + "^FS" +
+        "^FO" + str(bc_x) + "," + str(m) + "^BCR," + str(bc_h) + ",N,N,N^FD" + barcode + "^FS" +
         "^PQ" + str(pq) + "^XZ"
     )
 
@@ -378,78 +347,47 @@ def fmt_date(d):
 
 
 def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode, so, disp_name):
-    # Registro de tamanhos: nome -> (largura_mm, altura_mm, orientacao).
+    # MESMO modelo (vial girado 90 graus) para TODOS os tamanhos; muda so a dimensao.
     # Para um novo tamanho: adicione aqui e na opcao do campo label_template
     # (LABEL_TEMPLATES em lib/payloads_dispensation.py). 203 dpi ~= 8 dots/mm.
     sizes = {
-        "25x60mm": (25, 60, "portrait"),
-        "50x30mm": (50, 30, "landscape"),
-        "100x50mm": (100, 50, "landscape"),
+        "25x60mm": (25, 60),
+        "30x60mm": (30, 60),
+        "50x30mm": (50, 30),
+        "100x50mm": (100, 50),
     }
-    size = sizes.get(tpl, (25, 60, "portrait"))
+    size = sizes.get(tpl, (25, 60))
     w_mm = size[0]
     h_mm = size[1]
-    orient = size[2]
     pw = w_mm * 8
     ll = h_mm * 8
     # qtd da linha -> numero de copias (^PQ). 1 etiqueta por unidade/ampola.
     pq = int(qty)
     if pq < 1:
         pq = 1
-
-    if orient == "portrait":
-        # Texto girado 90 graus (A0R): cabe nome longo ao longo da altura (ll).
-        # A altura da fonte cresce em +x; linhas empilhadas pela largura (pw),
-        # com posicoes proporcionais para escalar a outros tamanhos retrato.
-        m = 16
-        nm_x = int(pw * 0.82)
-        cp_x = int(pw * 0.70)
-        it_x = int(pw * 0.58)
-        lo_x = int(pw * 0.46)
-        va_x = int(pw * 0.34)
-        bc_x = int(pw * 0.08)
-        nm_h = int(pw * 0.13)
-        cp_h = int(pw * 0.09)
-        it_h = int(pw * 0.10)
-        lo_h = int(pw * 0.085)
-        va_h = int(pw * 0.085)
-        bc_h = int(pw * 0.19)
-        return (
-            "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-            "^FO" + str(nm_x) + "," + str(m) + "^A0R," + str(nm_h) + "," + str(nm_h) + "^FD" + patient_name + "^FS" +
-            "^FO" + str(cp_x) + "," + str(m) + "^A0R," + str(cp_h) + "," + str(cp_h) + "^FDCPF: " + cpf_fmt + "^FS" +
-            "^FO" + str(it_x) + "," + str(m) + "^A0R," + str(it_h) + "," + str(it_h) + "^FD" + item_name + "^FS" +
-            "^FO" + str(lo_x) + "," + str(m) + "^A0R," + str(lo_h) + "," + str(lo_h) + "^FDLote: " + batch + "^FS" +
-            "^FO" + str(va_x) + "," + str(m) + "^A0R," + str(va_h) + "," + str(va_h) + "^FDVal: " + val + "   Qtd: " + str(qty) + "^FS" +
-            "^FO" + str(bc_x) + "," + str(m) + "^BCR," + str(bc_h) + ",N,N,N^FD" + barcode + "^FS" +
-            "^PQ" + str(pq) + "^XZ"
-        )
-
-    if w_mm == 100 and h_mm == 50:
-        return (
-            "^XA" + "^CI28" + "^PW800^LL400" +
-            "^FO30,20^A0N,36,36^FD" + patient_name + "^FS" +
-            "^FO30,65^A0N,28,28^FDCPF: " + cpf_fmt + "^FS" +
-            "^FO30,105^A0N,32,32^FD" + item_name + "^FS" +
-            "^FO30,150^A0N,26,26^FDLote: " + batch + "^FS" +
-            "^FO30,185^A0N,26,26^FDValidade: " + val + "^FS" +
-            "^FO30,220^A0N,26,26^FDFabricacao: " + fab + "^FS" +
-            "^FO30,255^A0N,28,28^FDQtd: " + str(qty) + " ampolas^FS" +
-            "^FO30,300^BCN,60,Y,N,N^FD" + barcode + "^FS" +
-            "^FO500,20^A0N,18,18^FD" + so + "^FS" +
-            "^FO500,42^A0N,18,18^FD" + disp_name + "^FS" +
-            "^PQ" + str(pq) + "^XZ"
-        )
-
-    # landscape padrao 50x30mm
+    # Texto girado 90 graus (A0R): a altura da fonte cresce em +x; linhas
+    # empilhadas pela largura (pw), com posicoes proporcionais para escalar.
+    m = 16
+    nm_x = int(pw * 0.82)
+    cp_x = int(pw * 0.70)
+    it_x = int(pw * 0.58)
+    lo_x = int(pw * 0.46)
+    va_x = int(pw * 0.34)
+    bc_x = int(pw * 0.08)
+    nm_h = int(pw * 0.13)
+    cp_h = int(pw * 0.09)
+    it_h = int(pw * 0.10)
+    lo_h = int(pw * 0.085)
+    va_h = int(pw * 0.085)
+    bc_h = int(pw * 0.19)
     return (
-        "^XA" + "^CI28" + "^PW400^LL240" +
-        "^FO15,10^A0N,24,24^FD" + patient_name + "^FS" +
-        "^FO15,40^A0N,18,18^FDCPF: " + cpf_fmt + "^FS" +
-        "^FO15,65^A0N,20,20^FD" + item_name + "^FS" +
-        "^FO15,90^A0N,18,18^FDLote: " + batch + "^FS" +
-        "^FO15,113^A0N,18,18^FDVal: " + val + " Qty: " + str(qty) + "^FS" +
-        "^FO15,140^BCN,55,Y,N,N^FD" + barcode + "^FS" +
+        "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
+        "^FO" + str(nm_x) + "," + str(m) + "^A0R," + str(nm_h) + "," + str(nm_h) + "^FD" + patient_name + "^FS" +
+        "^FO" + str(cp_x) + "," + str(m) + "^A0R," + str(cp_h) + "," + str(cp_h) + "^FDCPF: " + cpf_fmt + "^FS" +
+        "^FO" + str(it_x) + "," + str(m) + "^A0R," + str(it_h) + "," + str(it_h) + "^FD" + item_name + "^FS" +
+        "^FO" + str(lo_x) + "," + str(m) + "^A0R," + str(lo_h) + "," + str(lo_h) + "^FDLote: " + batch + "^FS" +
+        "^FO" + str(va_x) + "," + str(m) + "^A0R," + str(va_h) + "," + str(va_h) + "^FDVal: " + val + "   Qtd: " + str(qty) + "^FS" +
+        "^FO" + str(bc_x) + "," + str(m) + "^BCR," + str(bc_h) + ",N,N,N^FD" + barcode + "^FS" +
         "^PQ" + str(pq) + "^XZ"
     )
 
