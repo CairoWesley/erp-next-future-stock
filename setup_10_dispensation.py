@@ -269,20 +269,22 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
         )
 
     # GIRADO 90 (^A0R): linhas empilhadas pela largura (pw), texto ao longo da altura (ll).
-    step = pw // 11
-    fb = int(step * 0.8)
-    if fb < 11:
-        fb = 11
-    fw_c = int(fb * 0.65)
+    step = pw // 10
+    fb = int(step * 0.9)
+    if fb < 12:
+        fb = 12
+    fw_c = int(fb * 0.62)
     if fw_c < 7:
         fw_c = 7
-    fn = fb + 2
-    fn_c = int(fn * 0.65)
-    fe = fb - 1
+    fn = fb
+    fn_c = int(fb * 0.78)
+    fe = fb - 3
     if fe < 10:
         fe = 10
-    fe_c = int(fe * 0.65)
-    y = int(ll * 0.03)
+    fe_c = int(fe * 0.55)
+    if fe_c < 6:
+        fe_c = 6
+    y = int(ll * 0.02)
     if y < 8:
         y = 8
     top = pw - step
@@ -422,20 +424,22 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
         )
 
     # GIRADO 90 (^A0R): linhas empilhadas pela largura (pw), texto ao longo da altura (ll).
-    step = pw // 11
-    fb = int(step * 0.8)
-    if fb < 11:
-        fb = 11
-    fw_c = int(fb * 0.65)
+    step = pw // 10
+    fb = int(step * 0.9)
+    if fb < 12:
+        fb = 12
+    fw_c = int(fb * 0.62)
     if fw_c < 7:
         fw_c = 7
-    fn = fb + 2
-    fn_c = int(fn * 0.65)
-    fe = fb - 1
+    fn = fb
+    fn_c = int(fb * 0.78)
+    fe = fb - 3
     if fe < 10:
         fe = 10
-    fe_c = int(fe * 0.65)
-    y = int(ll * 0.03)
+    fe_c = int(fe * 0.55)
+    if fe_c < 6:
+        fe_c = 6
+    y = int(ll * 0.02)
     if y < 8:
         y = 8
     top = pw - step
