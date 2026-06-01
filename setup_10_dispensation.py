@@ -209,17 +209,19 @@ qty = int(qty_f) if qty_f == int(qty_f) else qty_f
 barcode = (disp.sales_order or "") + "|" + (target.patient or "") + "|" + (target.batch_no or "")
 
 
-def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode, so, disp_name):
-    # MESMO modelo (vial girado 90 graus) para TODOS os tamanhos; muda so a dimensao.
-    # Para um novo tamanho: adicione aqui e na opcao do campo label_template
-    # (LABEL_TEMPLATES em lib/payloads_dispensation.py). 203 dpi ~= 8 dots/mm.
+def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, prescriber_name, council, state, number):
+    # MODELO UNICO (Receituario) escalado para TODOS os tamanhos.
+    # Referencia 100x50mm (800x400). Fontes escalam pela largura (sx); posicoes
+    # verticais pela altura (sy). Novo tamanho: adicione aqui e em LABEL_TEMPLATES
+    # (lib/payloads_dispensation.py). 203 dpi ~= 8 dots/mm.
     sizes = {
         "25x60mm": (25, 60),
         "30x60mm": (30, 60),
         "50x30mm": (50, 30),
         "100x50mm": (100, 50),
+        "Receituario 100x50mm": (100, 50),
     }
-    size = sizes.get(tpl, (25, 60))
+    size = sizes.get(tpl, (100, 50))
     w_mm = size[0]
     h_mm = size[1]
     pw = w_mm * 8
@@ -228,74 +230,60 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
     pq = int(qty)
     if pq < 1:
         pq = 1
-    # Texto girado 90 graus (A0R): a altura da fonte cresce em +x; linhas
-    # empilhadas pela largura (pw), com posicoes proporcionais para escalar.
-    m = 16
-    nm_x = int(pw * 0.82)
-    cp_x = int(pw * 0.70)
-    it_x = int(pw * 0.58)
-    lo_x = int(pw * 0.46)
-    va_x = int(pw * 0.34)
-    bc_x = int(pw * 0.08)
-    nm_h = int(pw * 0.13)
-    cp_h = int(pw * 0.09)
-    it_h = int(pw * 0.10)
-    lo_h = int(pw * 0.085)
-    va_h = int(pw * 0.085)
-    bc_h = int(pw * 0.19)
+    endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
+    crm = (council or "CRM") + " " + (state or "") + "/" + (number or "")
+    sx = pw / 800.0
+    sy = ll / 400.0
+    x = int(20 * sx)
+    if x < 6:
+        x = 6
+    fw = pw - 2 * x
+    f_reg = int(24 * sx) if int(24 * sx) >= 6 else 6
+    f_nm = int(32 * sx) if int(32 * sx) >= 8 else 8
+    f_it = int(26 * sx) if int(26 * sx) >= 6 else 6
+    f_lo = int(24 * sx) if int(24 * sx) >= 6 else 6
+    f_fv = int(24 * sx) if int(24 * sx) >= 6 else 6
+    f_dr = int(24 * sx) if int(24 * sx) >= 6 else 6
+    f_crm = int(22 * sx) if int(22 * sx) >= 6 else 6
+    f_uso = int(22 * sx) if int(22 * sx) >= 6 else 6
+    f_man = int(22 * sx) if int(22 * sx) >= 6 else 6
+    f_end = int(20 * sx) if int(20 * sx) >= 6 else 6
+    y_reg = int(14 * sy)
+    y_nm = int(46 * sy)
+    y_it = int(86 * sy)
+    y_lo = int(120 * sy)
+    y_fv = int(152 * sy)
+    y_dr = int(184 * sy)
+    y_crm = int(214 * sy)
+    y_uso = int(246 * sy)
+    y_man = int(276 * sy)
+    y_end = int(316 * sy)
     return (
         "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-        "^FO" + str(nm_x) + "," + str(m) + "^A0R," + str(nm_h) + "," + str(nm_h) + "^FD" + patient_name + "^FS" +
-        "^FO" + str(cp_x) + "," + str(m) + "^A0R," + str(cp_h) + "," + str(cp_h) + "^FDCPF: " + cpf_fmt + "^FS" +
-        "^FO" + str(it_x) + "," + str(m) + "^A0R," + str(it_h) + "," + str(it_h) + "^FD" + item_name + "^FS" +
-        "^FO" + str(lo_x) + "," + str(m) + "^A0R," + str(lo_h) + "," + str(lo_h) + "^FDLote: " + batch + "^FS" +
-        "^FO" + str(va_x) + "," + str(m) + "^A0R," + str(va_h) + "," + str(va_h) + "^FDVal: " + val + "   Qtd: " + str(qty) + "^FS" +
-        "^FO" + str(bc_x) + "," + str(m) + "^BCR," + str(bc_h) + ",N,N,N^FD" + barcode + "^FS" +
+        "^FO" + str(x) + "," + str(y_reg) + "^A0N," + str(f_reg) + "," + str(f_reg) + "^FDREGISTRO: " + registro + "^FS" +
+        "^FO" + str(x) + "," + str(y_nm) + "^A0N," + str(f_nm) + "," + str(f_nm) + "^FD" + patient_name + "^FS" +
+        "^FO" + str(x) + "," + str(y_it) + "^A0N," + str(f_it) + "," + str(f_it) + "^FD" + item_name + "^FS" +
+        "^FO" + str(x) + "," + str(y_lo) + "^A0N," + str(f_lo) + "," + str(f_lo) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
+        "^FO" + str(x) + "," + str(y_fv) + "^A0N," + str(f_fv) + "," + str(f_fv) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
+        "^FO" + str(x) + "," + str(y_dr) + "^A0N," + str(f_dr) + "," + str(f_dr) + "^FDDR(A) " + prescriber_name + "^FS" +
+        "^FO" + str(x) + "," + str(y_crm) + "^A0N," + str(f_crm) + "," + str(f_crm) + "^FD" + crm + "^FS" +
+        "^FO" + str(x) + "," + str(y_uso) + "^A0N," + str(f_uso) + "," + str(f_uso) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+        "^FO" + str(x) + "," + str(y_man) + "^A0N," + str(f_man) + "," + str(f_man) + "^FDMANTER DE 2°C A 8°C^FS" +
+        "^FO" + str(x) + "," + str(y_end) + "^A0N," + str(f_end) + "," + str(f_end) + "^FB" + str(fw) + ",2,0,L,0^FD" + endereco + "^FS" +
         "^PQ" + str(pq) + "^XZ"
     )
 
 
-def build_zpl_secundario(registro, patient_name, item_name, batch, qty, fab, val, prescriber_name, council, state, number):
-    # Modelo secundario (detalhado) 100x50mm = 800x400 dots @ 203dpi.
-    # endereco: texto fixo da empresa -- PERSONALIZAR aqui.
-    endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
-    pqs = int(qty)
-    if pqs < 1:
-        pqs = 1
-    crm = (council or "CRM") + " " + (state or "") + "/" + (number or "")
-    return (
-        "^XA^CI28^PW800^LL400" +
-        "^FO20,14^A0N,24,24^FDREGISTRO: " + registro + "^FS" +
-        "^FO20,46^A0N,32,32^FD" + patient_name + "^FS" +
-        "^FO20,86^A0N,26,26^FD" + item_name + "^FS" +
-        "^FO20,120^A0N,24,24^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
-        "^FO20,152^A0N,24,24^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
-        "^FO20,184^A0N,24,24^FDDR(A) " + prescriber_name + "^FS" +
-        "^FO20,214^A0N,22,22^FD" + crm + "^FS" +
-        "^FO20,246^A0N,22,22^FDUSO INJETAVEL / SUBCUTANEO^FS" +
-        "^FO20,276^A0N,22,22^FDMANTER DE 2°C A 8°C^FS" +
-        "^FO20,316^A0N,20,20^FB760,2,0,L,0^FD" + endereco + "^FS" +
-        "^PQ" + str(pqs) + "^XZ"
-    )
-
-
-# Modelo selecionado no campo label_template decide qual etiqueta imprimir.
-if (disp.label_template or "25x60mm") == "Receituario 100x50mm":
-    # REGISTRO = numero do pedido (po_no, vindo do HubSpot) + "-" + linha do
-    # paciente com 6 digitos. Ex.: 12345-000001
-    hub_order = frappe.db.get_value("Sales Order", disp.sales_order, "po_no") if disp.sales_order else None
-    registro = (str(hub_order) if hub_order else "") + "-" + str(int(target.idx or 0)).zfill(6)
-    zpl = build_zpl_secundario(
-        registro, patient_name, item_name, batch, qty, fab, val,
-        target.prescriber_name or "", target.prescriber_council or "",
-        target.prescriber_state or "", target.prescriber_number or "",
-    )
-else:
-    zpl = build_zpl(
-        disp.label_template or "25x60mm",
-        patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode,
-        disp.sales_order or "", disp.name or "",
-    )
+# REGISTRO = numero do pedido (po_no, do HubSpot) + "-" + linha do paciente
+# com 6 digitos. Ex.: 12345-000001
+hub_order = frappe.db.get_value("Sales Order", disp.sales_order, "po_no") if disp.sales_order else None
+registro = (str(hub_order) if hub_order else "") + "-" + str(int(target.idx or 0)).zfill(6)
+zpl = build_zpl(
+    disp.label_template or "25x60mm",
+    registro, patient_name, item_name, batch, val, fab, qty,
+    target.prescriber_name or "", target.prescriber_council or "",
+    target.prescriber_state or "", target.prescriber_number or "",
+)
 
 frappe.response["message"] = {
     "dispensation": disp.name,
@@ -346,17 +334,19 @@ def fmt_date(d):
     return s
 
 
-def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode, so, disp_name):
-    # MESMO modelo (vial girado 90 graus) para TODOS os tamanhos; muda so a dimensao.
-    # Para um novo tamanho: adicione aqui e na opcao do campo label_template
-    # (LABEL_TEMPLATES em lib/payloads_dispensation.py). 203 dpi ~= 8 dots/mm.
+def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, prescriber_name, council, state, number):
+    # MODELO UNICO (Receituario) escalado para TODOS os tamanhos.
+    # Referencia 100x50mm (800x400). Fontes escalam pela largura (sx); posicoes
+    # verticais pela altura (sy). Novo tamanho: adicione aqui e em LABEL_TEMPLATES
+    # (lib/payloads_dispensation.py). 203 dpi ~= 8 dots/mm.
     sizes = {
         "25x60mm": (25, 60),
         "30x60mm": (30, 60),
         "50x30mm": (50, 30),
         "100x50mm": (100, 50),
+        "Receituario 100x50mm": (100, 50),
     }
-    size = sizes.get(tpl, (25, 60))
+    size = sizes.get(tpl, (100, 50))
     w_mm = size[0]
     h_mm = size[1]
     pw = w_mm * 8
@@ -365,54 +355,47 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
     pq = int(qty)
     if pq < 1:
         pq = 1
-    # Texto girado 90 graus (A0R): a altura da fonte cresce em +x; linhas
-    # empilhadas pela largura (pw), com posicoes proporcionais para escalar.
-    m = 16
-    nm_x = int(pw * 0.82)
-    cp_x = int(pw * 0.70)
-    it_x = int(pw * 0.58)
-    lo_x = int(pw * 0.46)
-    va_x = int(pw * 0.34)
-    bc_x = int(pw * 0.08)
-    nm_h = int(pw * 0.13)
-    cp_h = int(pw * 0.09)
-    it_h = int(pw * 0.10)
-    lo_h = int(pw * 0.085)
-    va_h = int(pw * 0.085)
-    bc_h = int(pw * 0.19)
+    endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
+    crm = (council or "CRM") + " " + (state or "") + "/" + (number or "")
+    sx = pw / 800.0
+    sy = ll / 400.0
+    x = int(20 * sx)
+    if x < 6:
+        x = 6
+    fw = pw - 2 * x
+    f_reg = int(24 * sx) if int(24 * sx) >= 6 else 6
+    f_nm = int(32 * sx) if int(32 * sx) >= 8 else 8
+    f_it = int(26 * sx) if int(26 * sx) >= 6 else 6
+    f_lo = int(24 * sx) if int(24 * sx) >= 6 else 6
+    f_fv = int(24 * sx) if int(24 * sx) >= 6 else 6
+    f_dr = int(24 * sx) if int(24 * sx) >= 6 else 6
+    f_crm = int(22 * sx) if int(22 * sx) >= 6 else 6
+    f_uso = int(22 * sx) if int(22 * sx) >= 6 else 6
+    f_man = int(22 * sx) if int(22 * sx) >= 6 else 6
+    f_end = int(20 * sx) if int(20 * sx) >= 6 else 6
+    y_reg = int(14 * sy)
+    y_nm = int(46 * sy)
+    y_it = int(86 * sy)
+    y_lo = int(120 * sy)
+    y_fv = int(152 * sy)
+    y_dr = int(184 * sy)
+    y_crm = int(214 * sy)
+    y_uso = int(246 * sy)
+    y_man = int(276 * sy)
+    y_end = int(316 * sy)
     return (
         "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-        "^FO" + str(nm_x) + "," + str(m) + "^A0R," + str(nm_h) + "," + str(nm_h) + "^FD" + patient_name + "^FS" +
-        "^FO" + str(cp_x) + "," + str(m) + "^A0R," + str(cp_h) + "," + str(cp_h) + "^FDCPF: " + cpf_fmt + "^FS" +
-        "^FO" + str(it_x) + "," + str(m) + "^A0R," + str(it_h) + "," + str(it_h) + "^FD" + item_name + "^FS" +
-        "^FO" + str(lo_x) + "," + str(m) + "^A0R," + str(lo_h) + "," + str(lo_h) + "^FDLote: " + batch + "^FS" +
-        "^FO" + str(va_x) + "," + str(m) + "^A0R," + str(va_h) + "," + str(va_h) + "^FDVal: " + val + "   Qtd: " + str(qty) + "^FS" +
-        "^FO" + str(bc_x) + "," + str(m) + "^BCR," + str(bc_h) + ",N,N,N^FD" + barcode + "^FS" +
+        "^FO" + str(x) + "," + str(y_reg) + "^A0N," + str(f_reg) + "," + str(f_reg) + "^FDREGISTRO: " + registro + "^FS" +
+        "^FO" + str(x) + "," + str(y_nm) + "^A0N," + str(f_nm) + "," + str(f_nm) + "^FD" + patient_name + "^FS" +
+        "^FO" + str(x) + "," + str(y_it) + "^A0N," + str(f_it) + "," + str(f_it) + "^FD" + item_name + "^FS" +
+        "^FO" + str(x) + "," + str(y_lo) + "^A0N," + str(f_lo) + "," + str(f_lo) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
+        "^FO" + str(x) + "," + str(y_fv) + "^A0N," + str(f_fv) + "," + str(f_fv) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
+        "^FO" + str(x) + "," + str(y_dr) + "^A0N," + str(f_dr) + "," + str(f_dr) + "^FDDR(A) " + prescriber_name + "^FS" +
+        "^FO" + str(x) + "," + str(y_crm) + "^A0N," + str(f_crm) + "," + str(f_crm) + "^FD" + crm + "^FS" +
+        "^FO" + str(x) + "," + str(y_uso) + "^A0N," + str(f_uso) + "," + str(f_uso) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+        "^FO" + str(x) + "," + str(y_man) + "^A0N," + str(f_man) + "," + str(f_man) + "^FDMANTER DE 2°C A 8°C^FS" +
+        "^FO" + str(x) + "," + str(y_end) + "^A0N," + str(f_end) + "," + str(f_end) + "^FB" + str(fw) + ",2,0,L,0^FD" + endereco + "^FS" +
         "^PQ" + str(pq) + "^XZ"
-    )
-
-
-def build_zpl_secundario(registro, patient_name, item_name, batch, qty, fab, val, prescriber_name, council, state, number):
-    # Modelo secundario (detalhado) 100x50mm = 800x400 dots @ 203dpi.
-    # endereco: texto fixo da empresa -- PERSONALIZAR aqui.
-    endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
-    pqs = int(qty)
-    if pqs < 1:
-        pqs = 1
-    crm = (council or "CRM") + " " + (state or "") + "/" + (number or "")
-    return (
-        "^XA^CI28^PW800^LL400" +
-        "^FO20,14^A0N,24,24^FDREGISTRO: " + registro + "^FS" +
-        "^FO20,46^A0N,32,32^FD" + patient_name + "^FS" +
-        "^FO20,86^A0N,26,26^FD" + item_name + "^FS" +
-        "^FO20,120^A0N,24,24^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
-        "^FO20,152^A0N,24,24^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
-        "^FO20,184^A0N,24,24^FDDR(A) " + prescriber_name + "^FS" +
-        "^FO20,214^A0N,22,22^FD" + crm + "^FS" +
-        "^FO20,246^A0N,22,22^FDUSO INJETAVEL / SUBCUTANEO^FS" +
-        "^FO20,276^A0N,22,22^FDMANTER DE 2°C A 8°C^FS" +
-        "^FO20,316^A0N,20,20^FB760,2,0,L,0^FD" + endereco + "^FS" +
-        "^PQ" + str(pqs) + "^XZ"
     )
 
 
@@ -436,20 +419,14 @@ for row in rows:
     qty = int(qty_f) if qty_f == int(qty_f) else qty_f
     barcode = (disp.sales_order or "") + "|" + (row.patient or "") + "|" + (row.batch_no or "")
 
-    if template == "Receituario 100x50mm":
-        hub_order = frappe.db.get_value("Sales Order", disp.sales_order, "po_no") if disp.sales_order else None
-        registro = (str(hub_order) if hub_order else "") + "-" + str(int(row.idx or 0)).zfill(6)
-        zpl = build_zpl_secundario(
-            registro, patient_name, item_name, batch, qty, fab, val,
-            row.prescriber_name or "", row.prescriber_council or "",
-            row.prescriber_state or "", row.prescriber_number or "",
-        )
-    else:
-        zpl = build_zpl(
-            template,
-            patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode,
-            disp.sales_order or "", disp.name or "",
-        )
+    hub_order = frappe.db.get_value("Sales Order", disp.sales_order, "po_no") if disp.sales_order else None
+    registro = (str(hub_order) if hub_order else "") + "-" + str(int(row.idx or 0)).zfill(6)
+    zpl = build_zpl(
+        template,
+        registro, patient_name, item_name, batch, val, fab, qty,
+        row.prescriber_name or "", row.prescriber_council or "",
+        row.prescriber_state or "", row.prescriber_number or "",
+    )
 
     all_zpl_parts.append(zpl)
     labels_info.append({
