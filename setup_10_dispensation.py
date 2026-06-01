@@ -273,15 +273,15 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
     fb = int(step * 0.9)
     if fb < 12:
         fb = 12
-    fw_c = int(fb * 0.62)
-    if fw_c < 7:
-        fw_c = 7
+    fw_c = fb - 1
     fn = fb
-    fn_c = int(fb * 0.78)
-    fe = fb - 3
+    fn_c = fb
+    fe = fb - 2
     if fe < 10:
         fe = 10
-    fe_c = int(fe * 0.55)
+    fe_c = ll // 36
+    if fe_c > fe:
+        fe_c = fe
     if fe_c < 6:
         fe_c = 6
     y = int(ll * 0.02)
@@ -428,15 +428,15 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
     fb = int(step * 0.9)
     if fb < 12:
         fb = 12
-    fw_c = int(fb * 0.62)
-    if fw_c < 7:
-        fw_c = 7
+    fw_c = fb - 1
     fn = fb
-    fn_c = int(fb * 0.78)
-    fe = fb - 3
+    fn_c = fb
+    fe = fb - 2
     if fe < 10:
         fe = 10
-    fe_c = int(fe * 0.55)
+    fe_c = ll // 36
+    if fe_c > fe:
+        fe_c = fe
     if fe_c < 6:
         fe_c = 6
     y = int(ll * 0.02)
