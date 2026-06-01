@@ -312,8 +312,12 @@ def build_zpl_secundario(registro, patient_name, item_name, batch, qty, fab, val
 
 # Modelo selecionado no campo label_template decide qual etiqueta imprimir.
 if (disp.label_template or "25x60mm") == "Receituario 100x50mm":
+    # REGISTRO = numero do pedido (po_no, vindo do HubSpot) + "-" + linha do
+    # paciente com 6 digitos. Ex.: 12345-000001
+    hub_order = frappe.db.get_value("Sales Order", disp.sales_order, "po_no") if disp.sales_order else None
+    registro = (str(hub_order) if hub_order else "") + "-" + str(int(target.idx or 0)).zfill(6)
     zpl = build_zpl_secundario(
-        disp.name or "", patient_name, item_name, batch, qty, fab, val,
+        registro, patient_name, item_name, batch, qty, fab, val,
         target.prescriber_name or "", target.prescriber_council or "",
         target.prescriber_state or "", target.prescriber_number or "",
     )
@@ -495,8 +499,10 @@ for row in rows:
     barcode = (disp.sales_order or "") + "|" + (row.patient or "") + "|" + (row.batch_no or "")
 
     if template == "Receituario 100x50mm":
+        hub_order = frappe.db.get_value("Sales Order", disp.sales_order, "po_no") if disp.sales_order else None
+        registro = (str(hub_order) if hub_order else "") + "-" + str(int(row.idx or 0)).zfill(6)
         zpl = build_zpl_secundario(
-            disp.name or "", patient_name, item_name, batch, qty, fab, val,
+            registro, patient_name, item_name, batch, qty, fab, val,
             row.prescriber_name or "", row.prescriber_council or "",
             row.prescriber_state or "", row.prescriber_number or "",
         )
