@@ -44,6 +44,7 @@ LABEL_TEMPLATES = "\n".join([
     "25x60mm",
     "50x30mm",
     "100x50mm",
+    "Receituario 100x50mm",
 ])
 
 

@@ -286,11 +286,43 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
     )
 
 
-zpl = build_zpl(
-    disp.label_template or "25x60mm",
-    patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode,
-    disp.sales_order or "", disp.name or "",
-)
+def build_zpl_secundario(registro, patient_name, item_name, batch, qty, fab, val, prescriber_name, council, state, number):
+    # Modelo secundario (detalhado) 100x50mm = 800x400 dots @ 203dpi.
+    # endereco: texto fixo da empresa -- PERSONALIZAR aqui.
+    endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
+    pqs = int(qty)
+    if pqs < 1:
+        pqs = 1
+    crm = (council or "CRM") + " " + (state or "") + "/" + (number or "")
+    return (
+        "^XA^CI28^PW800^LL400" +
+        "^FO20,14^A0N,24,24^FDREGISTRO: " + registro + "^FS" +
+        "^FO20,46^A0N,32,32^FD" + patient_name + "^FS" +
+        "^FO20,86^A0N,26,26^FD" + item_name + "^FS" +
+        "^FO20,120^A0N,24,24^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
+        "^FO20,152^A0N,24,24^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
+        "^FO20,184^A0N,24,24^FDDR(A) " + prescriber_name + "^FS" +
+        "^FO20,214^A0N,22,22^FD" + crm + "^FS" +
+        "^FO20,246^A0N,22,22^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+        "^FO20,276^A0N,22,22^FDMANTER DE 2°C A 8°C^FS" +
+        "^FO20,316^A0N,20,20^FB760,2,0,L,0^FD" + endereco + "^FS" +
+        "^PQ" + str(pqs) + "^XZ"
+    )
+
+
+# Modelo selecionado no campo label_template decide qual etiqueta imprimir.
+if (disp.label_template or "25x60mm") == "Receituario 100x50mm":
+    zpl = build_zpl_secundario(
+        disp.name or "", patient_name, item_name, batch, qty, fab, val,
+        target.prescriber_name or "", target.prescriber_council or "",
+        target.prescriber_state or "", target.prescriber_number or "",
+    )
+else:
+    zpl = build_zpl(
+        disp.label_template or "25x60mm",
+        patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode,
+        disp.sales_order or "", disp.name or "",
+    )
 
 frappe.response["message"] = {
     "dispensation": disp.name,
@@ -418,6 +450,30 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
     )
 
 
+def build_zpl_secundario(registro, patient_name, item_name, batch, qty, fab, val, prescriber_name, council, state, number):
+    # Modelo secundario (detalhado) 100x50mm = 800x400 dots @ 203dpi.
+    # endereco: texto fixo da empresa -- PERSONALIZAR aqui.
+    endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
+    pqs = int(qty)
+    if pqs < 1:
+        pqs = 1
+    crm = (council or "CRM") + " " + (state or "") + "/" + (number or "")
+    return (
+        "^XA^CI28^PW800^LL400" +
+        "^FO20,14^A0N,24,24^FDREGISTRO: " + registro + "^FS" +
+        "^FO20,46^A0N,32,32^FD" + patient_name + "^FS" +
+        "^FO20,86^A0N,26,26^FD" + item_name + "^FS" +
+        "^FO20,120^A0N,24,24^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
+        "^FO20,152^A0N,24,24^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
+        "^FO20,184^A0N,24,24^FDDR(A) " + prescriber_name + "^FS" +
+        "^FO20,214^A0N,22,22^FD" + crm + "^FS" +
+        "^FO20,246^A0N,22,22^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+        "^FO20,276^A0N,22,22^FDMANTER DE 2°C A 8°C^FS" +
+        "^FO20,316^A0N,20,20^FB760,2,0,L,0^FD" + endereco + "^FS" +
+        "^PQ" + str(pqs) + "^XZ"
+    )
+
+
 template = disp.label_template or "25x60mm"
 all_zpl_parts = []
 labels_info = []
@@ -438,11 +494,18 @@ for row in rows:
     qty = int(qty_f) if qty_f == int(qty_f) else qty_f
     barcode = (disp.sales_order or "") + "|" + (row.patient or "") + "|" + (row.batch_no or "")
 
-    zpl = build_zpl(
-        template,
-        patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode,
-        disp.sales_order or "", disp.name or "",
-    )
+    if template == "Receituario 100x50mm":
+        zpl = build_zpl_secundario(
+            disp.name or "", patient_name, item_name, batch, qty, fab, val,
+            row.prescriber_name or "", row.prescriber_council or "",
+            row.prescriber_state or "", row.prescriber_number or "",
+        )
+    else:
+        zpl = build_zpl(
+            template,
+            patient_name, cpf_fmt, item_name, batch, val, fab, qty, barcode,
+            disp.sales_order or "", disp.name or "",
+        )
 
     all_zpl_parts.append(zpl)
     labels_info.append({
