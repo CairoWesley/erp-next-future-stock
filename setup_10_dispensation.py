@@ -224,24 +224,28 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
     orient = size[2]
     pw = w_mm * 8
     ll = h_mm * 8
+    # qtd da linha -> numero de copias (^PQ). 1 etiqueta por unidade/ampola.
+    pq = int(qty)
+    if pq < 1:
+        pq = 1
 
     if orient == "portrait":
         # Texto girado 90 graus (A0R): cabe nome longo ao longo da altura (ll).
         # A altura da fonte cresce em +x; linhas empilhadas pela largura (pw),
         # com posicoes proporcionais para escalar a outros tamanhos retrato.
         m = 16
-        nm_x = int(pw * 0.86)
-        cp_x = int(pw * 0.72)
+        nm_x = int(pw * 0.82)
+        cp_x = int(pw * 0.70)
         it_x = int(pw * 0.58)
-        lo_x = int(pw * 0.45)
-        va_x = int(pw * 0.32)
-        bc_x = int(pw * 0.09)
-        nm_h = int(pw * 0.14)
-        cp_h = int(pw * 0.10)
-        it_h = int(pw * 0.11)
-        lo_h = int(pw * 0.09)
-        va_h = int(pw * 0.09)
-        bc_h = int(pw * 0.20)
+        lo_x = int(pw * 0.46)
+        va_x = int(pw * 0.34)
+        bc_x = int(pw * 0.08)
+        nm_h = int(pw * 0.13)
+        cp_h = int(pw * 0.09)
+        it_h = int(pw * 0.10)
+        lo_h = int(pw * 0.085)
+        va_h = int(pw * 0.085)
+        bc_h = int(pw * 0.19)
         return (
             "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
             "^FO" + str(nm_x) + "," + str(m) + "^A0R," + str(nm_h) + "," + str(nm_h) + "^FD" + patient_name + "^FS" +
@@ -250,7 +254,7 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
             "^FO" + str(lo_x) + "," + str(m) + "^A0R," + str(lo_h) + "," + str(lo_h) + "^FDLote: " + batch + "^FS" +
             "^FO" + str(va_x) + "," + str(m) + "^A0R," + str(va_h) + "," + str(va_h) + "^FDVal: " + val + "   Qtd: " + str(qty) + "^FS" +
             "^FO" + str(bc_x) + "," + str(m) + "^BCR," + str(bc_h) + ",N,N,N^FD" + barcode + "^FS" +
-            "^XZ"
+            "^PQ" + str(pq) + "^XZ"
         )
 
     if w_mm == 100 and h_mm == 50:
@@ -266,7 +270,7 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
             "^FO30,300^BCN,60,Y,N,N^FD" + barcode + "^FS" +
             "^FO500,20^A0N,18,18^FD" + so + "^FS" +
             "^FO500,42^A0N,18,18^FD" + disp_name + "^FS" +
-            "^XZ"
+            "^PQ" + str(pq) + "^XZ"
         )
 
     # landscape padrao 50x30mm
@@ -278,7 +282,7 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
         "^FO15,90^A0N,18,18^FDLote: " + batch + "^FS" +
         "^FO15,113^A0N,18,18^FDVal: " + val + " Qty: " + str(qty) + "^FS" +
         "^FO15,140^BCN,55,Y,N,N^FD" + barcode + "^FS" +
-        "^XZ"
+        "^PQ" + str(pq) + "^XZ"
     )
 
 
@@ -352,24 +356,28 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
     orient = size[2]
     pw = w_mm * 8
     ll = h_mm * 8
+    # qtd da linha -> numero de copias (^PQ). 1 etiqueta por unidade/ampola.
+    pq = int(qty)
+    if pq < 1:
+        pq = 1
 
     if orient == "portrait":
         # Texto girado 90 graus (A0R): cabe nome longo ao longo da altura (ll).
         # A altura da fonte cresce em +x; linhas empilhadas pela largura (pw),
         # com posicoes proporcionais para escalar a outros tamanhos retrato.
         m = 16
-        nm_x = int(pw * 0.86)
-        cp_x = int(pw * 0.72)
+        nm_x = int(pw * 0.82)
+        cp_x = int(pw * 0.70)
         it_x = int(pw * 0.58)
-        lo_x = int(pw * 0.45)
-        va_x = int(pw * 0.32)
-        bc_x = int(pw * 0.09)
-        nm_h = int(pw * 0.14)
-        cp_h = int(pw * 0.10)
-        it_h = int(pw * 0.11)
-        lo_h = int(pw * 0.09)
-        va_h = int(pw * 0.09)
-        bc_h = int(pw * 0.20)
+        lo_x = int(pw * 0.46)
+        va_x = int(pw * 0.34)
+        bc_x = int(pw * 0.08)
+        nm_h = int(pw * 0.13)
+        cp_h = int(pw * 0.09)
+        it_h = int(pw * 0.10)
+        lo_h = int(pw * 0.085)
+        va_h = int(pw * 0.085)
+        bc_h = int(pw * 0.19)
         return (
             "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
             "^FO" + str(nm_x) + "," + str(m) + "^A0R," + str(nm_h) + "," + str(nm_h) + "^FD" + patient_name + "^FS" +
@@ -378,7 +386,7 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
             "^FO" + str(lo_x) + "," + str(m) + "^A0R," + str(lo_h) + "," + str(lo_h) + "^FDLote: " + batch + "^FS" +
             "^FO" + str(va_x) + "," + str(m) + "^A0R," + str(va_h) + "," + str(va_h) + "^FDVal: " + val + "   Qtd: " + str(qty) + "^FS" +
             "^FO" + str(bc_x) + "," + str(m) + "^BCR," + str(bc_h) + ",N,N,N^FD" + barcode + "^FS" +
-            "^XZ"
+            "^PQ" + str(pq) + "^XZ"
         )
 
     if w_mm == 100 and h_mm == 50:
@@ -394,7 +402,7 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
             "^FO30,300^BCN,60,Y,N,N^FD" + barcode + "^FS" +
             "^FO500,20^A0N,18,18^FD" + so + "^FS" +
             "^FO500,42^A0N,18,18^FD" + disp_name + "^FS" +
-            "^XZ"
+            "^PQ" + str(pq) + "^XZ"
         )
 
     # landscape padrao 50x30mm
@@ -406,7 +414,7 @@ def build_zpl(tpl, patient_name, cpf_fmt, item_name, batch, val, fab, qty, barco
         "^FO15,90^A0N,18,18^FDLote: " + batch + "^FS" +
         "^FO15,113^A0N,18,18^FDVal: " + val + " Qty: " + str(qty) + "^FS" +
         "^FO15,140^BCN,55,Y,N,N^FD" + barcode + "^FS" +
-        "^XZ"
+        "^PQ" + str(pq) + "^XZ"
     )
 
 
