@@ -634,13 +634,13 @@ frappe.ui.form.on('Dispensacao', {
     // (em Frappe v15, frm.fields_dict.patients.grid pode não existir no setup)
     const patients_field = frm.fields_dict && frm.fields_dict.patients;
     if (patients_field && patients_field.grid && !patients_field.grid._zebra_btn_added) {
-      patients_field.grid.add_custom_button('Imprimir Esta Linha', function() {
+      patients_field.grid.add_custom_button('Imprimir Selecionadas', function() {
         const selected = patients_field.grid.get_selected_children();
         if (!selected.length) {
-          frappe.msgprint('Selecione 1 linha primeiro.');
+          frappe.msgprint('Selecione ao menos 1 linha (marque as caixas a esquerda).');
           return;
         }
-        print_one_label(frm, selected[0].name);
+        print_selected_labels(frm, selected.map((r) => r.name));
       });
       patients_field.grid._zebra_btn_added = true;
     }
@@ -677,6 +677,30 @@ function print_one_label(frm, row_name) {
       }
       send_to_zebra(frm, msg.zpl, [{ row_name: msg.row_name }], /*mark_all*/false);
     }
+  });
+}
+
+function print_selected_labels(frm, row_names) {
+  // Gera o ZPL de CADA linha selecionada (respeita template + ^PQ) e envia tudo junto.
+  frappe.dom.freeze('Gerando ' + row_names.length + ' etiqueta(s)...');
+  const calls = row_names.map((rn) => new Promise((resolve) => {
+    frappe.call({
+      method: 'future_production_generate_zpl_label',
+      args: { dispensation: frm.doc.name, row_name: rn },
+      callback: (r) => resolve(r && r.message),
+      error: () => resolve(null)
+    });
+  }));
+  Promise.all(calls).then((results) => {
+    frappe.dom.unfreeze();
+    const valid = (results || []).filter((m) => m && m.zpl);
+    if (!valid.length) {
+      frappe.msgprint({ title: 'Erro', message: 'ZPL nao gerado.', indicator: 'red' });
+      return;
+    }
+    const zpl = valid.map((m) => m.zpl).join('\n');
+    const labels = valid.map((m) => ({ row_name: m.row_name }));
+    send_to_zebra(frm, zpl, labels, /*mark_all*/false);
   });
 }
 
