@@ -820,6 +820,31 @@ function mark_completed(frm) {
     }
   );
 }
+
+// Auto-importa dados do cadastro (Patient/Prescriber) ao selecionar na linha.
+frappe.ui.form.on('Dispensacao Paciente', {
+  patient(frm, cdt, cdn) {
+    const row = locals[cdt][cdn];
+    if (!row.patient) return;
+    frappe.db.get_value('Patient', row.patient, ['patient_name', 'cpf', 'mobile']).then((r) => {
+      const d = (r && r.message) || {};
+      frappe.model.set_value(cdt, cdn, 'patient_name', d.patient_name || '');
+      frappe.model.set_value(cdt, cdn, 'cpf', d.cpf || '');
+      frappe.model.set_value(cdt, cdn, 'mobile', d.mobile || '');
+    });
+  },
+  prescriber(frm, cdt, cdn) {
+    const row = locals[cdt][cdn];
+    if (!row.prescriber) return;
+    frappe.db.get_value('Prescriber', row.prescriber, ['full_name', 'council_type', 'council_number', 'council_state']).then((r) => {
+      const d = (r && r.message) || {};
+      frappe.model.set_value(cdt, cdn, 'prescriber_name', d.full_name || '');
+      frappe.model.set_value(cdt, cdn, 'prescriber_council', d.council_type || '');
+      frappe.model.set_value(cdt, cdn, 'prescriber_number', d.council_number || '');
+      frappe.model.set_value(cdt, cdn, 'prescriber_state', d.council_state || '');
+    });
+  }
+});
 '''.strip()
 
 
