@@ -1,0 +1,109 @@
+{
+  "name": "HubSpot → ERPNext (Issue Order v2 — single endpoint)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "erp/issue-order-v2",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1c2e4a01-aaaa-1111-bbbb-100000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-100, 0],
+      "webhookId": "issue-order-v2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform: HubSpot payload -> ERPNext issue_order payload.\n// Input: webhook recebe { body: { hubspot_deal_id, companies[], contacts[], products[] } }\n// Output: { hubspot, customer, prescribers, patients, items, fp_patients }\n\nconst items = $input.all();\nconst out = [];\n\nfor (const item of items) {\n  const body = item.json.body || item.json;\n\n  const dealId = String(body.hubspot_deal_id || '');\n  const companies = body.companies || [];\n  const contacts = body.contacts || [];\n  const products = body.products || [];\n\n  // ---- Customer (da primeira company) ----\n  const co = companies[0] || {};\n  const cnpjDigits = (co.cnpj || '').replace(/\\D/g, '');\n  const cpfRespDigits = (co.cpf_responsavel || '').replace(/\\D/g, '');\n  const isCompany = !!cnpjDigits;\n  const customer = {\n    customer_name: co.name || 'Cliente Sem Nome',\n    customer_type: isCompany ? 'Company' : 'Individual',\n    tax_id: cnpjDigits || cpfRespDigits || '',\n  };\n\n  // ---- Helper: gera CPF placeholder do médico a partir de CRM+UF ----\n  // HubSpot não envia CPF do médico; CPF é único no Prescriber.\n  // Gera CPF determinístico baseado em (crm + uf) pra idempotência.\n  function medicoCpfStub(crm, uf) {\n    const s = (String(crm || '') + (uf || '')).replace(/\\D/g, '').padStart(11, '0');\n    const base = s.slice(0, 11).padStart(11, '0');\n    if (base === base[0].repeat(11)) return base.slice(0, 10) + '9';\n    return base;\n  }\n\n  // ---- Agrupa prescribers (médicos) e patients (pacientes) únicos ----\n  const prescribersMap = new Map();\n  const patientsMap = new Map();\n  const fpPatients = [];\n  const itemsMap = new Map();\n\n  for (const p of products) {\n    const sku = String(p.sku || '');\n    const qty = Number(p.quantidade || p.quantity || 1);\n    const rate = Number(p.price || 0);\n\n    if (itemsMap.has(sku)) {\n      itemsMap.get(sku).qty += qty;\n    } else {\n      itemsMap.set(sku, { item_code: sku, qty: qty, rate: rate, warehouse: 'Produtos Acabados - I' });\n    }\n\n    const crm = String(p.medico_crm || '');\n    const uf = String(p.medico_uf || '');\n    const medCpf = medicoCpfStub(crm, uf);\n    if (!prescribersMap.has(medCpf)) {\n      prescribersMap.set(medCpf, {\n        cpf: medCpf,\n        full_name: p.medico_nome || ('Medico ' + crm + '-' + uf),\n        councils: [{\n          council_type: 'CRM',\n          council_number: crm,\n          council_state: uf || 'SP',\n          council_status: 'Ativo',\n          is_primary: 1,\n        }],\n      });\n    }\n\n    const patCpf = (p.cpf || '').replace(/\\D/g, '');\n    if (patCpf && !patientsMap.has(patCpf)) {\n      patientsMap.set(patCpf, {\n        cpf: patCpf,\n        patient_name: p.nome || 'Paciente Sem Nome',\n        gender: p.genero || 'Outro',\n        mobile: p.telefone || '',\n        default_prescriber_cpf: medCpf,\n      });\n    }\n\n    fpPatients.push({\n      patient_cpf: patCpf,\n      prescriber_cpf: medCpf,\n      prescriber_council: { council_type: 'CRM', council_number: crm, council_state: uf || 'SP' },\n      item_code: sku,\n      qty: qty,\n    });\n  }\n\n  out.push({\n    json: {\n      hubspot: { deal_id: dealId, contact_id: contacts[0]?.email || '' },\n      customer: customer,\n      prescribers: Array.from(prescribersMap.values()),\n      patients: Array.from(patientsMap.values()),\n      items: Array.from(itemsMap.values()),\n      fp_patients: fpPatients,\n      company: 'Injmedpharma',\n    },\n  });\n}\n\nreturn out;"
+      },
+      "id": "1c2e4a01-aaaa-1111-bbbb-100000000002",
+      "name": "Transform HubSpot → ERPNext",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [120, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.injemedpharma.com.br/api/method/future_production_issue_order",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={\n  \"Content-Type\": \"application/json\",\n  \"Authorization\": \"token {{$env.ERPNEXT_API_KEY}}:{{$env.ERPNEXT_API_SECRET}}\"\n}",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "redirect": {
+            "redirect": {}
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "1c2e4a01-aaaa-1111-bbbb-100000000003",
+      "name": "ERPNext - issue_order",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [340, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, sales_order: $json.message?.sales_order, validation_status: $json.message?.validation_status, hubspot_complete: $json.message?.hubspot_complete, ready_to_reserve: $json.message?.ready_to_reserve, created: $json.message?.created }) }}",
+        "options": {}
+      },
+      "id": "1c2e4a01-aaaa-1111-bbbb-100000000004",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [560, 0]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Transform HubSpot → ERPNext",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform HubSpot → ERPNext": {
+      "main": [
+        [
+          {
+            "node": "ERPNext - issue_order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ERPNext - issue_order": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
