@@ -133,6 +133,13 @@ DISPENSATION_PATIENT = {
             "in_list_view": 1,
         },
         {
+            "fieldname": "ph",
+            "label": "pH",
+            "fieldtype": "Float",
+            "precision": "2",
+            "in_list_view": 1,
+        },
+        {
             "fieldname": "batch_no",
             "label": "Lote",
             "fieldtype": "Link",

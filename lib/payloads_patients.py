@@ -276,6 +276,13 @@ SALES_ORDER_PATIENT = {
             "non_negative": 1,
         },
         {
+            "fieldname": "ph",
+            "label": "pH",
+            "fieldtype": "Float",
+            "precision": "2",
+            "columns": 1,
+        },
+        {
             "fieldname": "delivery_address_override",
             "label": "Endereço de Entrega (se diferente do cadastro)",
             "fieldtype": "Small Text",

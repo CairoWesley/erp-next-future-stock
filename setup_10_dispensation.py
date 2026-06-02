@@ -111,6 +111,7 @@ else:
             "batch_no": p.batch_no,
             "batch_expiry": batch_doc.get("expiry_date"),
             "batch_manufacturing": batch_doc.get("manufacturing_date"),
+            "ph": p.get("ph"),
             "sales_order_patient_row": p.name,
             "printed": 0,
         })
@@ -209,12 +210,11 @@ qty = int(qty_f) if qty_f == int(qty_f) else qty_f
 barcode = (disp.sales_order or "") + "|" + (target.patient or "") + "|" + (target.batch_no or "")
 
 
-def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, prescriber_name, council, state, number):
+def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, prescriber_name, council, state, number, ph):
     # MODELO UNICO (Receituario), escalado e ORIENTADO pelo lado MAIOR da etiqueta:
     #   largura >= altura -> texto horizontal (^A0N) ao longo da largura
     #   altura  >  largura -> texto girado 90 (^A0R) ao longo da altura
-    # Novo tamanho: adicione aqui e em LABEL_TEMPLATES (lib/payloads_dispensation.py).
-    # 203 dpi ~= 8 dots/mm.
+    # 203 dpi ~= 8 dots/mm. Cada etiqueta = 1 unidade (^PQ imprime qty copias).
     sizes = {
         "25x60mm": (25, 60),
         "30x60mm": (30, 60),
@@ -227,55 +227,49 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
     h_mm = size[1]
     pw = w_mm * 8
     ll = h_mm * 8
-    # qtd da linha -> numero de copias (^PQ). 1 etiqueta por unidade/ampola.
     pq = int(qty)
     if pq < 1:
         pq = 1
     endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
-    crm = (council or "CRM") + " " + (state or "") + "/" + (number or "")
+    medico = "DR(A) " + prescriber_name + " - " + (council or "CRM") + " " + (state or "") + "/" + (number or "")
+    ph_txt = "pH: " + (str(ph) if ph else "")
+    l_reg = "REG: " + registro
+    l_lote = "Lote: " + batch + " - 1 UN"
+    l_fv = "FAB.: " + fab + " - VAL.: " + val
 
     if w_mm >= h_mm:
-        # HORIZONTAL: referencia 100x50mm (800x400); fontes pela largura (sx),
-        # posicoes verticais pela altura (sy).
+        # HORIZONTAL: referencia 100x50mm (800x400); fontes pela largura (sx), posicoes pela altura (sy).
         sx = pw / 800.0
         sy = ll / 400.0
         x = int(20 * sx)
         if x < 6:
             x = 6
         fw = pw - 2 * x
-        f_reg = int(24 * sx) if int(24 * sx) >= 6 else 6
-        f_nm = int(32 * sx) if int(32 * sx) >= 8 else 8
-        f_it = int(26 * sx) if int(26 * sx) >= 6 else 6
-        f_lo = int(24 * sx) if int(24 * sx) >= 6 else 6
-        f_fv = int(24 * sx) if int(24 * sx) >= 6 else 6
-        f_dr = int(24 * sx) if int(24 * sx) >= 6 else 6
-        f_crm = int(22 * sx) if int(22 * sx) >= 6 else 6
-        f_uso = int(22 * sx) if int(22 * sx) >= 6 else 6
-        f_man = int(22 * sx) if int(22 * sx) >= 6 else 6
-        f_end = int(20 * sx) if int(20 * sx) >= 6 else 6
+        f_nm = int(28 * sx) if int(28 * sx) >= 8 else 8
+        fb = int(21 * sx) if int(21 * sx) >= 6 else 6
+        fs = int(19 * sx) if int(19 * sx) >= 6 else 6
+        fe = int(17 * sx) if int(17 * sx) >= 6 else 6
         return (
             "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-            "^FO" + str(x) + "," + str(int(14 * sy)) + "^A0N," + str(f_reg) + "," + str(f_reg) + "^FDREGISTRO: " + registro + "^FS" +
-            "^FO" + str(x) + "," + str(int(46 * sy)) + "^A0N," + str(f_nm) + "," + str(f_nm) + "^FD" + patient_name + "^FS" +
-            "^FO" + str(x) + "," + str(int(86 * sy)) + "^A0N," + str(f_it) + "," + str(f_it) + "^FD" + item_name + "^FS" +
-            "^FO" + str(x) + "," + str(int(120 * sy)) + "^A0N," + str(f_lo) + "," + str(f_lo) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
-            "^FO" + str(x) + "," + str(int(152 * sy)) + "^A0N," + str(f_fv) + "," + str(f_fv) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
-            "^FO" + str(x) + "," + str(int(184 * sy)) + "^A0N," + str(f_dr) + "," + str(f_dr) + "^FDDR(A) " + prescriber_name + "^FS" +
-            "^FO" + str(x) + "," + str(int(214 * sy)) + "^A0N," + str(f_crm) + "," + str(f_crm) + "^FD" + crm + "^FS" +
-            "^FO" + str(x) + "," + str(int(246 * sy)) + "^A0N," + str(f_uso) + "," + str(f_uso) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
-            "^FO" + str(x) + "," + str(int(276 * sy)) + "^A0N," + str(f_man) + "," + str(f_man) + "^FDMANTER DE 2°C A 8°C^FS" +
-            "^FO" + str(x) + "," + str(int(316 * sy)) + "^A0N," + str(f_end) + "," + str(f_end) + "^FB" + str(fw) + ",2,0,L,0^FD" + endereco + "^FS" +
+            "^FO" + str(x) + "," + str(int(12 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + l_reg + "^FS" +
+            "^FO" + str(x) + "," + str(int(42 * sy)) + "^A0N," + str(f_nm) + "," + str(f_nm) + "^FD" + patient_name + "^FS" +
+            "^FO" + str(x) + "," + str(int(78 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + item_name + "^FS" +
+            "^FO" + str(x) + "," + str(int(108 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + ph_txt + "^FS" +
+            "^FO" + str(x) + "," + str(int(138 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + l_lote + "^FS" +
+            "^FO" + str(x) + "," + str(int(168 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + l_fv + "^FS" +
+            "^FO" + str(x) + "," + str(int(198 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + medico + "^FS" +
+            "^FO" + str(x) + "," + str(int(230 * sy)) + "^A0N," + str(fs) + "," + str(fs) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+            "^FO" + str(x) + "," + str(int(258 * sy)) + "^A0N," + str(fs) + "," + str(fs) + "^FDMANTER DE 2°C A 8°C^FS" +
+            "^FO" + str(x) + "," + str(int(292 * sy)) + "^A0N," + str(fe) + "," + str(fe) + "^FB" + str(fw) + ",2,0,L,0^FD" + endereco + "^FS" +
             "^PQ" + str(pq) + "^XZ"
         )
 
     # GIRADO 90 (^A0R): linhas empilhadas pela largura (pw), texto ao longo da altura (ll).
     step = pw // 10
-    fb = int(step * 0.9)
-    if fb < 12:
-        fb = 12
+    fb = int(step * 0.8)
+    if fb < 11:
+        fb = 11
     fw_c = fb - 1
-    fn = fb
-    fn_c = fb
     fe = fb - 2
     if fe < 10:
         fe = 10
@@ -287,16 +281,16 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
     y = int(ll * 0.02)
     if y < 8:
         y = 8
-    top = pw - step
+    top = pw - fb - 2
     return (
         "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-        "^FO" + str(top) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDREGISTRO: " + registro + "^FS" +
-        "^FO" + str(top - step) + "," + str(y) + "^A0R," + str(fn) + "," + str(fn_c) + "^FD" + patient_name + "^FS" +
+        "^FO" + str(top) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + l_reg + "^FS" +
+        "^FO" + str(top - step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FD" + patient_name + "^FS" +
         "^FO" + str(top - 2 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + item_name + "^FS" +
-        "^FO" + str(top - 3 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
-        "^FO" + str(top - 4 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
-        "^FO" + str(top - 5 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDDR(A) " + prescriber_name + "^FS" +
-        "^FO" + str(top - 6 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + crm + "^FS" +
+        "^FO" + str(top - 3 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + ph_txt + "^FS" +
+        "^FO" + str(top - 4 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + l_lote + "^FS" +
+        "^FO" + str(top - 5 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + l_fv + "^FS" +
+        "^FO" + str(top - 6 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + medico + "^FS" +
         "^FO" + str(top - 7 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
         "^FO" + str(top - 8 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDMANTER DE 2°C A 8°C^FS" +
         "^FO" + str(top - 9 * step) + "," + str(y) + "^A0R," + str(fe) + "," + str(fe_c) + "^FD" + endereco + "^FS" +
@@ -313,6 +307,7 @@ zpl = build_zpl(
     registro, patient_name, item_name, batch, val, fab, qty,
     target.prescriber_name or "", target.prescriber_council or "",
     target.prescriber_state or "", target.prescriber_number or "",
+    target.get("ph") or "",
 )
 
 frappe.response["message"] = {
@@ -364,12 +359,11 @@ def fmt_date(d):
     return s
 
 
-def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, prescriber_name, council, state, number):
+def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, prescriber_name, council, state, number, ph):
     # MODELO UNICO (Receituario), escalado e ORIENTADO pelo lado MAIOR da etiqueta:
     #   largura >= altura -> texto horizontal (^A0N) ao longo da largura
     #   altura  >  largura -> texto girado 90 (^A0R) ao longo da altura
-    # Novo tamanho: adicione aqui e em LABEL_TEMPLATES (lib/payloads_dispensation.py).
-    # 203 dpi ~= 8 dots/mm.
+    # 203 dpi ~= 8 dots/mm. Cada etiqueta = 1 unidade (^PQ imprime qty copias).
     sizes = {
         "25x60mm": (25, 60),
         "30x60mm": (30, 60),
@@ -382,55 +376,49 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
     h_mm = size[1]
     pw = w_mm * 8
     ll = h_mm * 8
-    # qtd da linha -> numero de copias (^PQ). 1 etiqueta por unidade/ampola.
     pq = int(qty)
     if pq < 1:
         pq = 1
     endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
-    crm = (council or "CRM") + " " + (state or "") + "/" + (number or "")
+    medico = "DR(A) " + prescriber_name + " - " + (council or "CRM") + " " + (state or "") + "/" + (number or "")
+    ph_txt = "pH: " + (str(ph) if ph else "")
+    l_reg = "REG: " + registro
+    l_lote = "Lote: " + batch + " - 1 UN"
+    l_fv = "FAB.: " + fab + " - VAL.: " + val
 
     if w_mm >= h_mm:
-        # HORIZONTAL: referencia 100x50mm (800x400); fontes pela largura (sx),
-        # posicoes verticais pela altura (sy).
+        # HORIZONTAL: referencia 100x50mm (800x400); fontes pela largura (sx), posicoes pela altura (sy).
         sx = pw / 800.0
         sy = ll / 400.0
         x = int(20 * sx)
         if x < 6:
             x = 6
         fw = pw - 2 * x
-        f_reg = int(24 * sx) if int(24 * sx) >= 6 else 6
-        f_nm = int(32 * sx) if int(32 * sx) >= 8 else 8
-        f_it = int(26 * sx) if int(26 * sx) >= 6 else 6
-        f_lo = int(24 * sx) if int(24 * sx) >= 6 else 6
-        f_fv = int(24 * sx) if int(24 * sx) >= 6 else 6
-        f_dr = int(24 * sx) if int(24 * sx) >= 6 else 6
-        f_crm = int(22 * sx) if int(22 * sx) >= 6 else 6
-        f_uso = int(22 * sx) if int(22 * sx) >= 6 else 6
-        f_man = int(22 * sx) if int(22 * sx) >= 6 else 6
-        f_end = int(20 * sx) if int(20 * sx) >= 6 else 6
+        f_nm = int(28 * sx) if int(28 * sx) >= 8 else 8
+        fb = int(21 * sx) if int(21 * sx) >= 6 else 6
+        fs = int(19 * sx) if int(19 * sx) >= 6 else 6
+        fe = int(17 * sx) if int(17 * sx) >= 6 else 6
         return (
             "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-            "^FO" + str(x) + "," + str(int(14 * sy)) + "^A0N," + str(f_reg) + "," + str(f_reg) + "^FDREGISTRO: " + registro + "^FS" +
-            "^FO" + str(x) + "," + str(int(46 * sy)) + "^A0N," + str(f_nm) + "," + str(f_nm) + "^FD" + patient_name + "^FS" +
-            "^FO" + str(x) + "," + str(int(86 * sy)) + "^A0N," + str(f_it) + "," + str(f_it) + "^FD" + item_name + "^FS" +
-            "^FO" + str(x) + "," + str(int(120 * sy)) + "^A0N," + str(f_lo) + "," + str(f_lo) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
-            "^FO" + str(x) + "," + str(int(152 * sy)) + "^A0N," + str(f_fv) + "," + str(f_fv) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
-            "^FO" + str(x) + "," + str(int(184 * sy)) + "^A0N," + str(f_dr) + "," + str(f_dr) + "^FDDR(A) " + prescriber_name + "^FS" +
-            "^FO" + str(x) + "," + str(int(214 * sy)) + "^A0N," + str(f_crm) + "," + str(f_crm) + "^FD" + crm + "^FS" +
-            "^FO" + str(x) + "," + str(int(246 * sy)) + "^A0N," + str(f_uso) + "," + str(f_uso) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
-            "^FO" + str(x) + "," + str(int(276 * sy)) + "^A0N," + str(f_man) + "," + str(f_man) + "^FDMANTER DE 2°C A 8°C^FS" +
-            "^FO" + str(x) + "," + str(int(316 * sy)) + "^A0N," + str(f_end) + "," + str(f_end) + "^FB" + str(fw) + ",2,0,L,0^FD" + endereco + "^FS" +
+            "^FO" + str(x) + "," + str(int(12 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + l_reg + "^FS" +
+            "^FO" + str(x) + "," + str(int(42 * sy)) + "^A0N," + str(f_nm) + "," + str(f_nm) + "^FD" + patient_name + "^FS" +
+            "^FO" + str(x) + "," + str(int(78 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + item_name + "^FS" +
+            "^FO" + str(x) + "," + str(int(108 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + ph_txt + "^FS" +
+            "^FO" + str(x) + "," + str(int(138 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + l_lote + "^FS" +
+            "^FO" + str(x) + "," + str(int(168 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + l_fv + "^FS" +
+            "^FO" + str(x) + "," + str(int(198 * sy)) + "^A0N," + str(fb) + "," + str(fb) + "^FD" + medico + "^FS" +
+            "^FO" + str(x) + "," + str(int(230 * sy)) + "^A0N," + str(fs) + "," + str(fs) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
+            "^FO" + str(x) + "," + str(int(258 * sy)) + "^A0N," + str(fs) + "," + str(fs) + "^FDMANTER DE 2°C A 8°C^FS" +
+            "^FO" + str(x) + "," + str(int(292 * sy)) + "^A0N," + str(fe) + "," + str(fe) + "^FB" + str(fw) + ",2,0,L,0^FD" + endereco + "^FS" +
             "^PQ" + str(pq) + "^XZ"
         )
 
     # GIRADO 90 (^A0R): linhas empilhadas pela largura (pw), texto ao longo da altura (ll).
     step = pw // 10
-    fb = int(step * 0.9)
-    if fb < 12:
-        fb = 12
+    fb = int(step * 0.8)
+    if fb < 11:
+        fb = 11
     fw_c = fb - 1
-    fn = fb
-    fn_c = fb
     fe = fb - 2
     if fe < 10:
         fe = 10
@@ -442,16 +430,16 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
     y = int(ll * 0.02)
     if y < 8:
         y = 8
-    top = pw - step
+    top = pw - fb - 2
     return (
         "^XA^CI28^PW" + str(pw) + "^LL" + str(ll) +
-        "^FO" + str(top) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDREGISTRO: " + registro + "^FS" +
-        "^FO" + str(top - step) + "," + str(y) + "^A0R," + str(fn) + "," + str(fn_c) + "^FD" + patient_name + "^FS" +
+        "^FO" + str(top) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + l_reg + "^FS" +
+        "^FO" + str(top - step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fb) + "^FD" + patient_name + "^FS" +
         "^FO" + str(top - 2 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + item_name + "^FS" +
-        "^FO" + str(top - 3 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDLote: " + batch + " - " + str(qty) + " UN^FS" +
-        "^FO" + str(top - 4 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDFAB.: " + fab + " - VAL.: " + val + "^FS" +
-        "^FO" + str(top - 5 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDDR(A) " + prescriber_name + "^FS" +
-        "^FO" + str(top - 6 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + crm + "^FS" +
+        "^FO" + str(top - 3 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + ph_txt + "^FS" +
+        "^FO" + str(top - 4 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + l_lote + "^FS" +
+        "^FO" + str(top - 5 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + l_fv + "^FS" +
+        "^FO" + str(top - 6 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FD" + medico + "^FS" +
         "^FO" + str(top - 7 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDUSO INJETAVEL / SUBCUTANEO^FS" +
         "^FO" + str(top - 8 * step) + "," + str(y) + "^A0R," + str(fb) + "," + str(fw_c) + "^FDMANTER DE 2°C A 8°C^FS" +
         "^FO" + str(top - 9 * step) + "," + str(y) + "^A0R," + str(fe) + "," + str(fe_c) + "^FD" + endereco + "^FS" +
@@ -486,6 +474,7 @@ for row in rows:
         registro, patient_name, item_name, batch, val, fab, qty,
         row.prescriber_name or "", row.prescriber_council or "",
         row.prescriber_state or "", row.prescriber_number or "",
+        row.get("ph") or "",
     )
 
     all_zpl_parts.append(zpl)
