@@ -62,6 +62,24 @@ def find_by_prefix(client, doctype: str, field: str, prefixes: list[str]) -> lis
         return []
 
 
+def find_all(client, doctype: str, field: str) -> list[dict]:
+    """Lista TODOS os docs do doctype (modo --all = 100%)."""
+    try:
+        _, body = call(client, "GET", f"/api/resource/{doctype}",
+                       params={"fields": json.dumps(["name", "docstatus", field]),
+                               "limit_page_length": 0})
+        return (body or {}).get("data") or []
+    except ErpnextApiError as exc:
+        log_error(f"  Falha listar {doctype}: {exc}")
+        return []
+
+
+def find(client, doctype: str, field: str, prefixes: list[str], all_mode: bool) -> list[dict]:
+    if all_mode:
+        return find_all(client, doctype, field)
+    return find_by_prefix(client, doctype, field, prefixes)
+
+
 def delete_doc(client, doctype: str, name: str, submitted: bool):
     try:
         if submitted:
@@ -73,41 +91,48 @@ def delete_doc(client, doctype: str, name: str, submitted: bool):
         return False
 
 
-def cleanup(client, prefixes: list[str]) -> dict:
+def cleanup(client, prefixes: list[str], all_mode: bool = False) -> dict:
     counts = {}
 
     # 1. Production Reservations (dependem de SO e FPB)
     log_section("1/7 — Production Reservations")
-    # Acha PRs de SOs com prefixo
-    sos = find_by_prefix(client, "Sales Order", "customer", prefixes)
+    sos = find(client, "Sales Order", "customer", prefixes, all_mode)
     sos_names = [s["name"] for s in sos]
-    if sos_names:
+    if all_mode:
+        prs = find_all(client, "Production Reservation", "name")
+    elif sos_names:
         _, body = call(client, "GET", "/api/resource/Production Reservation",
                        params={"filters": json.dumps([["sales_order", "in", sos_names]]),
                                "fields": '["name","docstatus"]',
-                               "limit_page_length": 2000})
+                               "limit_page_length": 5000})
         prs = (body or {}).get("data") or []
-        log_ok(f"  Encontradas {len(prs)} PRs ligadas a SOs de teste")
-        deleted = 0
-        for pr in prs:
-            if delete_doc(client, "Production Reservation", pr["name"], pr.get("docstatus") == 1):
-                deleted += 1
-        counts["Production Reservation"] = deleted
+    else:
+        prs = []
+    log_ok(f"  Encontradas {len(prs)} PRs")
+    deleted = 0
+    for pr in prs:
+        if delete_doc(client, "Production Reservation", pr["name"], pr.get("docstatus") == 1):
+            deleted += 1
+    counts["Production Reservation"] = deleted
 
-    # 1b. Dispensações (referenciam SOs de teste) — apagar antes dos SOs
+    # 1b. Dispensações — apagar antes dos SOs (referenciam SOs)
     log_section("1b/7 — Dispensacoes")
-    if sos_names:
+    if all_mode:
+        disps = find_all(client, "Dispensacao", "name")
+    elif sos_names:
         _, body = call(client, "GET", "/api/resource/Dispensacao",
                        params={"filters": json.dumps([["sales_order", "in", sos_names]]),
                                "fields": '["name","docstatus"]',
-                               "limit_page_length": 2000})
+                               "limit_page_length": 5000})
         disps = (body or {}).get("data") or []
-        log_ok(f"  Encontradas {len(disps)} Dispensacoes ligadas a SOs de teste")
-        deleted = 0
-        for d in disps:
-            if delete_doc(client, "Dispensacao", d["name"], d.get("docstatus") == 1):
-                deleted += 1
-        counts["Dispensacao"] = deleted
+    else:
+        disps = []
+    log_ok(f"  Encontradas {len(disps)} Dispensacoes")
+    deleted = 0
+    for d in disps:
+        if delete_doc(client, "Dispensacao", d["name"], d.get("docstatus") == 1):
+            deleted += 1
+    counts["Dispensacao"] = deleted
 
     # 2. Sales Orders
     log_section("2/7 — Sales Orders")
@@ -119,7 +144,7 @@ def cleanup(client, prefixes: list[str]) -> dict:
 
     # 3. Future Production Batches (por production_code)
     log_section("3/7 — Future Production Batches")
-    fpbs = find_by_prefix(client, "Future Production Batch", "production_code", prefixes)
+    fpbs = find(client, "Future Production Batch", "production_code", prefixes, all_mode)
     deleted = 0
     for f in fpbs:
         if delete_doc(client, "Future Production Batch", f["name"], f.get("docstatus") == 1):
@@ -128,7 +153,7 @@ def cleanup(client, prefixes: list[str]) -> dict:
 
     # 4. Batches físicos
     log_section("4/7 — Batches físicos")
-    batches = find_by_prefix(client, "Batch", "batch_id", prefixes)
+    batches = find(client, "Batch", "batch_id", prefixes, all_mode)
     deleted = 0
     for b in batches:
         if delete_doc(client, "Batch", b["name"], False):
@@ -137,7 +162,7 @@ def cleanup(client, prefixes: list[str]) -> dict:
 
     # 5. Patients (por patient_name)
     log_section("5/7 — Patients")
-    patients = find_by_prefix(client, "Patient", "patient_name", prefixes)
+    patients = find(client, "Patient", "patient_name", prefixes, all_mode)
     deleted = 0
     for p in patients:
         if delete_doc(client, "Patient", p["name"], False):
@@ -146,7 +171,7 @@ def cleanup(client, prefixes: list[str]) -> dict:
 
     # 6. Prescribers (por full_name)
     log_section("6/7 — Prescribers")
-    pres_list = find_by_prefix(client, "Prescriber", "full_name", prefixes)
+    pres_list = find(client, "Prescriber", "full_name", prefixes, all_mode)
     deleted = 0
     for p in pres_list:
         if delete_doc(client, "Prescriber", p["name"], False):
@@ -155,7 +180,7 @@ def cleanup(client, prefixes: list[str]) -> dict:
 
     # 7. Customers (por customer_name)
     log_section("7/7 — Customers")
-    custs = find_by_prefix(client, "Customer", "customer_name", prefixes)
+    custs = find(client, "Customer", "customer_name", prefixes, all_mode)
     deleted = 0
     for c in custs:
         if delete_doc(client, "Customer", c["name"], False):
@@ -171,6 +196,8 @@ def main():
                         help="Pula confirmação")
     parser.add_argument("--tag", action="append",
                         help="Prefixo adicional (pode repetir). Default: TEST-, DEMO-")
+    parser.add_argument("--all", action="store_true",
+                        help="Apaga TODOS os registros (100%%), ignorando prefixos. Mantem a Company.")
     args = parser.parse_args()
 
     prefixes = args.tag if args.tag else TAGS
@@ -178,9 +205,14 @@ def main():
     client = client_from_env()
 
     log_section("Deep Cleanup")
-    print(f"  Prefixos: {prefixes}")
-    print("  Vai apagar PR/SO/FPB/Batch/Patient/Prescriber/Customer")
-    print("  que comecem com esses prefixos.")
+    if args.all:
+        print("  MODO --all: vai apagar TODOS os registros (100%) de")
+        print("  PR / Dispensacao / SO / FPB / Batch / Patient / Prescriber / Customer.")
+        print("  A Company (empresa) NAO e tocada. ACAO IRREVERSIVEL.")
+    else:
+        print(f"  Prefixos: {prefixes}")
+        print("  Vai apagar PR/Dispensacao/SO/FPB/Batch/Patient/Prescriber/Customer")
+        print("  que comecem com esses prefixos.")
     print()
 
     if not args.yes:
@@ -189,7 +221,7 @@ def main():
             print("  Cancelado.")
             return 0
 
-    counts = cleanup(client, prefixes)
+    counts = cleanup(client, prefixes, args.all)
 
     log_section("RESUMO")
     total = 0
