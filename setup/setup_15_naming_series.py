@@ -71,11 +71,13 @@ NATIVE_WITH_NAMING_SERIES: list[str] = [
     "Stock Entry",
     "Patient",
     "Customer",  # também precisa Selling Settings (abaixo)
+    "Item",      # SKU auto-gerado, requer Stock Settings (abaixo)
 ]
 
 # Settings singletons que precisam apontar pra Naming Series.
 SETTINGS_OVERRIDES: list[tuple[str, dict]] = [
     ("Selling Settings", {"cust_master_name": "Naming Series"}),
+    ("Stock Settings", {"item_naming_by": "Naming Series"}),
 ]
 
 AUTONAME_VALUE = "format:{#####}"

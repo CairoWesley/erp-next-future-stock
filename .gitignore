@@ -11,3 +11,7 @@ __pycache__/
 
 .smoke_state.json
 .huge_state.json
+
+# Arquivos de trabalho temporários (cache do sync HubSpot)
+tools/_hubspot_*.json
+tools/_hubspot_*.py
