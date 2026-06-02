@@ -230,6 +230,9 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
     pq = int(qty)
     if pq < 1:
         pq = 1
+    # Regra de impressao: por unidade 1 etiqueta de caixa + 1 de ampola;
+    # +1 etiqueta adicional para o pedido. Total = qty * 2 + 1.
+    pq = pq * 2 + 1
     endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
     medico = "DR(A) " + prescriber_name + " - " + (council or "CRM") + " " + (state or "") + "/" + (number or "")
     ph_txt = "pH: " + (str(ph) if ph else "")
@@ -379,6 +382,9 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
     pq = int(qty)
     if pq < 1:
         pq = 1
+    # Regra de impressao: por unidade 1 etiqueta de caixa + 1 de ampola;
+    # +1 etiqueta adicional para o pedido. Total = qty * 2 + 1.
+    pq = pq * 2 + 1
     endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
     medico = "DR(A) " + prescriber_name + " - " + (council or "CRM") + " " + (state or "") + "/" + (number or "")
     ph_txt = "pH: " + (str(ph) if ph else "")
