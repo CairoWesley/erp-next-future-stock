@@ -63,6 +63,10 @@ FORM_VISIBILITY_FIELDS = [
     },
 
     # ----- Dados do Prescriber (fetch_from) -----
+    # Prescriber v2: campos do conselho movem pro child Prescriber Council.
+    # Fetch direto de prescriber.council_* não existe mais. prescriber_council
+    # (string consolidada "CRM-SP 12345") é populada via Server Script ao
+    # validar SO. Só mantemos fetch de full_name (campo da pessoa).
     {
         "dt": "Sales Order Patient",
         "fieldname": "prescriber_full_name",
@@ -73,36 +77,6 @@ FORM_VISIBILITY_FIELDS = [
         "read_only": 1,
         "insert_after": "prescriber_council",
         "in_list_view": 1,
-    },
-    {
-        "dt": "Sales Order Patient",
-        "fieldname": "prescriber_number",
-        "label": "Nº Conselho",
-        "fieldtype": "Data",
-        "fetch_from": "prescriber.council_number",
-        "fetch_if_empty": 0,
-        "read_only": 1,
-        "insert_after": "prescriber_full_name",
-    },
-    {
-        "dt": "Sales Order Patient",
-        "fieldname": "prescriber_state",
-        "label": "UF Conselho",
-        "fieldtype": "Data",
-        "fetch_from": "prescriber.council_state",
-        "fetch_if_empty": 0,
-        "read_only": 1,
-        "insert_after": "prescriber_number",
-    },
-    {
-        "dt": "Sales Order Patient",
-        "fieldname": "prescriber_status",
-        "label": "Status Conselho",
-        "fieldtype": "Data",
-        "fetch_from": "prescriber.council_status",
-        "fetch_if_empty": 0,
-        "read_only": 1,
-        "insert_after": "prescriber_state",
     },
 
     # ----- Dados do Batch (fetch_from) -----
