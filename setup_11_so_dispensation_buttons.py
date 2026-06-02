@@ -25,6 +25,64 @@ frappe.ui.form.on('Sales Order', {
         if (frm.is_new()) return;
         if (frm.doc.docstatus !== 1) return;
 
+        // 0) Validar e Reservar (substitui auto_reserve direto)
+        const has_reservation = (frm.doc.items || []).some(it => (it.fp_reserved_qty || 0) > 0);
+        if (!has_reservation) {
+            frm.add_custom_button(__('Validar e Reservar'), () => {
+                frappe.call({
+                    method: 'future_production_validate_and_reserve',
+                    args: { sales_order: frm.doc.name },
+                    freeze: true,
+                    freeze_message: __('Validando e reservando...'),
+                    callback: (r) => {
+                        const msg = r && r.message;
+                        if (!msg) return;
+                        if (!msg.ok) {
+                            // Mostra dialog com bloqueios
+                            const blockers = (msg.missing || [])
+                                .map(b => '• ' + b.label).join('<br>');
+                            frappe.msgprint({
+                                title: __('Reserva bloqueada'),
+                                message: __('Faltam validações:<br>{0}<br><br>' +
+                                    'Os webhooks externos atualizarão as flags automaticamente. ' +
+                                    'Você pode forçar (admin only) usando o botão "Forçar Reserva".', [blockers]),
+                                indicator: 'red',
+                            });
+                        } else {
+                            frappe.show_alert({
+                                message: __('{0} reservas criadas.', [(msg.reservations || []).length]),
+                                indicator: 'green'
+                            });
+                            frm.reload_doc();
+                        }
+                    }
+                });
+            }, __('Produção Futura'));
+
+            // Botão de força (debug/override)
+            frm.add_custom_button(__('Forçar Reserva (ignorar validações)'), () => {
+                frappe.confirm(
+                    __('Pular as validações e reservar mesmo assim? Use só em emergência.'),
+                    () => {
+                        frappe.call({
+                            method: 'future_production_validate_and_reserve',
+                            args: { sales_order: frm.doc.name, force: 1 },
+                            freeze: true,
+                            callback: (r) => {
+                                if (r && r.message && r.message.ok) {
+                                    frappe.show_alert({
+                                        message: __('Reservado (forçado).'),
+                                        indicator: 'orange'
+                                    });
+                                    frm.reload_doc();
+                                }
+                            }
+                        });
+                    }
+                );
+            }, __('Produção Futura'));
+        }
+
         // 1) Alocar Batch por Paciente
         frm.add_custom_button(__('Alocar Batch por Paciente'), () => {
             frappe.confirm(
