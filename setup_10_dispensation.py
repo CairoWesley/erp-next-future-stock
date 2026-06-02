@@ -233,7 +233,32 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
     # Regra de impressao: por unidade 1 etiqueta de caixa + 1 de ampola;
     # +1 etiqueta adicional para o pedido. Total = qty * 2 + 1.
     pq = pq * 2 + 1
-    endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
+    # Endereco real da Company (puxado do cadastro Company + Address linkado).
+    # Sem placeholder. Cai pra fallback so se a Company nao tiver dados.
+    comp_name = frappe.db.get_value("Sales Order", disp.sales_order, "company") if disp.sales_order else None
+    if not comp_name:
+        comp_name = frappe.defaults.get_user_default("Company")
+    tax_id = frappe.db.get_value("Company", comp_name, "tax_id") if comp_name else ""
+    tax_id = tax_id or ""
+    addr_links = frappe.get_all(
+        "Dynamic Link",
+        filters={"link_doctype": "Company", "link_name": comp_name, "parenttype": "Address"},
+        fields=["parent"],
+        limit=1,
+    ) if comp_name else []
+    if addr_links:
+        addr = frappe.db.get_value(
+            "Address", addr_links[0].parent,
+            ["address_line1", "city", "state"], as_dict=True
+        ) or {}
+        endereco = (
+            (addr.get("address_line1") or "") +
+            (" - " + addr.get("city") if addr.get("city") else "") +
+            ("/" + addr.get("state") if addr.get("state") else "") +
+            (" - CNPJ " + tax_id if tax_id else "")
+        )
+    else:
+        endereco = "CNPJ " + tax_id if tax_id else ""
     medico = "DR(A) " + prescriber_name + " - " + (council or "CRM") + " " + (state or "") + "/" + (number or "")
     ph_txt = "pH: " + (str(ph) if ph else "")
     l_reg = "REG: " + registro
@@ -385,7 +410,32 @@ def build_zpl(tpl, registro, patient_name, item_name, batch, val, fab, qty, pres
     # Regra de impressao: por unidade 1 etiqueta de caixa + 1 de ampola;
     # +1 etiqueta adicional para o pedido. Total = qty * 2 + 1.
     pq = pq * 2 + 1
-    endereco = "Rua Exemplo, 123 - Centro - Cidade/UF - CNPJ 00.000.000/0001-00"
+    # Endereco real da Company (puxado do cadastro Company + Address linkado).
+    # Sem placeholder. Cai pra fallback so se a Company nao tiver dados.
+    comp_name = frappe.db.get_value("Sales Order", disp.sales_order, "company") if disp.sales_order else None
+    if not comp_name:
+        comp_name = frappe.defaults.get_user_default("Company")
+    tax_id = frappe.db.get_value("Company", comp_name, "tax_id") if comp_name else ""
+    tax_id = tax_id or ""
+    addr_links = frappe.get_all(
+        "Dynamic Link",
+        filters={"link_doctype": "Company", "link_name": comp_name, "parenttype": "Address"},
+        fields=["parent"],
+        limit=1,
+    ) if comp_name else []
+    if addr_links:
+        addr = frappe.db.get_value(
+            "Address", addr_links[0].parent,
+            ["address_line1", "city", "state"], as_dict=True
+        ) or {}
+        endereco = (
+            (addr.get("address_line1") or "") +
+            (" - " + addr.get("city") if addr.get("city") else "") +
+            ("/" + addr.get("state") if addr.get("state") else "") +
+            (" - CNPJ " + tax_id if tax_id else "")
+        )
+    else:
+        endereco = "CNPJ " + tax_id if tax_id else ""
     medico = "DR(A) " + prescriber_name + " - " + (council or "CRM") + " " + (state or "") + "/" + (number or "")
     ph_txt = "pH: " + (str(ph) if ph else "")
     l_reg = "REG: " + registro

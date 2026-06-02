@@ -8,15 +8,17 @@
 
 ## Pendências
 
-- [ ] **1. Limpar 100% dos dados de teste** (manter a Company). Ver runbook abaixo.
-- [ ] **2. Endereço + CNPJ reais da empresa.** A Company `Injmedpharma` não tem
-      endereço (Address) nem CNPJ (`tax_id`) cadastrados. Hoje a etiqueta usa um
-      placeholder no endereço. Cadastrar os dados reais e religar a etiqueta para
-      **importar** dinamicamente (remover o placeholder em `build_zpl`).
-- [ ] **3. Confirmar regra de cópias da etiqueta.** Hoje imprime **`qty*2+1`
-      cópias da MESMA etiqueta** (1 caixa + 1 ampola por unidade + 1 adicional
-      para o pedido). Se "caixa", "ampola" e "adicional" precisarem de
-      **layouts/tamanhos diferentes**, implementar tipos distintos.
+- [x] **1. Limpar 100% dos dados de teste** ✅ FEITO em 2026-06-02. 372 docs removidos,
+      Company Injmedpharma + DocTypes/Scripts intactos.
+- [x] **2. Endereço + CNPJ reais da empresa.** ✅ FEITO. Cadastrados:
+      - Company: `INJEMED MEDICAMENTOS ESPECIAIS`, CNPJ `23.664.355/0001-80`
+      - Address: `RUA FLAVIO MARQUES LISBOA, 400, Belo Horizonte/MG`
+      - Farmacêutica: `Katia V Souza Lopes` (PRES-2026-00029, CRF-MG 50259)
+      - `build_zpl` agora puxa endereço + CNPJ dinâmicos via `frappe.db.get_value`
+        em `Company.tax_id` + `Address` (Dynamic Link). Placeholder removido.
+- [x] **3. Regra de cópias da etiqueta**: mantido `qty*2+1` cópias da MESMA
+      etiqueta conforme decisão atual (2026-06-02). Reavaliar quando produção
+      pedir layouts distintos (caixa/ampola/extra).
 
 ---
 
