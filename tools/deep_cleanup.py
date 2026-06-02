@@ -94,6 +94,21 @@ def cleanup(client, prefixes: list[str]) -> dict:
                 deleted += 1
         counts["Production Reservation"] = deleted
 
+    # 1b. Dispensações (referenciam SOs de teste) — apagar antes dos SOs
+    log_section("1b/7 — Dispensacoes")
+    if sos_names:
+        _, body = call(client, "GET", "/api/resource/Dispensacao",
+                       params={"filters": json.dumps([["sales_order", "in", sos_names]]),
+                               "fields": '["name","docstatus"]',
+                               "limit_page_length": 2000})
+        disps = (body or {}).get("data") or []
+        log_ok(f"  Encontradas {len(disps)} Dispensacoes ligadas a SOs de teste")
+        deleted = 0
+        for d in disps:
+            if delete_doc(client, "Dispensacao", d["name"], d.get("docstatus") == 1):
+                deleted += 1
+        counts["Dispensacao"] = deleted
+
     # 2. Sales Orders
     log_section("2/7 — Sales Orders")
     deleted = 0
