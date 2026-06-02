@@ -14,8 +14,10 @@ Uso:
     python setup_04_reports.py
     python setup_04_reports.py --uninstall
 """
-
 from __future__ import annotations
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import json
 import os

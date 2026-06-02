@@ -54,7 +54,7 @@ python -m venv .venv
 
 pip install -r requirements.txt
 cp .env.example .env             # editar com URL + API key/secret
-python setup_all.py
+python setup/setup_all.py
 ```
 
 Pré-requisito crítico no servidor: `bench --site <site> set-config -g server_script_enabled 1 && bench restart`.
@@ -79,22 +79,53 @@ Veja [`docs/03-installation.md`](docs/03-installation.md) para a lista completa.
 
 ```
 .
-├── docs/                          ← documentação completa (10 arquivos)
-├── lib/
+├── docs/                          documentação completa + fluxo-real/
+│   ├── 00..16-*.md                guias por tema
+│   └── fluxo-real/                passo a passo executado em prod
+├── lib/                           módulos compartilhados
 │   ├── erpnext_api.py             cliente HTTP idempotente
-│   ├── payloads.py                schemas dos DocTypes principais
-│   └── payloads_patients.py       schemas do módulo de pacientes
-├── setup_all.py                   orquestrador (6 passos)
-├── setup_01_structure.py          DocTypes principais + Custom Fields
-├── setup_02_client_scripts.py     UI / botões
-├── setup_03_server_scripts.py     validações + endpoints API
-├── setup_04_reports.py            relatórios
-├── setup_05_workspace.py          menu lateral
-├── setup_06_patients.py           módulo Lote × Pacientes
-├── test_scenario.py               cenário Fluxo A + B (parametrizável)
-├── test_scenario_patients.py      cenário com pacientes
+│   ├── payloads.py                schemas DocTypes principais
+│   ├── payloads_patients.py       schemas módulo pacientes
+│   ├── payloads_prescribers.py    schemas Prescriber + Council
+│   ├── payloads_dispensation.py   schemas Dispensação + Zebra
+│   └── payloads_*.py              demais payloads por subsistema
+├── setup/                         orquestrador + 14 passos de instalação
+│   ├── setup_all.py               roda todos passos em sequência
+│   ├── setup_01_structure.py      DocTypes + Custom Fields
+│   ├── setup_02_client_scripts.py UI / botões
+│   ├── setup_03_server_scripts.py validações + endpoints API
+│   ├── setup_04_reports.py        relatórios
+│   ├── setup_05_workspace.py      menu lateral
+│   ├── setup_06_patients.py       módulo Lote × Pacientes
+│   ├── setup_07_prescribers.py    módulo Médico Prescritor
+│   ├── setup_08_patient_batch.py  alocação batch por paciente
+│   ├── setup_09_form_visibility.py fetch fields no SO
+│   ├── setup_10_dispensation.py   Dispensação + Zebra ZPL
+│   ├── setup_11_so_dispensation_buttons.py botões SO
+│   ├── setup_12_test_company.py   ambiente teste isolado
+│   ├── setup_13_so_validation.py  validações pré-reserva (pagamento/receitas/HubSpot)
+│   └── setup_14_issue_order.py    endpoint único HubSpot→ERPNext
+├── tests/                         cenários ponta a ponta
+│   ├── test_scenario.py           Fluxo A + B (parametrizável)
+│   ├── test_scenario_patients.py  com pacientes
+│   └── test_scenario_prescribers.py com prescriber+council
+├── smoke/                         testes de volume
+│   ├── mini_flow.py               fluxo mínimo (debug)
+│   ├── smoke_test_large.py        10 FPB × 2k ampolas
+│   └── smoke_test_huge.py         volume estresse
 ├── tools/                         scripts de diagnóstico/manutenção
+├── n8n_workflows/                 workflows n8n exportados (JSON)
+├── requirements.txt
 └── .env.example
+```
+
+Tudo roda da raiz do projeto:
+
+```bash
+python setup/setup_all.py             # instala tudo
+python setup/setup_13_so_validation.py # passo isolado
+python tests/test_scenario.py          # cenário ponta a ponta
+python smoke/smoke_test_large.py       # smoke de volume
 ```
 
 ## Stack

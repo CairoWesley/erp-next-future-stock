@@ -268,7 +268,7 @@ O script:
 Para um reset total (cancela e apaga FPBs e PRs):
 ```bash
 python tools/recreate_doctypes.py
-python setup_03_server_scripts.py    # reaplica scripts
+python setup/setup_03_server_scripts.py    # reaplica scripts
 ```
 
 ---

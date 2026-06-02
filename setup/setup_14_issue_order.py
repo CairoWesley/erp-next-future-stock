@@ -68,8 +68,10 @@ Idempotência:
 - Patient por CPF (lookup, atualiza dados)
 - Se SO já existe pro hubspot_deal_id, retorna existente sem recriar.
 """
-
 from __future__ import annotations
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import sys
 

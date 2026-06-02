@@ -16,8 +16,10 @@ Cenário:
 
 Cleanup: cancela e apaga todos os documentos TEST-PF-* antes de rodar.
 """
-
 from __future__ import annotations
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import datetime as dt
 import json

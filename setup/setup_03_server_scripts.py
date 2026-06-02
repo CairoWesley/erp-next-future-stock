@@ -28,8 +28,10 @@ Nota técnica: cada SCRIPT_* abaixo usa aspas simples triplas (r''' ''') como
 delimitador externo. Isso permite escrever blocos SQL em aspas duplas triplas
 dentro do script Python sem precisar escapar nada.
 """
-
 from __future__ import annotations
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import sys
 

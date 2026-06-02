@@ -30,8 +30,10 @@ Cada fase termina imprimindo "VISIBILIDADE":
   - Chamadas API pra validar via curl/Postman
   - Valores esperados
 """
-
 from __future__ import annotations
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import argparse
 import datetime as dt

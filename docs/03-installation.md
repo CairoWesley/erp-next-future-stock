@@ -82,7 +82,7 @@ Se aparecer `server_script_enabled = False`, volte e habilite no bench (passo
 ## Passo 4 — Instalação completa
 
 ```bash
-python setup_all.py
+python setup/setup_all.py
 ```
 
 Saída esperada (resumo): os 6 passos rodam em sequência, cada um com seu
@@ -100,12 +100,12 @@ bloco `[CRIANDO] / [OK]`. Ao final:
 Para isolar falhas, rode passo a passo:
 
 ```bash
-python setup_01_structure.py        # DocTypes + Custom Fields
-python setup_02_client_scripts.py   # Botões UI
-python setup_03_server_scripts.py   # Validações + endpoints API
-python setup_04_reports.py          # Relatórios
-python setup_05_workspace.py        # Menu lateral
-python setup_06_patients.py         # Módulo Lote × Pacientes
+python setup/setup_01_structure.py        # DocTypes + Custom Fields
+python setup/setup_02_client_scripts.py   # Botões UI
+python setup/setup_03_server_scripts.py   # Validações + endpoints API
+python setup/setup_04_reports.py          # Relatórios
+python setup/setup_05_workspace.py        # Menu lateral
+python setup/setup_06_patients.py         # Módulo Lote × Pacientes
 ```
 
 ## Idempotência
@@ -134,14 +134,14 @@ Depois de instalar, abra o ERPNext:
 Se mudou algum payload, script ou workspace localmente e quer publicar:
 
 ```bash
-python setup_all.py
+python setup/setup_all.py
 ```
 
 Tudo que mudou vai como `update`. Para **mudanças no schema de DocType existente** (adicionar/remover campos), o `create_doctype` pula porque já existe — é preciso recriar:
 
 ```bash
 python tools/recreate_doctypes.py
-python setup_all.py
+python setup/setup_all.py
 ```
 
 > Atenção: `recreate_doctypes.py` cancela e apaga TODOS os documentos
@@ -151,7 +151,7 @@ python setup_all.py
 ## Desinstalação
 
 ```bash
-python setup_all.py --uninstall
+python setup/setup_all.py --uninstall
 ```
 
 Remove em ordem inversa: Pacientes → Workspace → Reports → Server Scripts → Client Scripts → Custom Fields → DocTypes.
@@ -161,7 +161,7 @@ Remove em ordem inversa: Pacientes → Workspace → Reports → Server Scripts 
 ## Pular passos
 
 ```bash
-python setup_all.py --skip 4,5      # pular Reports e Workspace
+python setup/setup_all.py --skip 4,5      # pular Reports e Workspace
 ```
 
 ## Troubleshooting de instalação

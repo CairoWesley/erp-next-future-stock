@@ -10,11 +10,11 @@ Reproduz o cenário de aceite da seção 23 da documentação original.
 
 ### Uso
 ```bash
-python test_scenario.py                       # padrão: produced=1850
-python test_scenario.py --produced-qty 2000   # produção igual ao planejado
-python test_scenario.py --produced-qty 1500   # subprodução grave
-python test_scenario.py --produced-qty 2100   # sobreprodução
-python test_scenario.py --no-cleanup          # não apaga dados anteriores
+python tests/test_scenario.py                       # padrão: produced=1850
+python tests/test_scenario.py --produced-qty 2000   # produção igual ao planejado
+python tests/test_scenario.py --produced-qty 1500   # subprodução grave
+python tests/test_scenario.py --produced-qty 2100   # sobreprodução
+python tests/test_scenario.py --no-cleanup          # não apaga dados anteriores
 ```
 
 ### O que faz
@@ -78,7 +78,7 @@ Valida o vínculo paciente → SO → FPB.
 
 ### Uso
 ```bash
-python test_scenario_patients.py
+python tests/test_scenario_patients.py
 ```
 
 ### O que faz
@@ -140,7 +140,7 @@ Para zerar tudo do módulo (mantém Customers, Items, Warehouses):
 
 ```bash
 python tools/recreate_doctypes.py     # apaga FPBs, PRs e os 2 DocTypes
-python setup_all.py                   # recria do zero
+python setup/setup_all.py                   # recria do zero
 ```
 
 ## Workflow recomendado em CI/CD
@@ -150,10 +150,10 @@ python setup_all.py                   # recria do zero
 python -c "from lib.erpnext_api import client_from_env; client_from_env().server_script_enabled() or exit(1)"
 
 # 2. Deploy idempotente
-python setup_all.py
+python setup/setup_all.py
 
 # 3. Smoke test (sem cleanup, evita interferir com prod)
-python test_scenario.py --produced-qty 2000 --no-cleanup
+python tests/test_scenario.py --produced-qty 2000 --no-cleanup
 ```
 
 ## Não há testes unitários (ainda)

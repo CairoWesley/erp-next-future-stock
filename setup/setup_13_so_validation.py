@@ -27,8 +27,10 @@ Uso:
     python setup_13_so_validation.py
     python setup_13_so_validation.py --uninstall
 """
-
 from __future__ import annotations
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import sys
 

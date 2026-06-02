@@ -23,8 +23,10 @@ Uso:
     python mini_flow.py --no-pause # roda sem parar
     python mini_flow.py --cleanup  # remove tudo (TEST-MINI-*)
 """
-
 from __future__ import annotations
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import argparse
 import datetime as dt

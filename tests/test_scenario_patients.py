@@ -11,8 +11,10 @@ Cenário:
      3. Item do paciente fora do SO -> bloqueia
   - Ao final: reserva contra FPB e verifica rastreabilidade
 """
-
 from __future__ import annotations
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import datetime as dt
 import json

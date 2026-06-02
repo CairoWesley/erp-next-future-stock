@@ -15,8 +15,10 @@ Uso:
     python setup_all.py --uninstall    # remove tudo
     python setup_all.py --skip 3,4     # pula os passos 3 e 4
 """
-
 from __future__ import annotations
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import argparse
 import sys

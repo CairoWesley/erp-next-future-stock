@@ -289,19 +289,19 @@ Pode rodar agora sem esperar credentials.
 source .venv/bin/activate
 
 # Limpa qualquer estado anterior
-python smoke_test_huge.py --phase cleanup
+python smoke/smoke_test_huge.py --phase cleanup
 python tools/deep_cleanup.py --yes
 
 # Roda tudo
-python smoke_test_huge.py --phase all
+python smoke/smoke_test_huge.py --phase all
 ```
 
 ### Pra validar 1 fluxo pequeno (debug)
 
 ```bash
-python mini_flow.py            # interativo (pausa entre fases)
-python mini_flow.py --no-pause # rápido (sem pausa)
-python mini_flow.py --cleanup  # limpa
+python smoke/mini_flow.py            # interativo (pausa entre fases)
+python smoke/mini_flow.py --no-pause # rápido (sem pausa)
+python smoke/mini_flow.py --cleanup  # limpa
 ```
 
 ### Pra adicionar credentials
@@ -326,13 +326,13 @@ ERPNEXT_DB_PASSWORD=<pass>
 ### Pra reinstalar do zero (após reset DB)
 
 ```bash
-python setup_all.py            # roda 8 passos idempotentes
+python setup/setup_all.py            # roda 8 passos idempotentes
 ```
 
 ### Pra desinstalar (mantém docs do ERPNext)
 
 ```bash
-python setup_all.py --uninstall
+python setup/setup_all.py --uninstall
 ```
 
 ---

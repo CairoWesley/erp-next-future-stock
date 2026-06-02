@@ -29,18 +29,18 @@ lib/visibility.py           # helpers de inspeção (FPB/PR/SO tables)
 source .venv/bin/activate
 
 # Fase a fase (recomendado pra validar cada etapa)
-python smoke_test_large.py --phase setup     # 1. Customers, Prescribers, Patients
-python smoke_test_large.py --phase fpbs      # 2. Criar 10 FPBs
-python smoke_test_large.py --phase orders    # 3. SOs + reservas auto FIFO
-python smoke_test_large.py --phase produce   # 4. Produção real (3 full + 7 parcial)
-python smoke_test_large.py --phase release   # 5. Liberar FIFO
-python smoke_test_large.py --phase report    # 6. Relatório consolidado
+python smoke/smoke_test_large.py --phase setup     # 1. Customers, Prescribers, Patients
+python smoke/smoke_test_large.py --phase fpbs      # 2. Criar 10 FPBs
+python smoke/smoke_test_large.py --phase orders    # 3. SOs + reservas auto FIFO
+python smoke/smoke_test_large.py --phase produce   # 4. Produção real (3 full + 7 parcial)
+python smoke/smoke_test_large.py --phase release   # 5. Liberar FIFO
+python smoke/smoke_test_large.py --phase report    # 6. Relatório consolidado
 
 # Tudo de uma vez
-python smoke_test_large.py --phase all
+python smoke/smoke_test_large.py --phase all
 
 # Limpar tudo (remove TEST-LRG-*)
-python smoke_test_large.py --phase cleanup
+python smoke/smoke_test_large.py --phase cleanup
 ```
 
 ## Resultado esperado por fase
@@ -172,7 +172,7 @@ print_fpb_table(fpbs)
 ## Cleanup
 
 ```bash
-python smoke_test_large.py --phase cleanup
+python smoke/smoke_test_large.py --phase cleanup
 ```
 
 Remove em ordem:

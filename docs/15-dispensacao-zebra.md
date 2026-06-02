@@ -217,7 +217,7 @@ POST /api/method/future_production_mark_dispensation_completed
 ## Smoke test (validado)
 
 ```
-$ python smoke_test_huge.py --phase dispense
+$ python smoke/smoke_test_huge.py --phase dispense
 
 Dispensations criadas: 19  (1 por SO alocado)
 Total de etiquetas potenciais: 79  (soma das linhas)

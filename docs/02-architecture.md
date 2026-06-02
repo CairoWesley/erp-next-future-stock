@@ -170,27 +170,48 @@ Evita colisão com campos nativos do ERPNext (especialmente `Sales Order Item.re
 ```
 erpnext-future-production-setup/
 ├── README.md                      overview + quickstart
-├── docs/                          ← documentação completa (este diretório)
+├── docs/                          documentação completa (este diretório)
 ├── .env.example                   template de variáveis
 ├── .gitignore
 ├── requirements.txt               requests, python-dotenv
 │
-├── setup_all.py                   orquestrador (6 passos)
-├── setup_01_structure.py          FPB + PR + Custom Fields no SO Item
-├── setup_02_client_scripts.py     3 Client Scripts
-├── setup_03_server_scripts.py     11 Server Scripts
-├── setup_04_reports.py            4 Reports
-├── setup_05_workspace.py          Workspace
-├── setup_06_patients.py           Patient + Sales Order Patient + 2 validações
+├── setup/                         orquestrador + 14 passos
+│   ├── setup_all.py               roda todos passos em sequência
+│   ├── setup_01_structure.py      FPB + PR + Custom Fields no SO Item
+│   ├── setup_02_client_scripts.py 3 Client Scripts
+│   ├── setup_03_server_scripts.py 11 Server Scripts
+│   ├── setup_04_reports.py        4 Reports
+│   ├── setup_05_workspace.py      Workspace
+│   ├── setup_06_patients.py       Patient + Sales Order Patient + validações
+│   ├── setup_07_prescribers.py    Prescriber + Council
+│   ├── setup_08_patient_batch.py  alocação batch por paciente
+│   ├── setup_09_form_visibility.py fetch fields no SO
+│   ├── setup_10_dispensation.py   Dispensação + Zebra ZPL
+│   ├── setup_11_so_dispensation_buttons.py  botões SO
+│   ├── setup_12_test_company.py   ambiente teste isolado
+│   ├── setup_13_so_validation.py  validações pré-reserva
+│   └── setup_14_issue_order.py    endpoint único HubSpot→ERPNext
 │
-├── test_scenario.py               cenário Fluxo A + B (parametrizável)
-├── test_scenario_patients.py      cenário com pacientes
+├── tests/                         cenários ponta a ponta
+│   ├── test_scenario.py
+│   ├── test_scenario_patients.py
+│   └── test_scenario_prescribers.py
 │
-├── lib/
+├── smoke/                         testes de volume
+│   ├── mini_flow.py
+│   ├── smoke_test_large.py
+│   └── smoke_test_huge.py
+│
+├── lib/                           módulos compartilhados
 │   ├── __init__.py
 │   ├── erpnext_api.py             cliente HTTP com idempotência
 │   ├── payloads.py                FPB, PR, custom fields do SO Item
-│   └── payloads_patients.py       Patient, Sales Order Patient, custom fields do SO
+│   ├── payloads_patients.py       Patient, Sales Order Patient
+│   ├── payloads_prescribers.py    Prescriber + Council
+│   ├── payloads_dispensation.py   Dispensacao + Zebra
+│   └── payloads_*.py              demais payloads por subsistema
+│
+├── n8n_workflows/                 workflows n8n exportados (JSON)
 │
 └── tools/                         scripts de diagnóstico/manutenção
     ├── diagnose.py                snapshot do ambiente

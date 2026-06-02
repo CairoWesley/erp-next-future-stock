@@ -52,7 +52,7 @@ python -m venv .venv
 
 pip install -r requirements.txt
 cp .env.example .env             # editar com URL + API key/secret
-python setup_all.py
+python setup/setup_all.py
 ```
 
 Veja [`03-installation.md`](03-installation.md) para pré-requisitos completos

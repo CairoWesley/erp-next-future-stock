@@ -28,8 +28,10 @@ Uso:
     ...
     python smoke_test_huge.py --phase cleanup
 """
-
 from __future__ import annotations
+
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import argparse
 import datetime as dt

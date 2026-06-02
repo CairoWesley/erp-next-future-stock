@@ -35,13 +35,13 @@ ERPNext Single Site
 
 ```bash
 # Cria TEST-CO Ltda com tudo necessário
-python setup_12_test_company.py
+python setup/setup_12_test_company.py
 
 # OU com nome custom
-python setup_12_test_company.py --name "Sandbox Empresa" --abbr "SB"
+python setup/setup_12_test_company.py --name "Sandbox Empresa" --abbr "SB"
 
 # Remover
-python setup_12_test_company.py --uninstall
+python setup/setup_12_test_company.py --uninstall
 ```
 
 **O que cria**:
@@ -74,7 +74,7 @@ Rodar smoke test no ambiente teste:
 ```bash
 ERPNEXT_COMPANY="TEST-CO Ltda" \
 ERPNEXT_WAREHOUSE="Produtos Acabados - TC" \
-  python smoke_test_huge.py --phase all
+  python smoke/smoke_test_huge.py --phase all
 ```
 
 ### Via shell export
@@ -82,7 +82,7 @@ ERPNEXT_WAREHOUSE="Produtos Acabados - TC" \
 ```bash
 export ERPNEXT_COMPANY="TEST-CO Ltda"
 export ERPNEXT_WAREHOUSE="Produtos Acabados - TC"
-python smoke_test_huge.py --phase all
+python smoke/smoke_test_huge.py --phase all
 ```
 
 ### Via UI ERPNext
@@ -116,7 +116,7 @@ Default sempre = `Injmedpharma` + `Produtos Acabados - I` (produção).
 export ERPNEXT_COMPANY="TEST-CO Ltda"
 export ERPNEXT_WAREHOUSE="Produtos Acabados - TC"
 
-python smoke_test_huge.py --phase all
+python smoke/smoke_test_huge.py --phase all
 # Inspeciona em UI: filtros por company=TEST-CO Ltda
 ```
 
@@ -130,14 +130,14 @@ export ERPNEXT_COMPANY="Sua Empresa Ltda"
 export ERPNEXT_WAREHOUSE="Produtos Acabados - I"
 
 # Roda novamente — mesmo código, dados separados
-python smoke_test_huge.py --phase all
+python smoke/smoke_test_huge.py --phase all
 ```
 
 ### 3. Cleanup isolado
 
 ```bash
 # Limpa só TEST-CO
-ERPNEXT_COMPANY="TEST-CO Ltda" python smoke_test_huge.py --phase cleanup
+ERPNEXT_COMPANY="TEST-CO Ltda" python smoke/smoke_test_huge.py --phase cleanup
 ERPNEXT_COMPANY="TEST-CO Ltda" python tools/deep_cleanup.py --yes
 ```
 
@@ -222,11 +222,11 @@ User Permissions (pra restringir):
 
 ```bash
 # Criar
-python setup_12_test_company.py
+python setup/setup_12_test_company.py
 
 # Rodar smoke huge em teste
 ERPNEXT_COMPANY="TEST-CO Ltda" ERPNEXT_WAREHOUSE="Produtos Acabados - TC" \
-  python smoke_test_huge.py --phase all
+  python smoke/smoke_test_huge.py --phase all
 
 # Verificar dados criados em TEST-CO
 ERPNEXT_COMPANY="TEST-CO Ltda" python -c "
@@ -240,5 +240,5 @@ print_fpb_table(list_fpbs(c, code_prefix='DEMO-HUGE'))
 ERPNEXT_COMPANY="TEST-CO Ltda" python tools/deep_cleanup.py --yes
 
 # Remover Company inteira (precisa apagar docs primeiro)
-python setup_12_test_company.py --uninstall
+python setup/setup_12_test_company.py --uninstall
 ```
