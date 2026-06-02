@@ -369,7 +369,7 @@ if not so_name:
     frappe.throw("sales_order e obrigatorio.")
 
 if isinstance(qty_by_item, str):
-    qty_by_item = frappe.parse_json(qty_by_item)
+    qty_by_item = json.loads(qty_by_item)
 
 so_doc = frappe.get_doc("Sales Order", so_name)
 if so_doc.docstatus != 1:

@@ -320,12 +320,26 @@ else:
 frappe.db.set_value("Sales Order", existing_so, {"validation_status": new_status},
                     update_modified=False)
 
+# created_* vars só existem no fluxo de criação. Em modo idempotente, ficam vazias.
+try:
+    out_prescribers = created_prescribers
+except NameError:
+    out_prescribers = []
+try:
+    out_patients = created_patients
+except NameError:
+    out_patients = []
+try:
+    out_customer = cust_name
+except NameError:
+    out_customer = None
+
 frappe.response["message"] = {
     "sales_order": existing_so,
     "created": {
-        "customer": cust_name if not data.get("hubspot", {}).get("idempotent") else None,
-        "prescribers": created_prescribers if 'created_prescribers' in dir() else [],
-        "patients": created_patients if 'created_patients' in dir() else [],
+        "customer": out_customer,
+        "prescribers": out_prescribers,
+        "patients": out_patients,
     },
     "validation_status": new_status,
     "hubspot_complete": True,
