@@ -56,11 +56,11 @@ independente. Ver [`00b-numeracao.md`](00b-numeracao.md) pra detalhes.
 | 0b | Numeração auto-increment | ✅ | [00b-numeracao.md](00b-numeracao.md) |
 | 0d | Sync produtos HubSpot ↔ ERPNext | ✅ | [00d-sync-produtos-hubspot.md](00d-sync-produtos-hubspot.md) |
 | 1 | Criar primeiro FPB (lote planejado) | ✅ | [01-criar-fpb.md](01-criar-fpb.md) |
-| 2 | Cadastrar Cliente real (Customer + Address + Contact) | ⏳ | (próximo) |
-| 3 | Cadastrar Médico (Prescriber + Council) | ⏳ | — |
-| 4 | Cadastrar Paciente (Patient) | ⏳ | — |
-| 5 | Criar Sales Order com fp_patients | ⏳ | — |
-| 6 | Validar e reservar | ⏳ | — |
+| 2 | Cadastrar Cliente (Customer + Address + Contact) | ✅ | [02-cadastrar-cliente.md](02-cadastrar-cliente.md) |
+| 3 | Cadastrar Médico (Prescriber + Council) | ⏳ pulada exemplo | [03-cadastrar-medico.md](03-cadastrar-medico.md) |
+| 4 | Cadastrar Paciente (Patient) | ✅ | [04-cadastrar-paciente.md](04-cadastrar-paciente.md) |
+| 5 | Criar Sales Order com fp_patients | ✅ | [05-criar-sales-order.md](05-criar-sales-order.md) |
+| 6 | Validar e reservar | ✅ | [06-validar-reservar.md](06-validar-reservar.md) |
 | 7 | Registrar produção (Batch físico + update FPB) | ⏳ | — |
 | 8 | Stock Entry Manufacture | ⏳ | — |
 | 9 | Liberar reservas | ⏳ | — |
