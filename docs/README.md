@@ -37,6 +37,7 @@ implantado 100% via API REST.
 | [`14-diagrama-processo-completo.md`](14-diagrama-processo-completo.md) | Diagrama visual simples — todas etapas + telas + dados visíveis + API. |
 | [`15-dispensacao-zebra.md`](15-dispensacao-zebra.md) | Módulo Dispensação v2 (1 SO = 1 entrega com child de pacientes) + ZPL Zebra. |
 | [`16-multi-empresa-ambiente-teste.md`](16-multi-empresa-ambiente-teste.md) | Multi-Company + Ambiente de teste isolado via env vars. |
+| [`fluxo-real/`](fluxo-real/00-indice.md) | Passo a passo de cada etapa REAL executada em produção. Convenções Injemed. |
 | [`15-dispensacao-zebra.md`](15-dispensacao-zebra.md) | Módulo Dispensação + Etiqueta Zebra (DocType, endpoints, ZPL templates). |
 
 ## Quickstart
