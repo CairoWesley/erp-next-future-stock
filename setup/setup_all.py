@@ -41,6 +41,7 @@ STEPS: list[tuple[int, str, str]] = [
     (10, "setup_10_dispensation",   "Dispensação + Etiqueta Zebra"),
     (11, "setup_11_so_dispensation_buttons", "Botões UI no Sales Order"),
     (13, "setup_13_so_validation",  "Validações Pré-Reserva (pagamento/receitas/HubSpot)"),
+    (15, "setup_15_naming_series",  "Naming Series auto-increment (format:{#####})"),
 ]
 
 

@@ -30,31 +30,45 @@ FPB.production_code == Batch.batch_id   (ex: TIRZE60-20260602)
 
 ### Códigos automáticos do ERPNext
 
-| Tipo | Series | Exemplo |
+A partir de `setup_15_naming_series`, toda numeração é **auto-increment puro
+zero-padded de 5 dígitos**, sem prefixo nem ano. Cada DocType tem contador
+independente. Ver [`00b-numeracao.md`](00b-numeracao.md) pra detalhes.
+
+| Tipo | Padrão antes | Padrão novo |
 |---|---|---|
-| Future Production Batch | `FPB-.YYYY.-.#####` | FPB-2026-00115 |
-| Production Reservation | `PR-.YYYY.-.#####` | PR-2026-00001 |
-| Patient | `PAC-.YYYY.-.#####` | PAC-2026-00152 |
-| Prescriber | `PRES-.YYYY.-.#####` | PRES-2026-00031 |
-| Sales Order | nativo ERPNext | SAL-ORD-2026-00089 |
-| Dispensacao | `DISP-.YYYY.-.#####` | DISP-2026-00001 |
+| Customer | CUST-2026-00001 | `00001` |
+| Patient | PAC-2026-00001 | `00001` |
+| Prescriber | PRES-2026-00031 | `00001` |
+| Sales Order | SAL-ORD-2026-00089 | `00001` |
+| Future Production Batch | FPB-2026-00115 (mantém) | próximo: `00001` |
+| Production Reservation | PR-2026-00001 | `00001` |
+| Dispensacao | DISP-2026-00001 | `00001` |
+| Delivery Note | MAT-DN-2026-00001 | `00001` |
+| Sales Invoice | ACC-SINV-2026-00001 | `00001` |
+| Payment Entry | ACC-PAY-2026-00001 | `00001` |
+| Stock Entry | MAT-STE-2026-00001 | `00001` |
 
 ## Índice
 
 | # | Etapa | Status | Arquivo |
 |---|---|---|---|
+| 0a | Convenções gerais (este arquivo) | ✅ | [00-indice.md](00-indice.md) |
+| 0b | Numeração auto-increment | ✅ | [00b-numeracao.md](00b-numeracao.md) |
 | 1 | Criar primeiro FPB (lote planejado) | ✅ | [01-criar-fpb.md](01-criar-fpb.md) |
-| 2 | Criar Sales Order (pedido) | ⏳ | (próximo) |
-| 3 | Validar e reservar | ⏳ | — |
-| 4 | Registrar produção (Batch físico + update FPB) | ⏳ | — |
-| 5 | Stock Entry Manufacture | ⏳ | — |
-| 6 | Liberar reservas | ⏳ | — |
-| 7 | Alocar batch por paciente | ⏳ | — |
-| 8 | Delivery Note | ⏳ | — |
-| 9 | Sales Invoice | ⏳ | — |
-| 10 | Payment Entry | ⏳ | — |
-| 11 | Criar Dispensação + imprimir etiqueta Zebra | ⏳ | — |
-| 12 | Marcar como dispensado | ⏳ | — |
+| 2 | Cadastrar Cliente real (Customer + Address + Contact) | ⏳ | (próximo) |
+| 3 | Cadastrar Médico (Prescriber + Council) | ⏳ | — |
+| 4 | Cadastrar Paciente (Patient) | ⏳ | — |
+| 5 | Criar Sales Order com fp_patients | ⏳ | — |
+| 6 | Validar e reservar | ⏳ | — |
+| 7 | Registrar produção (Batch físico + update FPB) | ⏳ | — |
+| 8 | Stock Entry Manufacture | ⏳ | — |
+| 9 | Liberar reservas | ⏳ | — |
+| 10 | Alocar batch por paciente | ⏳ | — |
+| 11 | Delivery Note | ⏳ | — |
+| 12 | Sales Invoice | ⏳ | — |
+| 13 | Payment Entry | ⏳ | — |
+| 14 | Criar Dispensação + imprimir etiqueta Zebra | ⏳ | — |
+| 15 | Marcar como dispensado | ⏳ | — |
 
 ## Como usar esta pasta
 
