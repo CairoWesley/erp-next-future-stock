@@ -1,0 +1,113 @@
+{
+  "name": "Sync Order validacao_receita → ERPNext",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "erp/sync-order",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "syncord-0001",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-400, 0],
+      "webhookId": "erp-sync-order"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Espera body: { deal_id: '60801476407' }  OU  { order_id: 1 }\nconst body = $input.first().json.body || $input.first().json;\nreturn [{ json: { deal_id: body.deal_id || null, order_id: body.order_id || null } }];"
+      },
+      "id": "syncord-0002",
+      "name": "Parse input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-180, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH o AS (\n  SELECT * FROM validacao_receita.orders\n  WHERE ($1::text IS NOT NULL AND hubspot_deal_id = $1)\n     OR ($2::int IS NOT NULL AND id = $2)\n  LIMIT 1\n),\nprods AS (\n  SELECT p.*, json_agg(json_build_object(\n    'patient', json_build_object(\n      'cpf', pt.cpf,\n      'nome', pt.nome,\n      'telefone', pt.telefone,\n      'data_nascimento', pt.data_nascimento,\n      'cep', pt.cep,\n      'endereco', pt.endereco,\n      'numero', pt.numero,\n      'complemento', pt.complemento,\n      'bairro', pt.bairro,\n      'municipio', pt.municipio,\n      'uf', pt.uf,\n      'quantidade', pt.quantidade,\n      'medico_nome', pt.medico_nome,\n      'medico_crm', pt.medico_crm,\n      'medico_uf', pt.medico_uf,\n      'posologia', pt.posologia,\n      'data_prescricao', pt.data_prescricao\n    ),\n    'validation_status', v.status\n  ) ORDER BY pt.id) AS patients\n  FROM validacao_receita.products p\n  LEFT JOIN validacao_receita.patients pt ON pt.product_id = p.id\n  LEFT JOIN validacao_receita.validations v ON v.patient_id = pt.id\n  WHERE p.order_id = (SELECT id FROM o)\n  GROUP BY p.id\n)\nSELECT\n  (SELECT row_to_json(o.*) FROM o) AS order_data,\n  (SELECT row_to_json(dc.*) FROM validacao_receita.deal_companies dc WHERE dc.order_id = (SELECT id FROM o) LIMIT 1) AS company,\n  (SELECT row_to_json(ct.*) FROM validacao_receita.deal_contacts ct WHERE ct.order_id = (SELECT id FROM o) LIMIT 1) AS contact,\n  (SELECT json_agg(row_to_json(p.*) ORDER BY p.id) FROM prods p) AS products,\n  (SELECT row_to_json(t.*)\n     FROM checkout_simples.transactions t\n     JOIN checkout_simples.checkouts ch ON ch.id = t.checkout_id\n     WHERE ch.external_ref = (SELECT hubspot_deal_id FROM o)\n       AND t.status = 'PAID' AND t.paid_at IS NOT NULL\n     ORDER BY t.paid_at DESC LIMIT 1\n  ) AS payment,\n  (SELECT row_to_json(pay.*)\n     FROM checkout_simples.payers pay\n     JOIN checkout_simples.transactions t ON pay.transaction_id = t.id\n     JOIN checkout_simples.checkouts ch ON ch.id = t.checkout_id\n     WHERE ch.external_ref = (SELECT hubspot_deal_id FROM o)\n       AND t.status = 'PAID'\n     ORDER BY t.paid_at DESC LIMIT 1\n  ) AS payer",
+        "additionalFields": {
+          "queryReplacement": "={{ $json.deal_id }}, ={{ $json.order_id }}"
+        },
+        "options": {}
+      },
+      "id": "syncord-0003",
+      "name": "Query Postgres",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [40, 0],
+      "credentials": {
+        "postgres": { "id": "REPLACE_ME", "name": "validacao_receita PG" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transforma dados Postgres em payload pra future_production_issue_order\nconst row = $input.first().json;\nconst order = row.order_data;\nconst comp = row.company || {};\nconst ct = row.contact || {};\nconst pay = row.payment || {};\nconst payer = row.payer || {};\nconst products = row.products || [];\n\nif (!order) {\n  return [{ json: { error: 'order não encontrado' } }];\n}\n\n// CPF/CNPJ priorize cpf_responsavel (PF Volpi) senão cnpj senão payer.cpf_cnpj\nconst taxId = (comp.cpf_responsavel || comp.cnpj || payer.cpf_cnpj || '').replace(/\\D/g, '');\nconst isCompany = !!comp.cnpj && (comp.cnpj || '').replace(/\\D/g, '').length === 14;\n\n// Customer\nconst customer = {\n  customer_name: comp.name || payer.name || order.company_name || 'Sem Nome',\n  customer_type: isCompany ? 'Company' : 'Individual',\n  customer_group: 'Volpi',\n  territory: 'Brazil',\n  tax_id: taxId,\n  address: (payer.address || comp.endereco) ? {\n    title: comp.name || payer.name,\n    type: 'Billing',\n    address_line1: payer.address || comp.endereco || '',\n    address_line2: payer.complement || comp.complemento || '',\n    city: comp.municipio || (payer.city || ''),\n    state: comp.uf || comp.estado_conselho || (payer.province || ''),\n    pincode: comp.cep || payer.postal_code || '',\n    country: 'Brazil',\n    email_id: ct.email || payer.email || '',\n    phone: ct.phone || payer.phone || '',\n  } : null,\n  contact: ct.firstname ? {\n    first_name: ct.firstname,\n    last_name: ct.lastname || '',\n    email: ct.email || '',\n    phone: ct.phone || '',\n  } : null,\n};\n\n// Prescribers — médico responsável técnico da company + médicos únicos dos pacientes\nconst presMap = new Map();\nif (comp.nome_responsavel_tecnico && comp.numero_conselho) {\n  const consec = (comp.conselho || '').replace(/^\\d+\\s*-\\s*/, '') || 'CRM';\n  const key = `${comp.cpf_responsavel || ''}|${consec}|${comp.numero_conselho}|${comp.estado_conselho || comp.uf || ''}`;\n  presMap.set(key, {\n    cpf: (comp.cpf_responsavel || '').replace(/\\D/g, ''),\n    full_name: comp.nome_responsavel_tecnico,\n    councils: [{\n      council_type: consec,\n      council_number: String(comp.numero_conselho),\n      council_state: comp.estado_conselho || comp.uf || '',\n      is_primary: 1,\n    }],\n  });\n}\nfor (const prod of products) {\n  for (const item of (prod.patients || [])) {\n    const p = item.patient;\n    if (!p.medico_crm) continue;\n    const key = `||CRM|${p.medico_crm}|${p.medico_uf}`;\n    if (presMap.has(key)) continue;\n    presMap.set(key, {\n      cpf: '',\n      full_name: p.medico_nome,\n      councils: [{ council_type: 'CRM', council_number: String(p.medico_crm), council_state: p.medico_uf, is_primary: 1 }],\n    });\n  }\n}\nconst prescribers = Array.from(presMap.values());\n\n// Patients (únicos por CPF)\nconst patMap = new Map();\nfor (const prod of products) {\n  for (const item of (prod.patients || [])) {\n    const p = item.patient;\n    const cpfd = (p.cpf || '').replace(/\\D/g, '');\n    if (!cpfd || patMap.has(cpfd)) continue;\n    patMap.set(cpfd, {\n      cpf: cpfd,\n      patient_name: p.nome,\n      mobile: p.telefone || '',\n      gender: 'Outro',\n      default_prescriber_cpf: '',  // será resolvido pelo lookup CRM+UF\n    });\n  }\n}\nconst patients = Array.from(patMap.values());\n\n// Items (linhas do SO)\nconst items = [];\nconst fp_patients = [];\nfor (const prod of products) {\n  items.push({\n    item_code: prod.sku,\n    qty: Number(prod.quantity),\n    rate: Number(prod.price),\n    warehouse: 'Produtos Acabados - I',\n  });\n  for (const item of (prod.patients || [])) {\n    const p = item.patient;\n    fp_patients.push({\n      patient_cpf: (p.cpf || '').replace(/\\D/g, ''),\n      prescriber_cpf: '',\n      prescriber_council: {\n        council_type: 'CRM',\n        council_number: String(p.medico_crm || ''),\n        council_state: p.medico_uf || '',\n      },\n      item_code: prod.sku,\n      qty: Number(p.quantidade),\n    });\n  }\n}\n\n// Adiciona FRETE se tiver no deal (n8n não busca line_items HubSpot, então TODO)\n// Por agora deixa só os items do validacao_receita\n\nconst out = {\n  hubspot: {\n    deal_id: String(order.hubspot_deal_id || ''),\n    contact_id: String(ct.hs_object_id || ''),\n  },\n  company: 'Injmedpharma',\n  customer,\n  prescribers,\n  patients,\n  items,\n  fp_patients,\n  payment: pay.id ? {\n    amount: pay.amount_cents ? Number(pay.amount_cents) / 100 : null,\n    status: 'PAID',\n    transaction_id: pay.id,\n    paid_at: pay.paid_at,\n  } : null,\n  prescriptions: {\n    count: products.reduce((s, p) => s + (p.patients || []).length, 0),\n    reference: `validacao_receita order_id=${order.id}`,\n  },\n};\n\nreturn [{ json: out }];"
+      },
+      "id": "syncord-0004",
+      "name": "Transform → ERPNext payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [260, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.injemedpharma.com.br/api/method/future_production_issue_order",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={\n  \"Content-Type\": \"application/json\",\n  \"Authorization\": \"token {{ $env.ERPNEXT_API_KEY }}:{{ $env.ERPNEXT_API_SECRET }}\"\n}",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "syncord-0005",
+      "name": "POST issue_order ERPNext",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 0]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE validacao_receita.orders SET pedido_fc_emitido_at = NOW() WHERE hubspot_deal_id = $1 AND pedido_fc_emitido_at IS NULL RETURNING id, pedido_fc_emitido_at",
+        "additionalFields": { "queryReplacement": "={{ $('Parse input').first().json.deal_id }}" },
+        "options": {}
+      },
+      "id": "syncord-0006",
+      "name": "Mark order sent",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [700, 0],
+      "credentials": {
+        "postgres": { "id": "REPLACE_ME", "name": "validacao_receita PG" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok: true, erpnext: $('POST issue_order ERPNext').first().json.message, marked: $('Mark order sent').first().json }) }}",
+        "options": {}
+      },
+      "id": "syncord-0007",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [920, 0]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": { "main": [[{ "node": "Parse input", "type": "main", "index": 0 }]] },
+    "Parse input": { "main": [[{ "node": "Query Postgres", "type": "main", "index": 0 }]] },
+    "Query Postgres": { "main": [[{ "node": "Transform → ERPNext payload", "type": "main", "index": 0 }]] },
+    "Transform → ERPNext payload": { "main": [[{ "node": "POST issue_order ERPNext", "type": "main", "index": 0 }]] },
+    "POST issue_order ERPNext": { "main": [[{ "node": "Mark order sent", "type": "main", "index": 0 }]] },
+    "Mark order sent": { "main": [[{ "node": "Respond", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

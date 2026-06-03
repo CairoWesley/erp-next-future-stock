@@ -151,11 +151,80 @@ if not existing_so:
         new_c.insert(ignore_permissions=True)
         cust_name = new_c.name
 
+    # ----- 1.5) Address linked to Customer (opcional) -----
+    addr_in = customer_in.get("address") or {}
+    if addr_in:
+        addr_title = addr_in.get("title") or cust_name_in
+        addr_type = addr_in.get("type") or "Billing"
+        addr_key = addr_title + "-" + addr_type
+        if not frappe.db.exists("Address", addr_key):
+            new_addr = frappe.new_doc("Address")
+            new_addr.address_title = addr_title
+            new_addr.address_type = addr_type
+            new_addr.address_line1 = addr_in.get("address_line1") or ""
+            new_addr.address_line2 = addr_in.get("address_line2") or ""
+            new_addr.city = addr_in.get("city") or ""
+            new_addr.state = addr_in.get("state") or ""
+            new_addr.pincode = addr_in.get("pincode") or ""
+            new_addr.country = addr_in.get("country") or "Brazil"
+            new_addr.email_id = addr_in.get("email_id") or ""
+            new_addr.phone = addr_in.get("phone") or ""
+            new_addr.is_primary_address = 1
+            new_addr.is_shipping_address = 1
+            new_addr.append("links", {"link_doctype": "Customer", "link_name": cust_name})
+            new_addr.insert(ignore_permissions=True)
+
+    # ----- 1.6) Contact linked to Customer (opcional) -----
+    contact_in = customer_in.get("contact") or {}
+    if contact_in:
+        existing_ct = frappe.db.sql(
+            "select c.name from `tabContact` c "
+            "join `tabDynamic Link` dl on dl.parent = c.name "
+            "where dl.link_doctype='Customer' and dl.link_name=%s limit 1",
+            (cust_name,), as_dict=False,
+        )
+        if not existing_ct:
+            new_ct = frappe.new_doc("Contact")
+            new_ct.first_name = contact_in.get("first_name") or "Sem Nome"
+            new_ct.last_name = contact_in.get("last_name") or ""
+            if contact_in.get("email"):
+                new_ct.append("email_ids", {"email_id": contact_in["email"], "is_primary": 1})
+            if contact_in.get("phone"):
+                new_ct.append("phone_nos", {
+                    "phone": contact_in["phone"],
+                    "is_primary_mobile_no": 1,
+                    "is_primary_phone": 1,
+                })
+            new_ct.is_primary_contact = 1
+            new_ct.append("links", {"link_doctype": "Customer", "link_name": cust_name})
+            new_ct.insert(ignore_permissions=True)
+
     # ----- 2) Prescribers (upsert por CPF + merge councils) -----
+    # Suporta lookup por CRM+UF quando CPF ausente (sistema validacao_receita
+    # nao guarda CPF do medico, so CRM+UF). Cria CPF placeholder AUTO-<crm><uf>.
     pres_by_cpf = {}
+    pres_by_council = {}  # (type, state, number) -> prescriber_name
     created_prescribers = []
     for p_in in prescribers_in:
         cpf = "".join(ch for ch in (p_in.get("cpf") or "") if ch.isdigit())
+        # Lookup por council se sem CPF
+        if not cpf and p_in.get("councils"):
+            c0 = p_in["councils"][0]
+            ct_type = c0.get("council_type") or ""
+            ct_state = c0.get("council_state") or ""
+            ct_num = str(c0.get("council_number") or "")
+            existing_council = frappe.db.sql(
+                "select parent from `tabPrescriber Council` "
+                "where council_type=%s and council_state=%s and council_number=%s limit 1",
+                (ct_type, ct_state, ct_num), as_dict=False,
+            )
+            if existing_council:
+                cpf = frappe.db.get_value("Prescriber", existing_council[0][0], "cpf") or ""
+            if not cpf:
+                # gera CPF placeholder unico (11 digitos)
+                base = ct_type + ct_num + ct_state
+                base_digits = "".join(ch for ch in base if ch.isdigit()) or "0"
+                cpf = ("9" + base_digits)[:11].ljust(11, "0")
         if not cpf:
             continue
         existing_pres = frappe.db.get_value("Prescriber", {"cpf": cpf}, "name")
@@ -202,6 +271,11 @@ if not existing_so:
             new_p.insert(ignore_permissions=True)
             pres_by_cpf[cpf] = new_p.name
             created_prescribers.append(new_p.name)
+        # Indexa por council pra lookup em fp_patients quando vier so CRM+UF
+        for cc in (p_in.get("councils") or []):
+            ck = (cc.get("council_type") or "", cc.get("council_state") or "",
+                  str(cc.get("council_number") or ""))
+            pres_by_council[ck] = pres_by_cpf[cpf]
 
     # ----- 3) Patients (upsert por CPF) -----
     pat_by_cpf = {}
@@ -272,6 +346,21 @@ if not existing_so:
         pres_cpf = "".join(ch for ch in (fp.get("prescriber_cpf") or "") if ch.isdigit())
         patient_name = pat_by_cpf.get(pat_cpf)
         prescriber_name = pres_by_cpf.get(pres_cpf)
+        # Fallback lookup por council quando prescriber_cpf vazio
+        if not prescriber_name and fp.get("prescriber_council"):
+            pc = fp["prescriber_council"]
+            ck = (pc.get("council_type") or "", pc.get("council_state") or "",
+                  str(pc.get("council_number") or ""))
+            prescriber_name = pres_by_council.get(ck)
+            if not prescriber_name:
+                # Lookup global no DB
+                row = frappe.db.sql(
+                    "select parent from `tabPrescriber Council` "
+                    "where council_type=%s and council_state=%s and council_number=%s limit 1",
+                    ck, as_dict=False,
+                )
+                if row:
+                    prescriber_name = row[0][0]
 
         # Acha council_row_id (se prescriber + council especificado)
         council_row_id = None
@@ -301,6 +390,30 @@ if not existing_so:
     so.insert(ignore_permissions=True)
     so.submit()
     existing_so = so.name
+
+# ----- 5) Payment inline (sem precisar webhook separado) -----
+payment_in = data.get("payment") or {}
+if payment_in:
+    pstatus = (payment_in.get("status") or "").upper()
+    pamount = float(payment_in.get("amount") or 0)
+    so_grand = float(frappe.db.get_value("Sales Order", existing_so, "grand_total") or 0)
+    if pstatus in ("PAID", "RECEIVED", "CONFIRMED") and abs(pamount - so_grand) <= 0.01:
+        frappe.db.set_value("Sales Order", existing_so, {
+            "payment_validated": 1,
+            "payment_validated_at": payment_in.get("paid_at") or frappe.utils.now(),
+            "payment_reference": payment_in.get("transaction_id") or "",
+            "payment_amount": pamount,
+        }, update_modified=False)
+
+# ----- 6) Prescriptions inline -----
+prescriptions_in = data.get("prescriptions") or {}
+if prescriptions_in:
+    frappe.db.set_value("Sales Order", existing_so, {
+        "prescriptions_validated": 1,
+        "prescriptions_validated_at": frappe.utils.now(),
+        "prescriptions_qty_validated": int(prescriptions_in.get("count") or 0),
+        "prescriptions_reference": prescriptions_in.get("reference") or "",
+    }, update_modified=False)
 
 # Recalcula validation_status: hubspot=True, payment/prescriptions ainda False.
 refr = frappe.db.get_value(
@@ -336,6 +449,61 @@ try:
 except NameError:
     out_customer = None
 
+# ----- 7) Auto-reserve FIFO contra FPB (se 3 flags ok) -----
+out_reservations = []
+out_reserve_errors = []
+if p_ok and r_ok and h_ok:
+    so_doc = frappe.get_doc("Sales Order", existing_so)
+    if so_doc.docstatus == 1:
+        for it in so_doc.items:
+            is_stock = frappe.db.get_value("Item", it.item_code, "is_stock_item")
+            if not int(is_stock or 0):
+                continue
+            # Quantidade ja reservada pra essa linha
+            already = frappe.db.sql(
+                "select coalesce(sum(reserved_qty),0) from `tabProduction Reservation` "
+                "where sales_order_item=%s and docstatus=1",
+                (it.name,), as_dict=False,
+            )
+            already_qty = float((already[0][0] if already else 0) or 0)
+            needed = float(it.qty or 0) - already_qty
+            if needed <= 0:
+                continue
+            fpbs = frappe.db.sql(
+                "select name, available_qty from `tabFuture Production Batch` "
+                "where item_code=%s and docstatus=1 and status='Aberta para Reserva' "
+                "and available_qty > 0 "
+                "order by planned_production_date asc, creation asc",
+                (it.item_code,), as_dict=True,
+            )
+            for fpb in fpbs:
+                if needed <= 0:
+                    break
+                alloc = min(needed, float(fpb.available_qty or 0))
+                if alloc <= 0:
+                    continue
+                pr = frappe.new_doc("Production Reservation")
+                pr.sales_order = existing_so
+                pr.sales_order_item = it.name
+                pr.future_production_batch = fpb.name
+                pr.item_code = it.item_code
+                pr.reserved_qty = alloc
+                pr.insert(ignore_permissions=True)
+                pr.submit()
+                out_reservations.append({
+                    "reservation": pr.name,
+                    "sales_order_item": it.name,
+                    "future_production_batch": fpb.name,
+                    "reserved_qty": alloc,
+                })
+                needed -= alloc
+            if needed > 0:
+                out_reserve_errors.append({
+                    "item_code": it.item_code,
+                    "missing_qty": needed,
+                    "message": "Saldo insuficiente em FPBs disponiveis.",
+                })
+
 frappe.response["message"] = {
     "sales_order": existing_so,
     "created": {
@@ -346,6 +514,8 @@ frappe.response["message"] = {
     "validation_status": new_status,
     "hubspot_complete": True,
     "ready_to_reserve": (p_ok and r_ok and h_ok),
+    "reservations": out_reservations,
+    "reserve_errors": out_reserve_errors,
 }
 '''.strip()
 
