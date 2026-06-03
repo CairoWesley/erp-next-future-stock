@@ -127,6 +127,7 @@ Cada DocType com contador independente. Ver
 | 0i | Contrato Card React (deal_id + patient_fpb) | ✅ implementado | [00i-contrato-card-react.md](00i-contrato-card-react.md) |
 | 0j | Receita PDF anexada na linha do paciente | ✅ implementado | [00j-receita-anexa-paciente.md](00j-receita-anexa-paciente.md) |
 | 0k | **Fluxo n8n node-by-node (ATIVO em prod)** | ✅ rodando | [00k-fluxo-n8n-node-by-node.md](00k-fluxo-n8n-node-by-node.md) |
+| 0l | **Regras de negócio (pagamento/liquidação/gating)** | ✅ | [00l-regras-negocio.md](00l-regras-negocio.md) |
 
 ### Por pedido (cada deal HubSpot dispara)
 

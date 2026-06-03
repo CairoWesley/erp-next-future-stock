@@ -194,9 +194,16 @@ if pay:
     amt = float(pay.get("amount") or 0)
     grand = float(frappe.db.get_value("Sales Order", existing_so, "grand_total") or 0)
     if st in ("PAID", "RECEIVED", "CONFIRMED") and abs(amt - grand) <= 0.01:
+        # Normaliza datetime: ISO "2026-06-02T21:46:15.806Z" -> "2026-06-02 21:46:15"
+        paid_raw = str(pay.get("paid_at") or frappe.utils.now())
+        paid_clean = paid_raw.replace("T", " ").replace("Z", "").strip()
+        if "." in paid_clean:
+            paid_clean = paid_clean.split(".")[0]
+        if "+" in paid_clean:
+            paid_clean = paid_clean.split("+")[0].strip()
         frappe.db.set_value("Sales Order", existing_so, {
             "payment_validated": 1,
-            "payment_validated_at": pay.get("paid_at") or frappe.utils.now(),
+            "payment_validated_at": paid_clean,
             "payment_reference": pay.get("transaction_id") or "",
             "payment_amount": amt,
         }, update_modified=False)

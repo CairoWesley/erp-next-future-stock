@@ -441,9 +441,15 @@ if payment_in:
     pamount = float(payment_in.get("amount") or 0)
     so_grand = float(frappe.db.get_value("Sales Order", existing_so, "grand_total") or 0)
     if pstatus in ("PAID", "RECEIVED", "CONFIRMED") and abs(pamount - so_grand) <= 0.01:
+        paid_raw = str(payment_in.get("paid_at") or frappe.utils.now())
+        paid_clean = paid_raw.replace("T", " ").replace("Z", "").strip()
+        if "." in paid_clean:
+            paid_clean = paid_clean.split(".")[0]
+        if "+" in paid_clean:
+            paid_clean = paid_clean.split("+")[0].strip()
         frappe.db.set_value("Sales Order", existing_so, {
             "payment_validated": 1,
-            "payment_validated_at": payment_in.get("paid_at") or frappe.utils.now(),
+            "payment_validated_at": paid_clean,
             "payment_reference": payment_in.get("transaction_id") or "",
             "payment_amount": pamount,
         }, update_modified=False)
