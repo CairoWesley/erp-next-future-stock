@@ -32,9 +32,81 @@ from __future__ import annotations
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import sys
+import sys, json
 
 from lib.erpnext_api import client_from_env, log_error, log_ok, log_section
+
+
+# Client Script (UI Sales Order): botões "Cancelar Reserva" + "Trocar Lote".
+CLIENT_SCRIPT_JS = r'''
+frappe.ui.form.on('Sales Order', {
+  refresh(frm) {
+    if (frm.doc.docstatus !== 1) return;
+
+    frm.add_custom_button(__('Cancelar Reserva'), () => {
+      frappe.confirm(
+        __('Cancelar TODAS as reservas deste pedido?<br>O pedido CONTINUA no sistema, só fica SEM reserva.'),
+        () => frappe.call({
+          method: 'future_production_cancel_reservation',
+          args: { sales_order: frm.doc.name },
+          freeze: true, freeze_message: __('Cancelando reserva...'),
+          callback(r) {
+            const m = (r && r.message) || {};
+            frappe.msgprint(__('Reservas canceladas: {0} · pacientes limpos: {1}',
+              [(m.cancelled||[]).length, m.patients_cleared||0]));
+            frm.reload_doc();
+          }
+        })
+      );
+    }, __('Reserva'));
+
+    frm.add_custom_button(__('Trocar Lote'), () => {
+      const items = Array.from(new Set((frm.doc.items||[]).map(i => i.item_code)));
+      const d = new frappe.ui.Dialog({
+        title: __('Trocar Lote da Reserva'),
+        fields: [
+          { fieldname:'item_code', label:__('Produto'), fieldtype:'Select',
+            options: items.join('\n'), reqd:1 },
+          { fieldname:'fpb_name', label:__('Novo Lote (FPB)'), fieldtype:'Link',
+            options:'Future Production Batch', reqd:1,
+            get_query() {
+              return { filters: {
+                item_code: d.get_value('item_code'),
+                docstatus: 1,
+                status: ['in', ['Aberta para Reserva','Reservada Parcialmente']]
+              }};
+            }
+          },
+        ],
+        primary_action_label: __('Trocar'),
+        primary_action(v) {
+          d.hide();
+          frappe.call({
+            method: 'future_production_swap_reservation',
+            args: { sales_order: frm.doc.name, fpb_map: { [v.item_code]: v.fpb_name } },
+            freeze: true, freeze_message: __('Trocando lote...'),
+            callback(r) {
+              const m = (r && r.message) || {};
+              if ((m.blocked||[]).length)
+                frappe.msgprint({ title:__('Troca bloqueada'), indicator:'orange',
+                  message:(m.blocked).map(b=>b.error).join('<br>') });
+              else if ((m.reserve_errors||[]).length || (m.pack_errors||[]).length)
+                frappe.msgprint({ title:__('Erro na troca'), indicator:'red',
+                  message:[].concat(m.reserve_errors||[], m.pack_errors||[]).map(e=>e.error).join('<br>') });
+              else
+                frappe.msgprint({ title:__('Lote trocado'), indicator:'green',
+                  message:__('Novo lote reservado. Reserva(s): {0}',
+                    [(m.reservations||[]).map(x=>x.reservation).join(', ') || '—']) });
+              frm.reload_doc();
+            }
+          });
+        }
+      });
+      d.show();
+    }, __('Reserva'));
+  }
+});
+'''.strip()
 
 
 # Resolve SO por sales_order direto ou deal_id (HubSpot) — bloco reusado.
@@ -186,6 +258,39 @@ elif single:
 if not target_items:
     frappe.throw("[BATCH_REQUIRED] Informe o(s) lote(s) novo(s) (item_fpb/fpb_map/fpb_name) pra trocar.")
 
+# GATE: nao troca lote JA PRODUZIDO nem a menos de N dias da producao do lote atual.
+# N vem da config (Injemed Financial Settings.swap_min_days_before_production, padrao 5).
+cfg = frappe.get_doc("Injemed Financial Settings", "Injemed Financial Settings")
+min_days = int(cfg.get("swap_min_days_before_production") or 5)
+today = frappe.utils.getdate(frappe.utils.today())
+blocked = []
+allowed_items = []
+for ic in target_items:
+    cur_prs = frappe.get_all("Production Reservation",
+        filters={"sales_order": so_name, "item_code": ic, "docstatus": 1},
+        fields=["future_production_batch"])
+    reason = None
+    for cpr in cur_prs:
+        fb = frappe.db.get_value("Future Production Batch", cpr.future_production_batch,
+            ["produced_qty", "planned_production_date"], as_dict=True)
+        if not fb:
+            continue
+        if float(fb.produced_qty or 0) > 0:
+            reason = "lote " + cpr.future_production_batch + " ja foi produzido"
+            break
+        if fb.planned_production_date:
+            dleft = frappe.utils.date_diff(fb.planned_production_date, today)
+            if dleft < min_days:
+                reason = ("lote " + cpr.future_production_batch + " produz em " +
+                    str(dleft) + " dia(s) (minimo " + str(min_days) + " dias antes da producao)")
+                break
+    if reason:
+        blocked.append({"code": "SWAP_TOO_LATE", "item_code": ic,
+            "error": "Nao da pra trocar o produto " + str(ic) + ": " + reason + "."})
+    else:
+        allowed_items.append(ic)
+target_items = allowed_items
+
 # 1) CANCELA reservas atuais dos itens-alvo (libera lote antigo)
 cancelled = []
 for ic in target_items:
@@ -320,7 +425,7 @@ for r in pat_rows:
 frappe.response["message"] = {"ok": True, "sales_order": so_name,
     "cancelled": cancelled, "reservations": reservations,
     "reserve_errors": errors, "patient_assignments": patient_assignments,
-    "pack_errors": pack_errors}
+    "pack_errors": pack_errors, "blocked": blocked}
 ''').strip()
 
 
@@ -336,6 +441,29 @@ def install() -> int:
         log_error("Server Scripts desabilitados.")
         return 1
     log_section("Reservation ops (cancel / swap)")
+
+    # Config: dias minimos antes da producao pra permitir TROCA de lote (swap).
+    try:
+        client.create_custom_field({
+            "dt": "Injemed Financial Settings",
+            "fieldname": "swap_min_days_before_production",
+            "label": "Dias mínimos p/ trocar lote (antes da produção)",
+            "fieldtype": "Int", "default": "5",
+            "insert_after": "card_days_per_installment",
+            "description": "Troca de lote (swap) bloqueada se faltar menos que N "
+                           "dias pra produção do lote atual, ou se já produzido.",
+        })
+        _, cur = client._request("GET",
+            "/api/resource/Injemed%20Financial%20Settings/Injemed%20Financial%20Settings")
+        val = ((cur or {}).get("data") or {}).get("swap_min_days_before_production")
+        if not val:
+            client._request("PUT",
+                "/api/resource/Injemed%20Financial%20Settings/Injemed%20Financial%20Settings",
+                json_body={"swap_min_days_before_production": 5})
+        log_ok("Config swap_min_days_before_production (=5) pronta.")
+    except Exception as exc:  # noqa: BLE001
+        log_error(f"Config swap lead-time: {exc}")
+
     rc = 0
     for name, script in ENDPOINTS:
         try:
@@ -347,6 +475,20 @@ def install() -> int:
         except Exception as exc:  # noqa: BLE001
             log_error(f"{name}: {exc}")
             rc = 1
+
+    # Client Script (UI Sales Order): botões Cancelar Reserva + Trocar Lote.
+    try:
+        cs_name = "Sales Order - Reserva Ops"
+        enc = cs_name.replace(" ", "%20")
+        _, ex = client._request("GET", "/api/resource/Client Script/" + enc)
+        if ex is not None:
+            client._request("DELETE", "/api/resource/Client Script/" + enc)
+        client._request("POST", "/api/resource/Client Script", json_body={
+            "doctype": "Client Script", "name": cs_name, "dt": "Sales Order",
+            "view": "Form", "enabled": 1, "script": CLIENT_SCRIPT_JS})
+        log_ok(f"Client Script '{cs_name}' (UI Sales Order) pronto.")
+    except Exception as exc:  # noqa: BLE001
+        log_error(f"Client Script: {exc}")
     return rc
 
 
@@ -357,6 +499,10 @@ def uninstall() -> int:
             client.delete_server_script(name)
         except Exception as exc:  # noqa: BLE001
             log_error(f"{name}: {exc}")
+    try:
+        client._request("DELETE", "/api/resource/Client Script/Sales%20Order%20-%20Reserva%20Ops")
+    except Exception as exc:  # noqa: BLE001
+        log_error(f"Client Script: {exc}")
     return 0
 
 

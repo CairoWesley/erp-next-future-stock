@@ -1,0 +1,97 @@
+{
+  "name": "Cancelar Reserva → ERPNext",
+  "nodes": [
+    {
+      "id": "105992b3-5dc6-40d5-b239-5a877bc03d92",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "erp/cancelar-reserva",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "6944ac34-4694-4b60-af8d-d2107ee97d90"
+    },
+    {
+      "id": "f347de9c-c88a-4996-9aeb-4b2995a849fe",
+      "name": "ERPNext",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.injemedpharma.com.br/api/method/future_production_cancel_reservation",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jXQ4NuOXsgOuyVuv",
+          "name": "ERPNext Injemed"
+        }
+      }
+    },
+    {
+      "id": "ba61f82d-9e03-41b0-944a-6ca63be670b8",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.message || { ok:false, error: ($json.exception || \"erro desconhecido\").replace(/^.*?: /, \"\"), exc_type: $json.exc_type }) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "ERPNext",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ERPNext": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

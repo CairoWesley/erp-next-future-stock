@@ -52,6 +52,7 @@ reserve_errors / pack_errors retornam código + mensagem PT:
 | `[NO_ITEMS]` (throw) | Pedido sem itens | step_order |
 | `[MISSING_SO]` (throw) | sales_order/deal_id é obrigatório | step_reserve/patients/cancel/swap |
 | `ITEM_NOT_IN_ORDER` | item do swap não está no pedido | swap_reservation |
+| `SWAP_TOO_LATE` (blocked) | lote já produzido ou <N dias pra produção | swap_reservation |
 | `[ORDER_HAS_PAYMENTS]` (throw) | cancel_order com PE lançado sem cancel_payments | cancel_reservation |
 | `[ITEM_FILTER_WITH_ORDER]` (throw) | item_code junto com cancel_order | cancel_reservation |
 
@@ -76,6 +77,8 @@ da produção em diante é **manual no ERPNext**.
 | ERPNext | https://erp.injemedpharma.com.br |
 | n8n | https://n8n.injemedpharma.com.br (workflow `fRn3EyKJLWIxEX3l`) |
 | Webhook sync | `POST /webhook/erp/sincronizar-pedido` |
+| Webhook trocar reserva | `POST /webhook/erp/trocar-reserva` (wf `78jiYigeTvfA7Yqd`) |
+| Webhook cancelar reserva | `POST /webhook/erp/cancelar-reserva` (wf `AatKl05FLZQHeg0j`) |
 | Backend validacao | https://validacao-api.injemedpharma.com.br (uploads de receita em `/uploads/<path>`) |
 | Postgres | `2.24.98.117:5432/postgres` (schemas: validacao_receita, checkout_simples, asaas, hubspot_injemed) |
 | Repo | https://github.com/CairoWesley/erp-next-future-stock |
@@ -173,7 +176,10 @@ AUTOMÁTICO (n8n):
   issue_order (legado, single-call)
 RESERVA OPS (chave produto+pedido):
   swap_reservation (troca lote: cancela antigo + reserva novo + re-bin-pack)
+    gate: SWAP_TOO_LATE se produzido ou <N dias (config swap_min_days, padrão 5)
   cancel_reservation (libera lote; cancel_order/cancel_payments p/ pedido inteiro)
+  n8n webhooks: /webhook/erp/trocar-reserva · /webhook/erp/cancelar-reserva
+  UI ERPNext: botões "Cancelar Reserva" + "Trocar Lote" (Client Script no SO)
 MANUAL (botões ERPNext):
   validate_and_reserve · allocate_patient_batches · release_batch
   create_work_order · recalculate_batch · replan_pending_qty
@@ -189,5 +195,6 @@ PIX D+1 · Cartão D+30/parcela · Boleto D+1
 Banco (PIX/cartão/boleto) = "Conta Bancária - I"
 Conta a receber = "Clientes - I"
 Modos = Pix / Cartão de Crédito / Boleto
+swap_min_days_before_production = 5 (mín. dias antes da produção pra trocar lote)
 ```
 Editável no form ERPNext: `/app/injemed-financial-settings`

@@ -1,0 +1,97 @@
+{
+  "name": "Trocar Reserva → ERPNext",
+  "nodes": [
+    {
+      "id": "fda408fc-bb1d-4db2-a8b8-48922240a717",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "erp/trocar-reserva",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "d474886d-15b2-4362-b801-2993e53f9a57"
+    },
+    {
+      "id": "499efe99-ac4d-4839-ae29-f574e87f4c9a",
+      "name": "ERPNext",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        260,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.injemedpharma.com.br/api/method/future_production_swap_reservation",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jXQ4NuOXsgOuyVuv",
+          "name": "ERPNext Injemed"
+        }
+      }
+    },
+    {
+      "id": "05e72346-c50d-493e-9830-d30380feb31f",
+      "name": "Responder",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json.message || { ok:false, error: ($json.exception || \"erro desconhecido\").replace(/^.*?: /, \"\"), exc_type: $json.exc_type }) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "ERPNext",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ERPNext": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

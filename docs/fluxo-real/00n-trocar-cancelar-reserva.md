@@ -55,6 +55,24 @@ nenhum lote informado → `BATCH_REQUIRED` (lote obrigatório, sem FIFO).
 
 Tudo na mesma transação: o saldo liberado no passo 1 já é visto pelo passo 3.
 
+### Gate: não troca em cima da hora
+
+A troca é **bloqueada por item** se o lote atual:
+- já foi **produzido** (`produced_qty > 0`), ou
+- **produz em menos de N dias** (`planned_production_date − hoje < N`).
+
+`N` = `Injemed Financial Settings.swap_min_days_before_production` (**padrão 5**,
+editável na UI `/app/injemed-financial-settings`). Itens bloqueados voltam em
+`blocked[]` com code `SWAP_TOO_LATE`; os demais itens trocam normalmente
+(não-destrutivo — a reserva bloqueada fica intacta).
+
+```json
+"blocked": [
+  { "code": "SWAP_TOO_LATE", "item_code": "TIR00060",
+    "error": "Nao da pra trocar o produto TIR00060: lote 00137 produz em 0 dia(s) (minimo 5 dias antes da producao)." }
+]
+```
+
 ### Response
 
 ```json
@@ -145,6 +163,7 @@ itens) → `ITEM_FILTER_WITH_ORDER`.
 | `[MISSING_SO]` (throw) | sem `sales_order` nem `deal_id` válido |
 | `[ORDER_HAS_PAYMENTS]` (throw) | `cancel_order` com PE lançado e sem `cancel_payments` |
 | `[ITEM_FILTER_WITH_ORDER]` (throw) | `item_code` junto com `cancel_order` |
+| `SWAP_TOO_LATE` (blocked[]) | swap: lote atual já produzido ou faltam <N dias pra produção |
 | `ITEM_NOT_IN_ORDER` | swap: item informado não está no pedido |
 | `BATCH_REQUIRED` / `BATCH_*` / `INSUFFICIENT_QTY` | swap: validação do lote novo (igual `step_reserve`) |
 | `PATIENT_NOT_FIT` | swap: bin-pack não fecha nos lotes novos |
@@ -176,6 +195,41 @@ curl -X POST .../future_production_cancel_reservation \
 
 ---
 
+## Webhooks n8n (Card React chama)
+
+Duas rotas dedicadas (auth ERPNext via credencial `ERPNext Injemed`). Repassam
+o body pro endpoint e devolvem o `message` (ou `{ok:false,error}` normalizado).
+
+| Op | Webhook n8n | Workflow ID | Endpoint ERPNext |
+|---|---|---|---|
+| Trocar | `POST /webhook/erp/trocar-reserva` | `78jiYigeTvfA7Yqd` | `swap_reservation` |
+| Cancelar | `POST /webhook/erp/cancelar-reserva` | `AatKl05FLZQHeg0j` | `cancel_reservation` |
+
+```bash
+# Trocar (Card manda deal_id + lote novo — "re-mando e atualiza")
+curl -X POST https://n8n.injemedpharma.com.br/webhook/erp/trocar-reserva \
+  -H "Content-Type: application/json" \
+  -d '{ "deal_id":"60801476407", "fpb_map": { "TIR00060":"00141" } }'
+
+# Cancelar (só reserva; pedido fica)
+curl -X POST https://n8n.injemedpharma.com.br/webhook/erp/cancelar-reserva \
+  -H "Content-Type: application/json" -d '{ "deal_id":"60801476407" }'
+```
+
+> **Por que webhook dedicado e não re-enviar no sync?** O sync principal
+> (`/webhook/erp/sincronizar-pedido`) é **idempotente**: se o item já tem
+> reserva, ele **pula** (não troca). Pra trocar o lote, use a rota
+> `trocar-reserva` — é o "re-mando o pedido com o lote novo e atualiza".
+
+## UI ERPNext (botões no Sales Order)
+
+Client Script `Sales Order - Reserva Ops` (instalado por `setup_22`) adiciona,
+no grupo **Reserva** do pedido submetido:
+
+- **Cancelar Reserva** → confirma e chama `cancel_reservation` (pedido fica).
+- **Trocar Lote** → diálogo: escolhe produto + novo FPB (filtrado por item +
+  status aberto) → `swap_reservation` (`fpb_map`). Mostra `blocked`/erros/sucesso.
+
 ## Validado em prod (SO 00138)
 
 | Op | Resultado |
@@ -184,3 +238,7 @@ curl -X POST .../future_production_cancel_reservation \
 | cancel (só reserva) | PR cancelada, lote liberado, `patients_cleared=1`, **SO docstatus=1** (fica) |
 | cancel `cancel_order` (tem PE) | THROW `ORDER_HAS_PAYMENTS` — atômico, PR sobrevive |
 | cancel `cancel_order`+`cancel_payments` (SO descartável) | SO + PE cancelados (docstatus 2) |
+| gate swap 00138 (lote produz hoje, 0d<5) | `SWAP_TOO_LATE` — bloqueado, PR intacta |
+| gate swap lote futuro (+12d) | permitido — troca OK |
+| webhook `trocar-reserva` | retorna `blocked` (gate) — chain OK |
+| webhook `cancelar-reserva` | retorna `{ok:false,error}` normalizado (throw) |
