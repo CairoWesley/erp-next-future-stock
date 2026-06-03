@@ -562,11 +562,23 @@ if so_fresh.docstatus == 0:
     so_fresh.submit()
     submitted = True
 
+# receita_targets: cpf -> row_name (pra etapa de anexar receita)
+receita_targets = []
+so_final = frappe.get_doc("Sales Order", so_name)
+for r in so_final.fp_patients:
+    rc = frappe.db.get_value("Patient", r.patient, "cpf") or ""
+    receita_targets.append({
+        "cpf": rc, "patient": r.patient, "item_code": r.item_code,
+        "row_name": r.name,
+        "has_receita": 1 if (r.receita or "") else 0,
+    })
+
 frappe.response["message"] = {
     "ok": True, "sales_order": so_name,
     "patients_created": created_pat, "prescribers_created": created_pres,
     "assignments": assignments, "pack_errors": pack_errors,
     "so_submitted": submitted,
+    "receita_targets": receita_targets,
 }
 '''.strip()
 
