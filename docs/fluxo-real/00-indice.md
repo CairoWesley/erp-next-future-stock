@@ -129,6 +129,7 @@ Cada DocType com contador independente. Ver
 | 0k | **Fluxo n8n node-by-node (ATIVO em prod)** | ✅ rodando | [00k-fluxo-n8n-node-by-node.md](00k-fluxo-n8n-node-by-node.md) |
 | 0l | **Regras de negócio (pagamento/liquidação/gating)** | ✅ | [00l-regras-negocio.md](00l-regras-negocio.md) |
 | 0m | Configuração Financeira (tempos + banco certo) | ✅ | [00m-configuracao-financeira.md](00m-configuracao-financeira.md) |
+| 0n | **Trocar / cancelar reserva (chave produto + pedido)** | ✅ validado prod | [00n-trocar-cancelar-reserva.md](00n-trocar-cancelar-reserva.md) |
 
 ### Por pedido (cada deal HubSpot dispara)
 

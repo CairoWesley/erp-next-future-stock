@@ -1,7 +1,7 @@
 # STATUS — Estado do Projeto (fonte de verdade)
 
 > Resumo vivo do que foi feito e do que falta. Atualizar conforme avança.
-> Última atualização: 2026-06-03 (após LIMPEZA GERAL).
+> Última atualização: 2026-06-03 (ops de reserva: swap + cancel — doc 00n).
 
 ## 🧹 Estado atual dos dados (pós-limpeza)
 
@@ -25,10 +25,15 @@ FPB 00137 TIRZE60-20260603 (item TIR00060, 1 ampola)
 SO 00138 R$1963.98 (TIR00060 1800 + FRETE 00069 163.98)
   Customer 00133 (Paulo César) · Patient 00136 (Eveline) · Prescriber 00135
   fp_patient: lote 00137 · receita REAL anexada (valida)
-  Reserva PR 00139 → FPB 00137 (1/1 → Totalmente Reservada)
+  Reserva PR 00143 → FPB 00137 (1/1 → Totalmente Reservada)
+    (PR 00139→00142→00143: trocada/recriada nos testes swap/cancel; ativa=00143)
   Recebimento PE 00140 R$1963.98 · valor 02/06 · liquida 02/07 (D+30) · linkado ao SO
 Pronto pra produção/dispensação MANUAL.
 ```
+
+> **Ops de reserva** (doc 00n): `swap_reservation` troca o lote;
+> `cancel_reservation` libera (pedido fica) ou cancela o pedido inteiro
+> (`cancel_order`+`cancel_payments`). Validadas em prod no SO 00138.
 
 ## Catálogo de erros padronizado (`{code, error, ...ctx}`)
 
@@ -45,7 +50,10 @@ reserve_errors / pack_errors retornam código + mensagem PT:
 | `[MISSING_CUSTOMER]` (throw) | Cliente (customer_name) é obrigatório | input |
 | `[CUSTOMER_NOT_FOUND]` (throw) | Cliente não encontrado | step_order |
 | `[NO_ITEMS]` (throw) | Pedido sem itens | step_order |
-| `[MISSING_SO]` (throw) | sales_order é obrigatório | step_reserve/patients |
+| `[MISSING_SO]` (throw) | sales_order/deal_id é obrigatório | step_reserve/patients/cancel/swap |
+| `ITEM_NOT_IN_ORDER` | item do swap não está no pedido | swap_reservation |
+| `[ORDER_HAS_PAYMENTS]` (throw) | cancel_order com PE lançado sem cancel_payments | cancel_reservation |
+| `[ITEM_FILTER_WITH_ORDER]` (throw) | item_code junto com cancel_order | cancel_reservation |
 
 > "Pacientes não validados" é gate UPSTREAM (validacao_receita.validations.
 > status='aprovado') — só pacientes aprovados são enviados/anexados.
@@ -88,6 +96,7 @@ Company ERPNext = **Injemedpharma** (com 'e').
 - `setup_19_step_endpoints` — **4 endpoints granulares** (step_customer/order/reserve/patients)
 - `setup_20_financial_config` — **Config Financeira** (DocType Single) + endpoints
 - `setup_21_payment_entry` — **register_payment** (Payment Entry valor-hoje/recebimento-futuro)
+- `setup_22_reservation_ops` — **trocar** (swap) e **cancelar** reserva (chave produto+pedido)
 
 ### Pipeline automático (n8n workflow ATIVO)
 ```
@@ -147,7 +156,8 @@ A partir do pedido pronto, time opera manual:
   (UI já existe, validar payload qty-por-lote)
 - [ ] Archive 63 produtos duplicados no HubSpot (task pendente)
 - [ ] Properties HubSpot pra médico estruturado (hoje vem de patients.medico_*)
-- [ ] Limpar SOs de teste cancelados (00077, 00125, 00126) — debris
+- [ ] Limpar SOs de teste cancelados (00077, 00125, 00126, 00144+PE 00145) — debris
+      (00144/00145 = teste cancel_order; cancelados docstatus=2, GL trava delete)
 
 ### Decisões abertas (00l seção 6)
 - Chargeback cartão após produção
@@ -161,6 +171,9 @@ AUTOMÁTICO (n8n):
   step_customer · step_order · step_reserve · step_patients
   register_payment · payment_schedule · get_financial_config
   issue_order (legado, single-call)
+RESERVA OPS (chave produto+pedido):
+  swap_reservation (troca lote: cancela antigo + reserva novo + re-bin-pack)
+  cancel_reservation (libera lote; cancel_order/cancel_payments p/ pedido inteiro)
 MANUAL (botões ERPNext):
   validate_and_reserve · allocate_patient_batches · release_batch
   create_work_order · recalculate_batch · replan_pending_qty
