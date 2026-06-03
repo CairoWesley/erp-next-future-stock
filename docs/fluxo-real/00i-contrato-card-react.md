@@ -101,14 +101,6 @@ Todos os pacientes do item vão pro mesmo lote (1 PR por item).
 { "deal_id": "60801476407", "fpb_name": "FPB-2026-00115" }
 ```
 
-### Sem FPB (FIFO automático)
-
-```json
-{ "deal_id": "60801476407" }
-```
-
-ERPNext enfileira FPBs por `planned_production_date asc` até cobrir o total.
-
 | Campo | Tipo | Obrigatório | Descrição |
 |---|---|---|---|
 | `deal_id` | string | **sim** | HubSpot Deal ID |
@@ -117,7 +109,7 @@ ERPNext enfileira FPBs por `planned_production_date asc` até cobrir o total.
 | `fpb_name` | string | não | Single FPB pra todos items stock (legacy) |
 | `order_id` | int | não | Alternativa ao deal_id (Postgres id) |
 
-Precedência: `item_fpb` > `fpb_map` > `fpb_name` > FIFO.
+Precedência: `item_fpb` > `fpb_map` > `fpb_name`. **Sem nenhum → erro `BATCH_REQUIRED`** (lote obrigatório, sem FIFO).
 
 Item non-stock (FRETE) → ignorado automático.
 
@@ -176,7 +168,7 @@ falha e aparece em `reserve_errors`:
 | `FPB X nao submetida.` | Lote em Rascunho (docstatus=0) | Submeter FPB |
 | `FPB X e do item Y, esperado Z.` | Lote é de outro produto | Trocar fpb_name |
 | `FPB X status=... nao aceita reservas.` | Lote fechado/encerrado | Trocar fpb_name |
-| `Nenhum lote disponivel pra item X` | FIFO sem FPB aberto | Criar FPB |
+| `BATCH_REQUIRED` Lote obrigatório pro produto X | Nenhum lote informado | Operador escolhe o lote (item_fpb) |
 
 ## Exemplo curl (teste manual)
 
@@ -198,11 +190,6 @@ curl -X POST https://n8n.injemedpharma.com.br/webhook/erp/sync-order \
 curl -X POST https://n8n.injemedpharma.com.br/webhook/erp/sync-order \
   -H "Content-Type: application/json" \
   -d '{ "deal_id": "60801476407", "fpb_map": { "TIR00060": "FPB-2026-00115" } }'
-
-# FIFO automático
-curl -X POST https://n8n.injemedpharma.com.br/webhook/erp/sync-order \
-  -H "Content-Type: application/json" \
-  -d '{ "deal_id": "60801476407" }'
 ```
 
 ## React Card — esqueleto (qty por lote, N lotes por item)
