@@ -1,0 +1,143 @@
+{
+  "name": "HubSpot → Set line_item.hs_sku from product.hs_sku",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hubspot/line-item-created",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "ed1234aa-1111-2222-3333-100000000001",
+      "name": "Webhook HubSpot",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-200, 0],
+      "webhookId": "hubspot-line-item-created"
+    },
+    {
+      "parameters": {
+        "jsCode": "// HubSpot envia body com line_item info. Pega hs_object_id (line_item id)\n// e hs_product_id (product no catálogo).\n//\n// Fallback FRETE: se name contém \"FRETE\" → seta sku=SV02000002 sem precisar\n// lookup do product. Backend Injmedpharma filtra FRETE por esse valor hardcoded.\n\nconst items = $input.all();\nconst out = [];\nfor (const item of items) {\n  const body = item.json.body || item.json;\n\n  // HubSpot workflow webhook envia objectId no top OU dentro de body\n  const lineItemId = body.objectId || body.hs_object_id || body.id;\n  const productId = body.hs_product_id;\n  const name = (body.name || '').toUpperCase();\n  const currentSku = body.hs_sku || '';\n\n  // Já tem sku? skip\n  if (currentSku) {\n    out.push({ json: { skip: true, reason: 'já tem hs_sku', lineItemId, currentSku } });\n    continue;\n  }\n\n  // FRETE special case\n  if (name.includes('FRETE')) {\n    out.push({ json: {\n      lineItemId,\n      newSku: 'SV02000002',\n      productId: null,\n      isFrete: true,\n    }});\n    continue;\n  }\n\n  // Sem product id? não dá pra resolver\n  if (!productId) {\n    out.push({ json: { skip: true, reason: 'sem hs_product_id e não é FRETE', lineItemId } });\n    continue;\n  }\n\n  out.push({ json: { lineItemId, productId, isFrete: false } });\n}\nreturn out;"
+      },
+      "id": "ed1234aa-1111-2222-3333-100000000002",
+      "name": "Parse + classificar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{
+            "leftValue": "={{ $json.skip }}",
+            "rightValue": true,
+            "operator": { "type": "boolean", "operation": "equal" }
+          }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ed1234aa-1111-2222-3333-100000000003",
+      "name": "Skip?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{
+            "leftValue": "={{ $json.isFrete }}",
+            "rightValue": true,
+            "operator": { "type": "boolean", "operation": "equal" }
+          }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ed1234aa-1111-2222-3333-100000000004",
+      "name": "É FRETE?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 100]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/objects/products/{{ $json.productId }}?properties=hs_sku",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={\n  \"Authorization\": \"Bearer {{ $env.HUBSPOT_ACCESS_TOKEN }}\"\n}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "ed1234aa-1111-2222-3333-100000000005",
+      "name": "GET product.hs_sku",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Junta payload pra PATCH line_item\nconst items = $input.all();\nconst out = [];\nfor (const item of items) {\n  const j = item.json;\n  let newSku;\n  let lineItemId;\n  if (j.newSku) {\n    // veio do FRETE branch\n    newSku = j.newSku;\n    lineItemId = j.lineItemId;\n  } else {\n    // veio do GET product\n    newSku = j.properties?.hs_sku;\n    lineItemId = j._lineItemId;  // setamos abaixo\n  }\n  if (!newSku || !lineItemId) {\n    out.push({ json: { error: 'sku ou lineItemId ausente', payload: j } });\n    continue;\n  }\n  out.push({ json: { lineItemId, hs_sku: newSku } });\n}\nreturn out;"
+      },
+      "id": "ed1234aa-1111-2222-3333-100000000006",
+      "name": "Monta PATCH",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 100]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/line_items/{{ $json.lineItemId }}",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "={\n  \"Authorization\": \"Bearer {{ $env.HUBSPOT_ACCESS_TOKEN }}\",\n  \"Content-Type\": \"application/json\"\n}",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={ \"properties\": { \"hs_sku\": \"{{ $json.hs_sku }}\" } }",
+        "options": { "timeout": 15000 }
+      },
+      "id": "ed1234aa-1111-2222-3333-100000000007",
+      "name": "PATCH line_item",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1100, 100]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"ok\": true }",
+        "options": {}
+      },
+      "id": "ed1234aa-1111-2222-3333-100000000008",
+      "name": "Responde 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1320, 0]
+    }
+  ],
+  "connections": {
+    "Webhook HubSpot": { "main": [[{ "node": "Parse + classificar", "type": "main", "index": 0 }]] },
+    "Parse + classificar": { "main": [[{ "node": "Skip?", "type": "main", "index": 0 }]] },
+    "Skip?": {
+      "main": [
+        [{ "node": "Responde 200", "type": "main", "index": 0 }],
+        [{ "node": "É FRETE?", "type": "main", "index": 0 }]
+      ]
+    },
+    "É FRETE?": {
+      "main": [
+        [{ "node": "Monta PATCH", "type": "main", "index": 0 }],
+        [{ "node": "GET product.hs_sku", "type": "main", "index": 0 }]
+      ]
+    },
+    "GET product.hs_sku": { "main": [[{ "node": "Monta PATCH", "type": "main", "index": 0 }]] },
+    "Monta PATCH": { "main": [[{ "node": "PATCH line_item", "type": "main", "index": 0 }]] },
+    "PATCH line_item": { "main": [[{ "node": "Responde 200", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}
