@@ -1,7 +1,23 @@
 # STATUS — Estado do Projeto (fonte de verdade)
 
 > Resumo vivo do que foi feito e do que falta. Atualizar conforme avança.
-> Última atualização: 2026-06-03.
+> Última atualização: 2026-06-03 (após LIMPEZA GERAL).
+
+## 🧹 Estado atual dos dados (pós-limpeza)
+
+ERPNext **zerado de transacional**, só Items mantidos:
+```
+Sales Order 0 · Customer 0 · Patient 0 · Prescriber 0 · Payment Entry 0
+Production Reservation 0 · Future Production Batch 0 · Address 0 · Contact 0
+Item: 69 (catálogo HubSpot — MANTIDO)
+```
+Mantidos: DocTypes, Server Scripts, Custom Fields, Config Financeira,
+Customer Group "Volpi", naming, n8n workflow. Postgres validacao_receita
+INTACTO (16 orders). Counter de naming NÃO reseta (próximo registro segue
+do número onde parou, não 00001).
+
+> **Pra rodar venda real via n8n: precisa criar 1 FPB (lote) antes** — a
+> reserva precisa de lote aberto. Ver guia em `10-criar-lote-fpb.md`.
 
 ## Visão geral
 
