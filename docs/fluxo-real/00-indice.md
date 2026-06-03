@@ -49,12 +49,20 @@
 POST https://n8n.injemedpharma.com.br/webhook/erp/sync-order
 Content-Type: application/json
 
-# Forma preferencial: lote por PACIENTE (1 receita = 1 lote inteiro)
+# Forma preferencial: QUANTIDADE POR LOTE.
+# Operador aloca X ampolas lote 1, Y ampolas lote 2.
+# Sistema distribui pacientes entre lotes (bin-pack).
+# REGRA: cada receita (paciente) cabe inteira em UM lote.
 {
   "deal_id": "60801476407",
-  "patient_fpb": [
-    { "patient_cpf": "00593976169", "item_code": "TIR00060", "fpb_name": "FPB-2026-00115" },
-    { "patient_cpf": "11122233344", "item_code": "TIR00060", "fpb_name": "FPB-2026-00120" }
+  "item_fpb": [
+    {
+      "item_code": "TIR00060",
+      "lotes": [
+        { "fpb_name": "FPB-2026-00115", "qty": 7 },
+        { "fpb_name": "FPB-2026-00120", "qty": 3 }
+      ]
+    }
   ]
 }
 ```
@@ -195,8 +203,8 @@ Tabelas principais (schema completo em [00e](00e-fonte-dados-validacao-receita.m
 
 ## ✅ Regras de negócio críticas
 
-1. **1 paciente = 1 lote inteiro**. Mesma receita NÃO divide entre lotes.
-2. **N items diferentes = N lotes possíveis**. Operador escolhe FPB por paciente.
+1. **1 receita = 1 lote inteiro**. Paciente nunca dividido entre 2 lotes.
+2. **Alocação por quantidade-por-lote**. Operador define X ampolas lote 1, Y lote 2. Sistema distribui pacientes (bin-pack first-fit-decreasing) respeitando regra 1. Se não fechar → erro pedindo reajuste.
 3. **Customer = entidade pagante** (PF ou PJ Volpi). CPF/CNPJ do pagador.
 4. **Médico (Prescriber)** vem denormalizado de `patients.medico_*`. Lookup por CRM+UF. CPF placeholder se ausente.
 5. **Receita PDF** = 1 por paciente. Anexada na row `fp_patients[i].receita`.

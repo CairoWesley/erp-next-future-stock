@@ -13,68 +13,109 @@ Content-Type: application/json
 
 ## Request body
 
-### Forma preferida (N items, N FPBs)
+### Forma PREFERIDA — quantidade por lote (`item_fpb`)
 
-```json
-{
-  "deal_id":  "60801476407",
-  "fpb_map": {
-    "TIR00060": "FPB-2026-00115",
-    "00049":    "FPB-2026-00120",
-    "00057":    "FPB-2026-00125"
-  }
-}
-```
-
-`fpb_map`: dict `{ item_code: fpb_name }`. **Um lote por item.**
-
-- Item presente no map sem FPB válido → erro no `reserve_errors[]` (não bloqueia SO).
-- Item ausente do map → cai pra `fpb_name` top-level (se houver) ou FIFO.
-- Item non-stock (FRETE) → ignorado automático (não tenta reservar).
-
-### Forma alias (legível pelo Card React)
+Operador aloca **X ampolas pra cada lote** por item. Sistema distribui os
+pacientes entre os lotes (bin-packing). **Regra dura: cada paciente
+(receita) cabe inteiro em UM lote — nunca dividido entre 2 lotes.**
 
 ```json
 {
   "deal_id": "60801476407",
-  "items": [
-    { "item_code": "TIR00060", "fpb_name": "FPB-2026-00115" },
-    { "item_code": "00049",    "fpb_name": "FPB-2026-00120" },
-    { "item_code": "00057",    "fpb_name": "FPB-2026-00125" }
+  "item_fpb": [
+    {
+      "item_code": "TIR00060",
+      "lotes": [
+        { "fpb_name": "FPB-2026-00115", "qty": 7 },
+        { "fpb_name": "FPB-2026-00120", "qty": 3 }
+      ]
+    },
+    {
+      "item_code": "00049",
+      "lotes": [
+        { "fpb_name": "FPB-2026-00130", "qty": 5 }
+      ]
+    }
   ]
 }
 ```
 
-n8n converte `items[]` → `fpb_map` automaticamente.
+**Como funciona o bin-packing:**
+
+```
+Item TIR00060 — total 10 ampolas (3 pacientes: 5, 3, 2)
+Operador aloca: Lote A = 7, Lote B = 3
+
+Distribuição (first-fit-decreasing, receita inteira):
+  Paciente 5amp → Lote A   (A: 7→2)
+  Paciente 3amp → Lote B   (B: 3→0)
+  Paciente 2amp → Lote A   (A: 2→0)
+
+Resultado:
+  Production Reservation Lote A = 7 ampolas
+  Production Reservation Lote B = 3 ampolas
+  Cada paciente fica 100% em UM lote.
+```
+
+**Se a alocação não fechar:**
+
+```
+Operador aloca: Lote A = 6, Lote B = 4
+  Paciente 5amp → Lote A (A: 6→1)
+  Paciente 3amp → Lote B (B: 4→1)
+  Paciente 2amp → NÃO CABE (A=1, B=1) → ERRO
+
+reserve_errors: [{
+  "item_code": "TIR00060",
+  "patient": "00085",
+  "qty": 2.0,
+  "message": "Paciente 00085 (qty 2.0) nao cabe em nenhum lote restante.
+              Ajuste as quantidades por lote."
+}]
+```
+
+SO é criado mesmo assim; só a reserva desse item falha. Operador reajusta
+as quantidades e re-chama (idempotente).
+
+### Forma PER-ITEM (`fpb_map`) — 1 lote pra todo o item
+
+```json
+{
+  "deal_id": "60801476407",
+  "fpb_map": {
+    "TIR00060": "FPB-2026-00115",
+    "00049":    "FPB-2026-00120"
+  }
+}
+```
+
+Todos os pacientes do item vão pro mesmo lote (1 PR por item).
 
 ### Forma legada (1 FPB pra tudo)
 
 ```json
-{
-  "deal_id":  "60801476407",
-  "fpb_name": "FPB-2026-00115"
-}
+{ "deal_id": "60801476407", "fpb_name": "FPB-2026-00115" }
 ```
 
-Mantido pra retrocompat. Usa esse FPB pra **todos** items stock do pedido.
-
-### Sem FPB (FIFO)
+### Sem FPB (FIFO automático)
 
 ```json
 { "deal_id": "60801476407" }
 ```
 
-ERPNext escolhe FPB por `planned_production_date asc`.
+ERPNext enfileira FPBs por `planned_production_date asc` até cobrir o total.
 
 | Campo | Tipo | Obrigatório | Descrição |
 |---|---|---|---|
 | `deal_id` | string | **sim** | HubSpot Deal ID |
-| `fpb_map` | dict | não | Map `item_code → fpb_name` (preferencial pra N items) |
-| `items` | array | não | Alias `[{item_code, fpb_name}]` (n8n converte pra fpb_map) |
+| `item_fpb` | array | não | **Preferido.** `[{item_code, lotes:[{fpb_name, qty}]}]` — qtd por lote + bin-pack |
+| `fpb_map` | dict | não | `{item_code → fpb_name}` — 1 lote por item |
 | `fpb_name` | string | não | Single FPB pra todos items stock (legacy) |
 | `order_id` | int | não | Alternativa ao deal_id (Postgres id) |
 
-Aliases aceitos: `future_production_batch` no lugar de `fpb_name`.
+Precedência: `item_fpb` > `fpb_map` > `fpb_name` > FIFO.
+
+Item non-stock (FRETE) → ignorado automático.
 
 ## Response
 
@@ -118,90 +159,123 @@ Aliases aceitos: `future_production_batch` no lugar de `fpb_name`.
 | `erpnext.reserve_errors` | Lista de itens que não conseguiram reservar (FPB ausente, FPB do item errado, FPB não submetida, saldo insuficiente). |
 | `marked` | Registro do `pedido_fc_emitido_at` (idempotente — só marca primeira vez). |
 
-## Erros de FPB
+## Erros de reserva
 
-Se `fpb_name` enviado mas tem problema, NÃO bloqueia o SO. SO é criado +
-flags setadas; apenas a reserva falha e aparece em `reserve_errors`:
+Erro de FPB NÃO bloqueia o SO. SO é criado + flags setadas; só a reserva
+falha e aparece em `reserve_errors`:
 
 | Mensagem | Causa | Fix |
 |---|---|---|
-| `FPB X nao existe.` | Nome digitado errado / lote apagado | Verifica nome exato em ERPNext |
-| `FPB X nao submetida.` | Lote em Rascunho (docstatus=0) | Submeter FPB primeiro |
+| `Paciente X (qty N) nao cabe em nenhum lote restante.` | Alocação qty-por-lote não fecha bin-pack | Reajustar `qty` por lote no `item_fpb` |
+| `Capacidade dos lotes (X) menor que total do item (Y).` | Soma das qty alocadas < total do item | Aumentar qty ou adicionar lote |
+| `FPB X nao existe.` | Nome errado / lote apagado | Verificar nome exato |
+| `FPB X nao submetida.` | Lote em Rascunho (docstatus=0) | Submeter FPB |
 | `FPB X e do item Y, esperado Z.` | Lote é de outro produto | Trocar fpb_name |
-| `FPB X status=Bloqueado (esperado 'Aberta para Reserva').` | Lote fechado/encerrado | Trocar fpb_name |
+| `FPB X status=... nao aceita reservas.` | Lote fechado/encerrado | Trocar fpb_name |
+| `Nenhum lote disponivel pra item X` | FIFO sem FPB aberto | Criar FPB |
 
 ## Exemplo curl (teste manual)
 
 ```bash
-# Específico (operador escolheu FPB)
+# Quantidade por lote (preferido)
 curl -X POST https://n8n.injemedpharma.com.br/webhook/erp/sync-order \
   -H "Content-Type: application/json" \
   -d '{
-    "deal_id":  "60801476407",
-    "fpb_name": "FPB-2026-00115"
+    "deal_id": "60801476407",
+    "item_fpb": [
+      { "item_code": "TIR00060", "lotes": [
+        { "fpb_name": "FPB-2026-00115", "qty": 7 },
+        { "fpb_name": "FPB-2026-00120", "qty": 3 }
+      ]}
+    ]
   }'
 
-# FIFO (sem escolher)
+# 1 lote por item
+curl -X POST https://n8n.injemedpharma.com.br/webhook/erp/sync-order \
+  -H "Content-Type: application/json" \
+  -d '{ "deal_id": "60801476407", "fpb_map": { "TIR00060": "FPB-2026-00115" } }'
+
+# FIFO automático
 curl -X POST https://n8n.injemedpharma.com.br/webhook/erp/sync-order \
   -H "Content-Type: application/json" \
   -d '{ "deal_id": "60801476407" }'
 ```
 
-## React Card — esqueleto sugerido (N items, N Selects)
+## React Card — esqueleto (qty por lote, N lotes por item)
+
+UI por item: lista de alocações `(FPB, qty)`. Operador adiciona lotes e
+distribui as ampolas. Card valida que `soma(qty) == total do item` antes
+de habilitar o envio.
 
 ```tsx
 import { useState, useEffect } from 'react';
-import { hubspot } from '@hubspot/ui-extensions';
 
 const SyncCard = ({ context }) => {
   const dealId = context.crm.objectId;
   const [orderStatus, setOrderStatus] = useState(null);
-  const [fpbsByItem, setFpbsByItem] = useState({});  // { item_code: FPB[] }
-  const [selection, setSelection] = useState({});    // { item_code: fpb_name }
+  const [fpbsByItem, setFpbsByItem] = useState({});  // { sku: FPB[] }
+  // alloc: { sku: [ {fpb_name, qty} ] }
+  const [alloc, setAlloc] = useState({});
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
 
-  // 1. Status do order
+  // 1. Status do order (backend validacao)
   useEffect(() => {
     fetch(`https://api.validacao.injemedpharma.com.br/api/orders/deal/${dealId}`)
       .then(r => r.json()).then(setOrderStatus);
   }, [dealId]);
 
-  // 2. FPBs por item (paralelo)
+  // 2. FPBs abertos por item (paralelo, exclui FRETE)
   useEffect(() => {
     if (!orderStatus?.products?.length) return;
-    const stockSkus = orderStatus.products
-      .filter(p => p.sku !== 'SV02000002')   // exclui FRETE
+    const skus = orderStatus.products
+      .filter(p => p.sku !== 'SV02000002')
       .map(p => p.sku);
-    Promise.all(stockSkus.map(sku =>
+    Promise.all(skus.map(sku =>
       fetch(`https://erp.injemedpharma.com.br/api/resource/Future Production Batch?` +
-        `filters=[["item_code","=","${sku}"],["status","=","Aberta para Reserva"],["docstatus","=",1]]&` +
-        `fields=["name","production_code","item_code","available_qty","planned_production_date"]&` +
-        `order_by=planned_production_date asc`,
+        `filters=[["item_code","=","${sku}"],["status","in",["Aberta para Reserva","Reservada Parcialmente"]],["docstatus","=",1]]&` +
+        `fields=["name","production_code","available_qty"]&order_by=planned_production_date asc`,
         { headers: { Authorization: `token <KEY>:<SECRET>` }}
       ).then(r => r.json()).then(d => [sku, d.data || []])
-    )).then(results => {
-      setFpbsByItem(Object.fromEntries(results));
-    });
+    )).then(rs => setFpbsByItem(Object.fromEntries(rs)));
   }, [orderStatus]);
+
+  const totalBySku = sku => {
+    const prod = (orderStatus?.products || []).find(p => p.sku === sku);
+    return Number(prod?.quantity || 0);
+  };
+  const allocSum = sku =>
+    (alloc[sku] || []).reduce((s, l) => s + Number(l.qty || 0), 0);
 
   const ready =
     orderStatus?.status === 'completo' &&
     (orderStatus.products || []).every(p =>
       (p.patients || []).every(pt => pt.validation_status === 'aprovado'));
 
-  const allItemsSelected =
-    Object.keys(fpbsByItem).every(sku => selection[sku]);
+  // cada item stock: soma das qty alocadas == total do item
+  const allClosed = Object.keys(fpbsByItem).every(
+    sku => allocSum(sku) === totalBySku(sku) && allocSum(sku) > 0);
+
+  const addLote = sku =>
+    setAlloc(p => ({ ...p, [sku]: [...(p[sku] || []), { fpb_name: '', qty: 0 }] }));
+  const setLote = (sku, i, field, v) =>
+    setAlloc(p => {
+      const arr = [...(p[sku] || [])];
+      arr[i] = { ...arr[i], [field]: v };
+      return { ...p, [sku]: arr };
+    });
 
   const handleSubmit = async () => {
     setBusy(true);
+    const item_fpb = Object.entries(alloc).map(([item_code, lotes]) => ({
+      item_code,
+      lotes: lotes.filter(l => l.fpb_name && Number(l.qty) > 0)
+                  .map(l => ({ fpb_name: l.fpb_name, qty: Number(l.qty) })),
+    }));
     const resp = await fetch('https://n8n.injemedpharma.com.br/webhook/erp/sync-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        deal_id: dealId,
-        fpb_map: selection,    // { 'TIR00060': 'FPB-...', '00049': 'FPB-...' }
-      }),
+      body: JSON.stringify({ deal_id: dealId, item_fpb }),
     });
     setResult(await resp.json());
     setBusy(false);
@@ -215,30 +289,43 @@ const SyncCard = ({ context }) => {
 
       {Object.entries(fpbsByItem).map(([sku, fpbs]) => {
         const prod = orderStatus.products.find(p => p.sku === sku);
+        const sum = allocSum(sku), tot = totalBySku(sku);
         return (
           <Box key={sku}>
-            <Text>{prod?.name} (SKU {sku}) — qty {prod?.quantity}</Text>
-            <Select
-              label={`Lote pra ${sku}`}
-              options={fpbs.map(f => ({
-                label: `${f.production_code} (${f.available_qty} disponíveis)`,
-                value: f.name,
-              }))}
-              value={selection[sku] || ''}
-              onChange={v => setSelection(prev => ({ ...prev, [sku]: v }))}
-            />
+            <Text>{prod?.name} (SKU {sku}) — total {tot} ampolas
+              {' '}({sum}/{tot} alocadas {sum === tot ? '✅' : '⚠'})</Text>
+            {(alloc[sku] || []).map((lote, i) => (
+              <Flex key={i} gap="small">
+                <Select
+                  options={fpbs.map(f => ({
+                    label: `${f.production_code} (${f.available_qty} disp)`,
+                    value: f.name,
+                  }))}
+                  value={lote.fpb_name}
+                  onChange={v => setLote(sku, i, 'fpb_name', v)}
+                />
+                <NumberInput
+                  value={lote.qty}
+                  min={0}
+                  onChange={v => setLote(sku, i, 'qty', v)}
+                />
+              </Flex>
+            ))}
+            <Button variant="secondary" onClick={() => addLote(sku)}>
+              + Adicionar lote
+            </Button>
           </Box>
         );
       })}
 
-      <Button onClick={handleSubmit} disabled={!ready || !allItemsSelected || busy}>
+      <Button onClick={handleSubmit} disabled={!ready || !allClosed || busy}>
         {busy ? 'Enviando…' : 'Enviar pra ERPNext'}
       </Button>
 
       {result && (
         <Text>
           {result.ok
-            ? `✅ SO ${result.erpnext.sales_order} | reservas: ${result.erpnext.reservations?.length || 0}`
+            ? `✅ SO ${result.erpnext.sales_order} | ${result.erpnext.reservations?.length || 0} reserva(s)`
             : `❌ ${JSON.stringify(result)}`}
         </Text>
       )}
@@ -247,7 +334,7 @@ const SyncCard = ({ context }) => {
         <Box>
           <Heading>Erros de reserva</Heading>
           {result.erpnext.reserve_errors.map((e, i) =>
-            <Text key={i}>{e.item_code}: {e.message}</Text>
+            <Text key={i}>{e.item_code}{e.patient ? ` / ${e.patient}` : ''}: {e.message}</Text>
           )}
         </Box>
       )}
@@ -255,6 +342,11 @@ const SyncCard = ({ context }) => {
   );
 };
 ```
+
+> Card só habilita "Enviar" quando, pra cada item stock,
+> `soma(qty alocada) == total do item`. O ERPNext ainda valida bin-pack
+> (receita inteira) — se a divisão não fechar com as receitas reais,
+> retorna `reserve_errors` e o operador reajusta.
 
 ## Quem busca o que (fluxo dados)
 

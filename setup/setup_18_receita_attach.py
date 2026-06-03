@@ -40,10 +40,20 @@ from lib.erpnext_api import client_from_env, log_error, log_ok, log_section
 CUSTOM_FIELDS = [
     {
         "dt": "Sales Order Patient",
+        "fieldname": "fp_future_production_batch",
+        "label": "Lote Reservado (FPB)",
+        "fieldtype": "Link",
+        "options": "Future Production Batch",
+        "insert_after": "qty",
+        "allow_on_submit": 1,
+        "read_only": 1,
+    },
+    {
+        "dt": "Sales Order Patient",
         "fieldname": "receita",
         "label": "Receita (PDF)",
         "fieldtype": "Attach",
-        "insert_after": "qty",
+        "insert_after": "fp_future_production_batch",
         "allow_on_submit": 1,
     },
     {
