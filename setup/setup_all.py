@@ -43,6 +43,7 @@ STEPS: list[tuple[int, str, str]] = [
     (13, "setup_13_so_validation",  "Validações Pré-Reserva (pagamento/receitas/HubSpot)"),
     (15, "setup_15_naming_series",  "Naming Series auto-increment (format:{#####})"),
     (16, "setup_16_form_layout",    "Form Layout (todos campos críticos visíveis)"),
+    (18, "setup_18_receita_attach", "Receita Attach (Custom Fields Sales Order Patient)"),
 ]
 
 
