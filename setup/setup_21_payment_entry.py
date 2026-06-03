@@ -130,6 +130,12 @@ else:
                       (" parcela " + str(i) + "/" + str(inst) if inst > 1 else "") +
                       " | autorizado " + str(paid_date) +
                       " | recebimento previsto " + str(clearance))
+        # CONECTA ao Sales Order (adiantamento) — aparece no pedido
+        pe.append("references", {
+            "reference_doctype": "Sales Order",
+            "reference_name": so_name,
+            "allocated_amount": val,
+        })
         pe.insert(ignore_permissions=True)
         pe.submit()
         created.append({
