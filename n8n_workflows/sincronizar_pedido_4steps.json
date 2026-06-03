@@ -213,6 +213,149 @@
         "responseBody": "={{ JSON.stringify({ ok:true, sales_order: $('2. Cadastra Pedido').first().json.message.sales_order, cliente: $('1. Cadastra Cliente').first().json.message, pacientes: $('3. Cadastra Pacientes + Médico').first().json.message, reservas: $('4. Reserva').first().json.message, pagamento: $('Normalizar').first().json.payment, liquidacao: ($('Liquidação (config)').first().json||{}).message||null }) }}",
         "options": {}
       }
+    },
+    {
+      "id": "rec-pg",
+      "name": "Buscar Receitas",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        760,
+        200
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "postgres": {
+          "id": "ZQSVfJQfNFuAdvFd",
+          "name": "Postgres dedicado"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT pt.cpf, pt.receita_path, pt.receita_original_name, pt.assinatura_digital_status FROM validacao_receita.patients pt JOIN validacao_receita.products pr ON pr.id=pt.product_id JOIN validacao_receita.orders o ON o.id=pr.order_id LEFT JOIN validacao_receita.validations v ON v.patient_id=pt.id WHERE o.hubspot_deal_id='{{ ($('Webhook').first().json.body||{}).hubspot_deal_id }}' AND v.status='aprovado' AND pt.receita_path IS NOT NULL",
+        "options": {}
+      }
+    },
+    {
+      "id": "rec-prep",
+      "name": "Preparar Receitas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        200
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "jsCode": "\nconst receitas = $input.all().map(i=>i.json);\nconst tgts = (($('3. Cadastra Pacientes + Médico').first().json.message||{}).receita_targets)||[];\nconst byCpf={}; for(const t of tgts) byCpf[String(t.cpf||'').replace(/\\D/g,'')]=t;\nconst out=[];\nfor(const r of receitas){ const cpf=String(r.cpf||'').replace(/\\D/g,''); const t=byCpf[cpf];\n  if(!t||!r.receita_path) continue;\n  out.push({json:{ row_name:t.row_name, file_name:r.receita_original_name||r.receita_path, status:r.assinatura_digital_status||'valida', pdf_url:'https://validacao-api.injemedpharma.com.br/uploads/'+r.receita_path }}); }\nreturn out;\n"
+      }
+    },
+    {
+      "id": "rec-dl",
+      "name": "Download Receita",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1160,
+        200
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.pdf_url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "rec-up",
+      "name": "Upload Receita",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1360,
+        200
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jXQ4NuOXsgOuyVuv",
+          "name": "ERPNext Injemed (claude)"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.injemedpharma.com.br/api/method/upload_file",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "is_private",
+              "value": "1"
+            },
+            {
+              "name": "doctype",
+              "value": "Sales Order Patient"
+            },
+            {
+              "name": "docname",
+              "value": "={{ $('Preparar Receitas').item.json.row_name }}"
+            },
+            {
+              "name": "fieldname",
+              "value": "receita"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      }
+    },
+    {
+      "id": "rec-set",
+      "name": "Set Receita Campos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1560,
+        200
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jXQ4NuOXsgOuyVuv",
+          "name": "ERPNext Injemed (claude)"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.injemedpharma.com.br/api/method/frappe.client.set_value",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ doctype:'Sales Order Patient', name: $('Preparar Receitas').item.json.row_name, fieldname:{ receita: ($json.message||{}).file_url, receita_original_name: $('Preparar Receitas').item.json.file_name, receita_status: $('Preparar Receitas').item.json.status } }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      }
     }
   ],
   "connections": {
@@ -298,6 +441,55 @@
         [
           {
             "node": "Respond",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Buscar Receitas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Receitas": {
+      "main": [
+        [
+          {
+            "node": "Preparar Receitas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Receitas": {
+      "main": [
+        [
+          {
+            "node": "Download Receita",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Receita": {
+      "main": [
+        [
+          {
+            "node": "Upload Receita",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Receita": {
+      "main": [
+        [
+          {
+            "node": "Set Receita Campos",
             "type": "main",
             "index": 0
           }

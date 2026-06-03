@@ -39,8 +39,38 @@
 [4. Reserva]            POST future_production_step_reserve
    │   → 1 Production Reservation por lote (item_fpb, qty operador)
    ▼
-[Respond]  { ok, sales_order, cliente, pacientes, reservas }
+[Liquidação (config)]   POST future_production_payment_schedule
+   │   → cronograma de liquidação (PIX D+1 / cartão D+30·i) + banco + modo
+   ├──────────────────────────────────────────────┐
+   ▼ (responde rápido)                             ▼ (async, não bloqueia)
+[Respond]                              [Buscar Receitas]  Postgres validacao_receita
+  { ok, sales_order, cliente,            │  WHERE validation='aprovado' AND receita_path NOT NULL
+    pacientes, reservas,                 ▼
+    pagamento, liquidacao }            [Preparar Receitas]  Code: join receita_targets (row por cpf)
+                                         ▼
+                                       [Download Receita]  GET backend/uploads/<path> (binário)
+                                         ▼
+                                       [Upload Receita]    POST upload_file (multipart) na row
+                                         ▼
+                                       [Set Receita Campos] set_value receita + original + status
 ```
+
+### Anexo de receita (branch async, não bloqueia a resposta)
+
+Após a Liquidação, o fluxo bifurca:
+- **Respond** devolve a resposta operacional na hora.
+- **Branch receita** (`continueOnFail` em todos os nodes) roda em paralelo:
+  só anexa pacientes com `validations.status='aprovado'` (gate Anvisa),
+  baixa o PDF do backend `validacao-api.injemedpharma.com.br/uploads/<path>`,
+  faz upload no ERPNext e seta `receita` + `receita_original_name` +
+  `receita_status` na linha do paciente. Erro aqui não trava o pedido.
+
+Validado em prod: receita limpa → webhook → chain re-anexou o PDF real
+(95KB) com status `valida`. Os 5 nodes rodaram ok.
+
+> Regra: **a receita tem que estar validada (aprovado) E dentro do
+> ERPNext** pro pedido ser considerado completo. O gate `aprovado` está
+> na query Postgres; o anexo físico é feito por este branch.
 
 ## Por que essa ordem (e não cliente→pedido→reserva→pacientes)
 
