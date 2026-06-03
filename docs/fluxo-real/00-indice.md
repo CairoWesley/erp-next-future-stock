@@ -59,6 +59,7 @@ independente. Ver [`00b-numeracao.md`](00b-numeracao.md) pra detalhes.
 | 0f | Arquitetura sync (HubSpot Card + n8n) | ✅ design | [00f-arquitetura-sync-validacao-receita.md](00f-arquitetura-sync-validacao-receita.md) |
 | 0g | Workflow auto `line_item.hs_sku` | ✅ design | [00g-workflow-auto-hs-sku.md](00g-workflow-auto-hs-sku.md) |
 | 0h | Integração automática setup_14 + n8n sync_order | ✅ implementado | [00h-integracao-automatica.md](00h-integracao-automatica.md) |
+| 0i | Contrato Card React → n8n (deal_id + fpb_name) | ✅ implementado | [00i-contrato-card-react.md](00i-contrato-card-react.md) |
 | 1 | Criar primeiro FPB (lote planejado) | ✅ | [01-criar-fpb.md](01-criar-fpb.md) |
 | 2 | Cadastrar Cliente (Customer + Address + Contact) | ✅ | [02-cadastrar-cliente.md](02-cadastrar-cliente.md) |
 | 3 | Cadastrar Médico (Prescriber + Council) | ✅ | [03-cadastrar-medico.md](03-cadastrar-medico.md) |
