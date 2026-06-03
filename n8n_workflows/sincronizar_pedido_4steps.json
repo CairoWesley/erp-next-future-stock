@@ -65,7 +65,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "jXQ4NuOXsgOuyVuv",
-          "name": "ERPNext Injemed (claude)"
+          "name": "ERPNext Injemed"
         }
       },
       "parameters": {
@@ -94,7 +94,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "jXQ4NuOXsgOuyVuv",
-          "name": "ERPNext Injemed (claude)"
+          "name": "ERPNext Injemed"
         }
       },
       "parameters": {
@@ -123,7 +123,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "jXQ4NuOXsgOuyVuv",
-          "name": "ERPNext Injemed (claude)"
+          "name": "ERPNext Injemed"
         }
       },
       "parameters": {
@@ -152,7 +152,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "jXQ4NuOXsgOuyVuv",
-          "name": "ERPNext Injemed (claude)"
+          "name": "ERPNext Injemed"
         }
       },
       "parameters": {
@@ -181,7 +181,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "jXQ4NuOXsgOuyVuv",
-          "name": "ERPNext Injemed (claude)"
+          "name": "ERPNext Injemed"
         }
       },
       "parameters": {
@@ -210,7 +210,7 @@
       ],
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ JSON.stringify({ ok:true, sales_order: $('2. Cadastra Pedido').first().json.message.sales_order, cliente: $('1. Cadastra Cliente').first().json.message, pacientes: $('3. Cadastra Pacientes + Médico').first().json.message, reservas: $('4. Reserva').first().json.message, pagamento: $('Normalizar').first().json.payment, liquidacao: ($('Liquidação (config)').first().json||{}).message||null }) }}",
+        "responseBody": "={{ JSON.stringify({ ok:true, sales_order: $('2. Cadastra Pedido').first().json.message.sales_order, cliente: $('1. Cadastra Cliente').first().json.message, pacientes: $('3. Cadastra Pacientes + Médico').first().json.message, reservas: $('4. Reserva').first().json.message, recebimento: ($('5. Lançar Recebimento').first().json||{}).message||null, pagamento: $('Normalizar').first().json.payment, liquidacao: ($('Liquidação (config)').first().json||{}).message||null }) }}",
         "options": {}
       }
     },
@@ -287,7 +287,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "jXQ4NuOXsgOuyVuv",
-          "name": "ERPNext Injemed (claude)"
+          "name": "ERPNext Injemed"
         }
       },
       "parameters": {
@@ -340,7 +340,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "jXQ4NuOXsgOuyVuv",
-          "name": "ERPNext Injemed (claude)"
+          "name": "ERPNext Injemed"
         }
       },
       "parameters": {
@@ -352,6 +352,36 @@
         "contentType": "json",
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ doctype:'Sales Order Patient', name: $('Preparar Receitas').item.json.row_name, fieldname:{ receita: ($json.message||{}).file_url, receita_original_name: $('Preparar Receitas').item.json.file_name, receita_status: $('Preparar Receitas').item.json.status } }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      }
+    },
+    {
+      "id": "lancar-receb",
+      "name": "5. Lançar Recebimento",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        680,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "jXQ4NuOXsgOuyVuv",
+          "name": "ERPNext Injemed"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.injemedpharma.com.br/api/method/future_production_register_payment",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ sales_order: $('2. Cadastra Pedido').first().json.message.sales_order, payment: $('Normalizar').first().json.payment }) }}",
         "options": {
           "allowUnauthorizedCerts": true
         }
@@ -429,7 +459,7 @@
       "main": [
         [
           {
-            "node": "Liquidação (config)",
+            "node": "5. Lançar Recebimento",
             "type": "main",
             "index": 0
           }
@@ -490,6 +520,17 @@
         [
           {
             "node": "Set Receita Campos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5. Lançar Recebimento": {
+      "main": [
+        [
+          {
+            "node": "Liquidação (config)",
             "type": "main",
             "index": 0
           }
