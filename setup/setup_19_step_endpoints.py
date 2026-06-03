@@ -297,7 +297,9 @@ for item_code, total in totals.items():
     already_qty = float((already[0][0] if already else 0) or 0)
     if already_qty >= total:
         continue
-    # Monta lotes
+    # Monta lotes — LOTE OBRIGATORIO (sem FIFO solto).
+    # O operador TEM que informar o lote (item_fpb / fpb_map / fpb_name).
+    # Sem lote informado pro item de estoque → erro, NAO reserva.
     lotes = []
     if item_code in alloc:
         lotes = alloc[item_code]
@@ -305,23 +307,10 @@ for item_code, total in totals.items():
         s = (fpb_map.get(item_code) or "").strip() or single
         if s:
             lotes = [{"fpb_name": s, "qty": total}]
-        else:
-            fifo = frappe.db.sql(
-                "select name, (coalesce(planned_qty,0)-coalesce(reserved_qty,0)) as avail "
-                "from `tabFuture Production Batch` where item_code=%s and docstatus=1 "
-                "and status in ('Aberta para Reserva','Reservada Parcialmente') "
-                "and (coalesce(planned_qty,0)-coalesce(reserved_qty,0))>0 "
-                "order by planned_production_date asc, creation asc", (item_code,), as_dict=True)
-            acc = 0
-            for f in fifo:
-                if acc >= total:
-                    break
-                take = min(float(f.avail or 0), total - acc)
-                lotes.append({"fpb_name": f.name, "qty": take})
-                acc += take
     if not lotes:
-        errors.append({"code": "NO_BATCH", "item_code": item_code,
-                       "error": "Nao ha lote disponivel para o produto " + str(item_code)})
+        errors.append({"code": "BATCH_REQUIRED", "item_code": item_code,
+                       "error": "Lote obrigatorio: selecione o lote para o produto " +
+                       str(item_code) + " (nao ha selecao automatica)."})
         continue
     # Cria 1 PR por lote (valida cada)
     for lt in lotes:

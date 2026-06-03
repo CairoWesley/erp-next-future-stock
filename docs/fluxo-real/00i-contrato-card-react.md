@@ -1,4 +1,8 @@
 # Contrato Card React HubSpot → n8n → ERPNext
+> ⚠ **Lote é OBRIGATÓRIO** no step_reserve — não há seleção automática (FIFO removido).
+> Sem `item_fpb`/`fpb_map`/`fpb_name` pro item de estoque → erro `BATCH_REQUIRED`,
+> pedido criado mas NÃO reservado. O operador SEMPRE escolhe o lote no Card.
+
 
 > Card React no HubSpot Deal page chama UM webhook único com 2 parâmetros.
 > n8n busca todos os dados (Postgres + HubSpot + checkout_simples) e

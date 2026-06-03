@@ -35,7 +35,7 @@ Pronto pra produção/dispensação MANUAL.
 reserve_errors / pack_errors retornam código + mensagem PT:
 | code | mensagem | quando |
 |---|---|---|
-| `NO_BATCH` | Não há lote disponível para o produto X | sem FPB aberto pro item |
+| `BATCH_REQUIRED` | Lote obrigatório: selecione o lote para o produto X | nenhum lote informado (sem FIFO automático) |
 | `BATCH_NOT_FOUND` | Lote X não encontrado | fpb_name errado |
 | `BATCH_NOT_SUBMITTED` | Lote X não está submetido | FPB em rascunho |
 | `BATCH_WRONG_ITEM` | Lote X é de outro produto (Y) | lote de item diferente |
