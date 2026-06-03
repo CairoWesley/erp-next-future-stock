@@ -38,7 +38,7 @@ if isinstance(data, str):
 cin = data.get("customer") or {}
 name_in = cin.get("customer_name") or cin.get("name")
 if not name_in:
-    frappe.throw("customer.customer_name obrigatorio.")
+    frappe.throw("[MISSING_CUSTOMER] Cliente (customer_name) e obrigatorio.")
 
 def digits(s):
     return "".join(ch for ch in str(s or "") if ch.isdigit())
@@ -142,12 +142,12 @@ if isinstance(cust_in, dict):
 else:
     cust = cust_in
 if not cust:
-    frappe.throw("customer nao encontrado.")
+    frappe.throw("[CUSTOMER_NOT_FOUND] Cliente nao encontrado.")
 
 company = data.get("company") or "Injemedpharma"
 items_in = data.get("items") or []
 if not items_in:
-    frappe.throw("items vazio.")
+    frappe.throw("[NO_ITEMS] Pedido sem itens.")
 hub = data.get("hubspot") or {}
 deal_id = hub.get("deal_id") or ""
 contact_id = hub.get("contact_id") or ""
@@ -246,7 +246,7 @@ if isinstance(data, str):
     data = frappe.parse_json(data)
 so_name = data.get("sales_order")
 if not so_name:
-    frappe.throw("sales_order obrigatorio.")
+    frappe.throw("[MISSING_SO] sales_order e obrigatorio.")
 
 item_fpb = data.get("item_fpb") or []
 fpb_map = data.get("fpb_map") or {}
@@ -320,27 +320,35 @@ for item_code, total in totals.items():
                 lotes.append({"fpb_name": f.name, "qty": take})
                 acc += take
     if not lotes:
-        errors.append({"item_code": item_code, "message": "Nenhum lote pra item " + str(item_code)})
+        errors.append({"code": "NO_BATCH", "item_code": item_code,
+                       "error": "Nao ha lote disponivel para o produto " + str(item_code)})
         continue
     # Cria 1 PR por lote (valida cada)
     for lt in lotes:
         info = fpb_info(lt["fpb_name"])
         if not info:
-            errors.append({"item_code": item_code, "message": "FPB " + lt["fpb_name"] + " nao existe."})
+            errors.append({"code": "BATCH_NOT_FOUND", "item_code": item_code,
+                           "fpb": lt["fpb_name"], "error": "Lote " + lt["fpb_name"] + " nao encontrado"})
             continue
         if int(info.docstatus or 0) != 1:
-            errors.append({"item_code": item_code, "message": "FPB " + lt["fpb_name"] + " nao submetida."})
+            errors.append({"code": "BATCH_NOT_SUBMITTED", "item_code": item_code,
+                           "fpb": lt["fpb_name"], "error": "Lote " + lt["fpb_name"] + " nao esta submetido"})
             continue
         if info.item_code != item_code:
-            errors.append({"item_code": item_code, "message": "FPB " + lt["fpb_name"] + " e de outro item."})
+            errors.append({"code": "BATCH_WRONG_ITEM", "item_code": item_code,
+                           "fpb": lt["fpb_name"], "error": "Lote " + lt["fpb_name"] +
+                           " e de outro produto (" + str(info.item_code) + ")"})
             continue
         if (info.status or "") not in ("Aberta para Reserva", "Reservada Parcialmente"):
-            errors.append({"item_code": item_code, "message": "FPB " + lt["fpb_name"] + " status=" + str(info.status)})
+            errors.append({"code": "BATCH_CLOSED", "item_code": item_code, "fpb": lt["fpb_name"],
+                           "error": "Lote " + lt["fpb_name"] + " nao aceita reservas (status: " + str(info.status) + ")"})
             continue
         qreq = float(lt["qty"])
         if float(info.avail or 0) < qreq:
-            errors.append({"item_code": item_code, "qty": qreq, "available": float(info.avail or 0),
-                           "message": "FPB " + lt["fpb_name"] + " saldo insuficiente."})
+            errors.append({"code": "INSUFFICIENT_QTY", "item_code": item_code, "fpb": lt["fpb_name"],
+                           "qty": qreq, "available": float(info.avail or 0),
+                           "error": "Nao ha quantidade disponivel no lote " + lt["fpb_name"] +
+                           " (disponivel " + str(float(info.avail or 0)) + ", solicitado " + str(qreq) + ")"})
             continue
         pr = frappe.new_doc("Production Reservation")
         pr.sales_order = so_name
@@ -370,7 +378,7 @@ if isinstance(data, str):
     data = frappe.parse_json(data)
 so_name = data.get("sales_order")
 if not so_name:
-    frappe.throw("sales_order obrigatorio.")
+    frappe.throw("[MISSING_SO] sales_order e obrigatorio.")
 
 prescribers_in = data.get("prescribers") or []
 patients_in = data.get("patients") or []
@@ -536,8 +544,9 @@ for fp in new_rows:
             chosen = fn
             break
     if order_lotes.get(ic) and not chosen:
-        pack_errors.append({"item_code": ic, "patient": patient_name, "qty": qty,
-            "message": "Paciente " + str(patient_name) + " (qty " + str(qty) + ") nao cabe em nenhum lote restante."})
+        pack_errors.append({"code": "PATIENT_NOT_FIT", "item_code": ic, "patient": patient_name, "qty": qty,
+            "error": "Paciente " + str(patient_name) + " (qtd " + str(qty) +
+            ") nao cabe em nenhum lote restante. Ajuste as quantidades por lote."})
         continue
     # Append row na SO
     so_doc.append("fp_patients", {

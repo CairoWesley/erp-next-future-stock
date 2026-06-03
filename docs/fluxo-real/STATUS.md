@@ -19,6 +19,37 @@ do número onde parou, não 00001).
 > **Pra rodar venda real via n8n: precisa criar 1 FPB (lote) antes** — a
 > reserva precisa de lote aberto. Ver guia em `10-criar-lote-fpb.md`.
 
+### Pedido real gerado via n8n (deal 60801476407) — COMPLETO
+```
+FPB 00137 TIRZE60-20260603 (item TIR00060, 1 ampola)
+SO 00138 R$1963.98 (TIR00060 1800 + FRETE 00069 163.98)
+  Customer 00133 (Paulo César) · Patient 00136 (Eveline) · Prescriber 00135
+  fp_patient: lote 00137 · receita REAL anexada (valida)
+  Reserva PR 00139 → FPB 00137 (1/1 → Totalmente Reservada)
+  Recebimento PE 00140 R$1963.98 · valor 02/06 · liquida 02/07 (D+30) · linkado ao SO
+Pronto pra produção/dispensação MANUAL.
+```
+
+## Catálogo de erros padronizado (`{code, error, ...ctx}`)
+
+reserve_errors / pack_errors retornam código + mensagem PT:
+| code | mensagem | quando |
+|---|---|---|
+| `NO_BATCH` | Não há lote disponível para o produto X | sem FPB aberto pro item |
+| `BATCH_NOT_FOUND` | Lote X não encontrado | fpb_name errado |
+| `BATCH_NOT_SUBMITTED` | Lote X não está submetido | FPB em rascunho |
+| `BATCH_WRONG_ITEM` | Lote X é de outro produto (Y) | lote de item diferente |
+| `BATCH_CLOSED` | Lote X não aceita reservas (status: ...) | lote fechado |
+| `INSUFFICIENT_QTY` | Não há quantidade disponível no lote X (disp N, solic M) | saldo < pedido |
+| `PATIENT_NOT_FIT` | Paciente X (qtd N) não cabe em nenhum lote restante | bin-pack não fecha |
+| `[MISSING_CUSTOMER]` (throw) | Cliente (customer_name) é obrigatório | input |
+| `[CUSTOMER_NOT_FOUND]` (throw) | Cliente não encontrado | step_order |
+| `[NO_ITEMS]` (throw) | Pedido sem itens | step_order |
+| `[MISSING_SO]` (throw) | sales_order é obrigatório | step_reserve/patients |
+
+> "Pacientes não validados" é gate UPSTREAM (validacao_receita.validations.
+> status='aprovado') — só pacientes aprovados são enviados/anexados.
+
 ## Visão geral
 
 Sistema de produção/dispensação Injmedpharma no ERPNext, integrado a:
