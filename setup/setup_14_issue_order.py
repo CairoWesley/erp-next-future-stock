@@ -104,9 +104,14 @@ items_in = data.get("items") or []
 fpps_in = data.get("fp_patients") or []
 company = data.get("company") or "Injmedpharma"
 delivery_date = data.get("delivery_date")
-# FPB explicito (operador escolheu lote no Card React). Top-level: usado
-# em TODOS items is_stock_item=1. Se omitido, auto-reserve faz FIFO.
+# FPB explicito (operador escolheu lote no Card React).
+# fpb_map: { item_code: fpb_name } — preferencial pra N items.
+# fpb_name: single, aplicado a TODOS items stock (retrocompat).
+# Se nada: FIFO automatic.
 explicit_fpb = (data.get("fpb_name") or data.get("future_production_batch") or "").strip()
+fpb_map_in = data.get("fpb_map") or {}
+if not isinstance(fpb_map_in, dict):
+    fpb_map_in = {}
 
 if not customer_in:
     frappe.throw("customer ausente.")
@@ -472,37 +477,40 @@ if p_ok and r_ok and h_ok:
             needed = float(it.qty or 0) - already_qty
             if needed <= 0:
                 continue
-            if explicit_fpb:
+            # Resolve FPB pra essa linha: per-item map > top-level single > FIFO
+            item_specific_fpb = (fpb_map_in.get(it.item_code) or "").strip()
+            chosen_fpb = item_specific_fpb or explicit_fpb
+            if chosen_fpb:
                 # Operador escolheu lote — valida + usa ele
                 row = frappe.db.sql(
                     "select name, available_qty, item_code, status, docstatus "
                     "from `tabFuture Production Batch` where name=%s",
-                    (explicit_fpb,), as_dict=True,
+                    (chosen_fpb,), as_dict=True,
                 )
                 if not row:
                     out_reserve_errors.append({
                         "item_code": it.item_code,
-                        "message": "FPB " + explicit_fpb + " nao existe.",
+                        "message": "FPB " + chosen_fpb + " nao existe.",
                     })
                     continue
                 fpb_row = row[0]
                 if int(fpb_row.docstatus or 0) != 1:
                     out_reserve_errors.append({
                         "item_code": it.item_code,
-                        "message": "FPB " + explicit_fpb + " nao submetida.",
+                        "message": "FPB " + chosen_fpb + " nao submetida.",
                     })
                     continue
                 if fpb_row.item_code != it.item_code:
                     out_reserve_errors.append({
                         "item_code": it.item_code,
-                        "message": "FPB " + explicit_fpb + " e do item " + str(fpb_row.item_code) +
+                        "message": "FPB " + chosen_fpb + " e do item " + str(fpb_row.item_code) +
                                    ", esperado " + str(it.item_code),
                     })
                     continue
                 if (fpb_row.status or "") != "Aberta para Reserva":
                     out_reserve_errors.append({
                         "item_code": it.item_code,
-                        "message": "FPB " + explicit_fpb + " status=" + str(fpb_row.status) +
+                        "message": "FPB " + chosen_fpb + " status=" + str(fpb_row.status) +
                                    " (esperado 'Aberta para Reserva').",
                     })
                     continue

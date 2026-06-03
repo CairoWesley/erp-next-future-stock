@@ -13,6 +13,42 @@ Content-Type: application/json
 
 ## Request body
 
+### Forma preferida (N items, N FPBs)
+
+```json
+{
+  "deal_id":  "60801476407",
+  "fpb_map": {
+    "TIR00060": "FPB-2026-00115",
+    "00049":    "FPB-2026-00120",
+    "00057":    "FPB-2026-00125"
+  }
+}
+```
+
+`fpb_map`: dict `{ item_code: fpb_name }`. **Um lote por item.**
+
+- Item presente no map sem FPB válido → erro no `reserve_errors[]` (não bloqueia SO).
+- Item ausente do map → cai pra `fpb_name` top-level (se houver) ou FIFO.
+- Item non-stock (FRETE) → ignorado automático (não tenta reservar).
+
+### Forma alias (legível pelo Card React)
+
+```json
+{
+  "deal_id": "60801476407",
+  "items": [
+    { "item_code": "TIR00060", "fpb_name": "FPB-2026-00115" },
+    { "item_code": "00049",    "fpb_name": "FPB-2026-00120" },
+    { "item_code": "00057",    "fpb_name": "FPB-2026-00125" }
+  ]
+}
+```
+
+n8n converte `items[]` → `fpb_map` automaticamente.
+
+### Forma legada (1 FPB pra tudo)
+
 ```json
 {
   "deal_id":  "60801476407",
@@ -20,14 +56,25 @@ Content-Type: application/json
 }
 ```
 
+Mantido pra retrocompat. Usa esse FPB pra **todos** items stock do pedido.
+
+### Sem FPB (FIFO)
+
+```json
+{ "deal_id": "60801476407" }
+```
+
+ERPNext escolhe FPB por `planned_production_date asc`.
+
 | Campo | Tipo | Obrigatório | Descrição |
 |---|---|---|---|
-| `deal_id` | string | **sim** | HubSpot Deal ID (também salvo em `validacao_receita.orders.hubspot_deal_id`) |
-| `fpb_name` | string | não | Nome do Future Production Batch alvo. Se omitido, n8n usa FIFO (próximo FPB disponível por `planned_production_date`). |
+| `deal_id` | string | **sim** | HubSpot Deal ID |
+| `fpb_map` | dict | não | Map `item_code → fpb_name` (preferencial pra N items) |
+| `items` | array | não | Alias `[{item_code, fpb_name}]` (n8n converte pra fpb_map) |
+| `fpb_name` | string | não | Single FPB pra todos items stock (legacy) |
+| `order_id` | int | não | Alternativa ao deal_id (Postgres id) |
 
-Alternativa: `order_id` (int Postgres) ao invés de `deal_id`.
-
-Alias aceitos: `future_production_batch` no lugar de `fpb_name`.
+Aliases aceitos: `future_production_batch` no lugar de `fpb_name`.
 
 ## Response
 
@@ -100,7 +147,7 @@ curl -X POST https://n8n.injemedpharma.com.br/webhook/erp/sync-order \
   -d '{ "deal_id": "60801476407" }'
 ```
 
-## React Card — esqueleto sugerido
+## React Card — esqueleto sugerido (N items, N Selects)
 
 ```tsx
 import { useState, useEffect } from 'react';
@@ -109,40 +156,52 @@ import { hubspot } from '@hubspot/ui-extensions';
 const SyncCard = ({ context }) => {
   const dealId = context.crm.objectId;
   const [orderStatus, setOrderStatus] = useState(null);
-  const [fpbs, setFpbs] = useState([]);
-  const [selectedFpb, setSelectedFpb] = useState('');
+  const [fpbsByItem, setFpbsByItem] = useState({});  // { item_code: FPB[] }
+  const [selection, setSelection] = useState({});    // { item_code: fpb_name }
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
 
-  // 1. Buscar status do order no backend validacao_receita
+  // 1. Status do order
   useEffect(() => {
     fetch(`https://api.validacao.injemedpharma.com.br/api/orders/deal/${dealId}`)
       .then(r => r.json()).then(setOrderStatus);
   }, [dealId]);
 
-  // 2. Buscar FPBs abertas no ERPNext (filtra por item dos products do order)
+  // 2. FPBs por item (paralelo)
   useEffect(() => {
     if (!orderStatus?.products?.length) return;
-    const skus = orderStatus.products.map(p => p.sku);
-    fetch(`https://erp.injemedpharma.com.br/api/resource/Future Production Batch?` +
-      `filters=[["item_code","in",${JSON.stringify(skus)}],["status","=","Aberta para Reserva"],["docstatus","=",1]]&` +
-      `fields=["name","production_code","item_code","available_qty","planned_production_date"]`,
-      { headers: { Authorization: `token <KEY>:<SECRET>` }}
-    ).then(r => r.json()).then(d => setFpbs(d.data));
+    const stockSkus = orderStatus.products
+      .filter(p => p.sku !== 'SV02000002')   // exclui FRETE
+      .map(p => p.sku);
+    Promise.all(stockSkus.map(sku =>
+      fetch(`https://erp.injemedpharma.com.br/api/resource/Future Production Batch?` +
+        `filters=[["item_code","=","${sku}"],["status","=","Aberta para Reserva"],["docstatus","=",1]]&` +
+        `fields=["name","production_code","item_code","available_qty","planned_production_date"]&` +
+        `order_by=planned_production_date asc`,
+        { headers: { Authorization: `token <KEY>:<SECRET>` }}
+      ).then(r => r.json()).then(d => [sku, d.data || []])
+    )).then(results => {
+      setFpbsByItem(Object.fromEntries(results));
+    });
   }, [orderStatus]);
 
   const ready =
     orderStatus?.status === 'completo' &&
     (orderStatus.products || []).every(p =>
       (p.patients || []).every(pt => pt.validation_status === 'aprovado'));
-    // payment check no checkout_simples seria server-side via backend extra OU n8n
+
+  const allItemsSelected =
+    Object.keys(fpbsByItem).every(sku => selection[sku]);
 
   const handleSubmit = async () => {
     setBusy(true);
     const resp = await fetch('https://n8n.injemedpharma.com.br/webhook/erp/sync-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deal_id: dealId, fpb_name: selectedFpb || null }),
+      body: JSON.stringify({
+        deal_id: dealId,
+        fpb_map: selection,    // { 'TIR00060': 'FPB-...', '00049': 'FPB-...' }
+      }),
     });
     setResult(await resp.json());
     setBusy(false);
@@ -153,27 +212,44 @@ const SyncCard = ({ context }) => {
       <Heading>Sync ERPNext</Heading>
       <Text>Status validacao: {orderStatus?.status || 'carregando'}</Text>
       <Text>Pacientes aprovados: {ready ? '✅' : '⏳'}</Text>
-      
-      <Select
-        label="Lote (FPB) a reservar"
-        options={fpbs.map(f => ({
-          label: `${f.production_code} (${f.available_qty} disponíveis)`,
-          value: f.name
-        }))}
-        value={selectedFpb}
-        onChange={setSelectedFpb}
-      />
-      
-      <Button onClick={handleSubmit} disabled={!ready || busy}>
+
+      {Object.entries(fpbsByItem).map(([sku, fpbs]) => {
+        const prod = orderStatus.products.find(p => p.sku === sku);
+        return (
+          <Box key={sku}>
+            <Text>{prod?.name} (SKU {sku}) — qty {prod?.quantity}</Text>
+            <Select
+              label={`Lote pra ${sku}`}
+              options={fpbs.map(f => ({
+                label: `${f.production_code} (${f.available_qty} disponíveis)`,
+                value: f.name,
+              }))}
+              value={selection[sku] || ''}
+              onChange={v => setSelection(prev => ({ ...prev, [sku]: v }))}
+            />
+          </Box>
+        );
+      })}
+
+      <Button onClick={handleSubmit} disabled={!ready || !allItemsSelected || busy}>
         {busy ? 'Enviando…' : 'Enviar pra ERPNext'}
       </Button>
-      
+
       {result && (
         <Text>
           {result.ok
-            ? `✅ SO ${result.erpnext.sales_order} criado.`
+            ? `✅ SO ${result.erpnext.sales_order} | reservas: ${result.erpnext.reservations?.length || 0}`
             : `❌ ${JSON.stringify(result)}`}
         </Text>
+      )}
+
+      {result?.erpnext?.reserve_errors?.length > 0 && (
+        <Box>
+          <Heading>Erros de reserva</Heading>
+          {result.erpnext.reserve_errors.map((e, i) =>
+            <Text key={i}>{e.item_code}: {e.message}</Text>
+          )}
+        </Box>
       )}
     </Tile>
   );
