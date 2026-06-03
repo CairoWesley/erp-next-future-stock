@@ -64,7 +64,8 @@ independente. Ver [`00b-numeracao.md`](00b-numeracao.md) pra detalhes.
 | 4 | Cadastrar Paciente (Patient) | ✅ | [04-cadastrar-paciente.md](04-cadastrar-paciente.md) |
 | 5 | Criar Sales Order com fp_patients | ✅ | [05-criar-sales-order.md](05-criar-sales-order.md) |
 | 6 | Validar e reservar | ✅ | [06-validar-reservar.md](06-validar-reservar.md) |
-| 7 | Registrar produção (Batch físico + update FPB) | ⏳ | — |
+| **Pedido REAL Paulo César** | sync end-to-end executado | ✅ | [07-pedido-real-paulo-cesar.md](07-pedido-real-paulo-cesar.md) |
+| 8 | Registrar produção (Batch físico + update FPB) | ⏳ | — |
 | 8 | Stock Entry Manufacture | ⏳ | — |
 | 9 | Liberar reservas | ⏳ | — |
 | 10 | Alocar batch por paciente | ⏳ | — |
