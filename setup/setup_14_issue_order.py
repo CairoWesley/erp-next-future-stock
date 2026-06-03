@@ -44,7 +44,7 @@ Body:
       "qty": 10
     }
   ],
-  "company": "Injmedpharma",                     # opcional, default Injmedpharma
+  "company": "Injemedpharma",                     # opcional, default Injemedpharma
   "delivery_date": "2026-07-15"                  # opcional, default +30d
 }
 
@@ -102,7 +102,7 @@ prescribers_in = data.get("prescribers") or []
 patients_in = data.get("patients") or []
 items_in = data.get("items") or []
 fpps_in = data.get("fp_patients") or []
-company = data.get("company") or "Injmedpharma"
+company = data.get("company") or "Injemedpharma"
 delivery_date = data.get("delivery_date")
 # --- Resolucao de lote (FPB) pra reserva. 4 formas, em ordem de precedencia: ---
 #

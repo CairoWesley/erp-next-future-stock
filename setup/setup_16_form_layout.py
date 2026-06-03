@@ -1,6 +1,6 @@
 """
 setup_16_form_layout.py — força visibilidade total nos forms críticos
-Injmedpharma.
+Injemedpharma.
 
 Convenção: nada de seção colapsada por default. Operador precisa enxergar
 tudo (vendedor, taxas, termos, endereço, contato, pagamento) sem clicar

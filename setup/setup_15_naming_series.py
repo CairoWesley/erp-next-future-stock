@@ -2,7 +2,7 @@
 setup_15_naming_series.py — força autoname auto-incremental (puro número
 zero-padded) em todos DocTypes operacionais.
 
-Convenção Injmedpharma: nada de prefixo, nada de ano. Só sequência:
+Convenção Injemedpharma: nada de prefixo, nada de ano. Só sequência:
     00001, 00002, 00003, ...
 
 Cada DocType tem seu próprio contador (Customer 00001 != Patient 00001).
