@@ -126,6 +126,7 @@ Cada DocType com contador independente. Ver
 | 0h | Integração setup_14 + n8n sync_order | ✅ implementado | [00h-integracao-automatica.md](00h-integracao-automatica.md) |
 | 0i | Contrato Card React (deal_id + patient_fpb) | ✅ implementado | [00i-contrato-card-react.md](00i-contrato-card-react.md) |
 | 0j | Receita PDF anexada na linha do paciente | ✅ implementado | [00j-receita-anexa-paciente.md](00j-receita-anexa-paciente.md) |
+| 0k | **Fluxo n8n node-by-node (ATIVO em prod)** | ✅ rodando | [00k-fluxo-n8n-node-by-node.md](00k-fluxo-n8n-node-by-node.md) |
 
 ### Por pedido (cada deal HubSpot dispara)
 

@@ -1,0 +1,271 @@
+{
+  "name": "Sincronização Pedido → ERPNext (Processo Completo)",
+  "nodes": [
+    {
+      "id": "f071773d-0039-48ce-b0b2-0306916b90f5",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -560,
+        0
+      ],
+      "webhookId": "d00c4d3d-f832-4341-935d-7bf8568b0207",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "erp/sincronizar-pedido",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "pg-pay",
+      "name": "Buscar Pagamento",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -360,
+        0
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "ZQSVfJQfNFuAdvFd",
+          "name": "Postgres dedicado"
+        }
+      },
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT t.id AS transaction_id, t.amount_cents, t.paid_at FROM checkout_simples.transactions t JOIN checkout_simples.checkouts ch ON ch.id=t.checkout_id WHERE ch.external_ref='{{ ($json.body && $json.body.hubspot_deal_id) || $json.hubspot_deal_id }}' AND t.status='PAID' AND t.paid_at IS NOT NULL ORDER BY t.paid_at DESC LIMIT 1",
+        "options": {}
+      }
+    },
+    {
+      "id": "normalize",
+      "name": "Normalizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        0
+      ],
+      "parameters": {
+        "jsCode": "\nconst wh = $('Webhook').first().json;\nconst body = wh.body || wh;\nconst dig = s => (s ? String(s).replace(/\\D/g,'') : '');\nlet pay=null;\ntry { const it=$input.all(); if(it.length && it[0].json && it[0].json.transaction_id){const p=it[0].json; pay={amount:p.amount_cents?Number(p.amount_cents)/100:null,status:'PAID',transaction_id:String(p.transaction_id),paid_at:p.paid_at};} } catch(e){}\nconst companies=body.companies||[]; const contacts=body.contacts||[]; const products=body.products||[];\nconst co=companies[0]||{}; const ct=contacts[0]||{};\nconst cnpj=dig(co.cnpj); const isPJ=cnpj.length===14; const taxId=isPJ?cnpj:dig(co.cpf_responsavel);\nconst customer={ customer_name: co.name||((ct.firstname||'')+' '+(ct.lastname||'')).trim()||'Cliente HubSpot', customer_type:isPJ?'Company':'Individual', customer_group:'Volpi', territory:'Brazil', tax_id:taxId, email_id:ct.email||'', mobile_no:ct.phone||'',\n  address:(co.endereco||co.cep)?{ title:co.name||'Cliente', type:'Billing', address_line1:co.endereco||'', address_line2:co.complemento||'', city:co.municipio||'', state:co.uf||co.estado_conselho||'', pincode:dig(co.cep), country:'Brazil', email_id:ct.email||'', phone:ct.phone||'' }:null,\n  contact:ct.firstname?{ first_name:ct.firstname, last_name:ct.lastname||'', email:ct.email||'', phone:ct.phone||'' }:null };\nconst presMap={};\nif(co.nome_responsavel_tecnico && co.numero_conselho){ presMap['co']={ cpf:dig(co.cpf_responsavel), full_name:co.nome_responsavel_tecnico, councils:[{council_type:(co.conselho||'CRM').replace(/^\\d+\\s*-\\s*/,'')||'CRM', council_number:String(co.numero_conselho), council_state:co.estado_conselho||co.uf||'', is_primary:1}] }; }\nconst items=[]; const patients=[]; const fp_patients=[]; const seen={};\nfor(const p of products){ const ic=p.sku; items.push({item_code:ic,qty:Number(p.quantity)||0,rate:Number(p.price)||0,warehouse:'Produtos Acabados - I'});\n  for(const pt of (p.patients||[])){ const cpf=dig(pt.cpf); if(cpf&&!seen[cpf]){seen[cpf]=1; patients.push({cpf,patient_name:pt.nome,mobile:pt.telefone||'',gender:'Outro'});}\n    const crm=dig(pt.medico_crm); if(pt.medico_nome&&crm){const mk=crm+'-'+(pt.medico_uf||''); if(!presMap[mk])presMap[mk]={cpf:'',full_name:pt.medico_nome,councils:[{council_type:'CRM',council_number:String(pt.medico_crm),council_state:pt.medico_uf||'',is_primary:1}]};}\n    fp_patients.push({patient_cpf:cpf,prescriber_cpf:'',prescriber_council:{council_type:'CRM',council_number:String(pt.medico_crm||''),council_state:pt.medico_uf||''},item_code:ic,qty:Number(pt.quantidade)||0}); } }\nreturn [{ json:{ hubspot:{deal_id:String(body.hubspot_deal_id||''),contact_id:String(ct.hs_object_id||'')}, company:'Injemedpharma', customer, prescribers:Object.values(presMap), patients, items, fp_patients, item_fpb: body.item_fpb||null, fpb_map: body.fpb_map||null, fpb_name: body.fpb_name||null, payment: pay, prescriptions:{count:fp_patients.length,reference:'hubspot deal '+(body.hubspot_deal_id||'')} } }];\n"
+      }
+    },
+    {
+      "id": "http-1. Cadastra Cliente",
+      "name": "1. Cadastra Cliente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        60,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "g3maLxJRtt1GzXNR",
+          "name": "ERPNext Injemed (temp)"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.injemedpharma.com.br/api/method/future_production_step_customer",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ customer: $('Normalizar').first().json.customer }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      }
+    },
+    {
+      "id": "http-2. Cadastra Pedido",
+      "name": "2. Cadastra Pedido",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        280,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "g3maLxJRtt1GzXNR",
+          "name": "ERPNext Injemed (temp)"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.injemedpharma.com.br/api/method/future_production_step_order",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ customer: $('1. Cadastra Cliente').first().json.message.customer, company: $('Normalizar').first().json.company, hubspot: $('Normalizar').first().json.hubspot, items: $('Normalizar').first().json.items, payment: $('Normalizar').first().json.payment, prescriptions: $('Normalizar').first().json.prescriptions }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      }
+    },
+    {
+      "id": "http-3. Cadastra Pacientes + Médico",
+      "name": "3. Cadastra Pacientes + Médico",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        500,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "g3maLxJRtt1GzXNR",
+          "name": "ERPNext Injemed (temp)"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.injemedpharma.com.br/api/method/future_production_step_patients",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ sales_order: $('2. Cadastra Pedido').first().json.message.sales_order, prescribers: $('Normalizar').first().json.prescribers, patients: $('Normalizar').first().json.patients, fp_patients: $('Normalizar').first().json.fp_patients, item_fpb: $('Normalizar').first().json.item_fpb }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      }
+    },
+    {
+      "id": "http-4. Reserva",
+      "name": "4. Reserva",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        720,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "g3maLxJRtt1GzXNR",
+          "name": "ERPNext Injemed (temp)"
+        }
+      },
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.injemedpharma.com.br/api/method/future_production_step_reserve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ sales_order: $('2. Cadastra Pedido').first().json.message.sales_order, item_fpb: $('Normalizar').first().json.item_fpb, fpb_map: $('Normalizar').first().json.fpb_map, fpb_name: $('Normalizar').first().json.fpb_name }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      }
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        940,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ ok:true, sales_order: $('2. Cadastra Pedido').first().json.message.sales_order, cliente: $('1. Cadastra Cliente').first().json.message, pacientes: $('3. Cadastra Pacientes + Médico').first().json.message, reservas: $('4. Reserva').first().json.message }) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Buscar Pagamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Pagamento": {
+      "main": [
+        [
+          {
+            "node": "Normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar": {
+      "main": [
+        [
+          {
+            "node": "1. Cadastra Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Cadastra Cliente": {
+      "main": [
+        [
+          {
+            "node": "2. Cadastra Pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Cadastra Pedido": {
+      "main": [
+        [
+          {
+            "node": "3. Cadastra Pacientes + Médico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Cadastra Pacientes + Médico": {
+      "main": [
+        [
+          {
+            "node": "4. Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Reserva": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  }
+}
