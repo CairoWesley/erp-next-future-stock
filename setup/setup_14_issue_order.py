@@ -112,6 +112,19 @@ explicit_fpb = (data.get("fpb_name") or data.get("future_production_batch") or "
 fpb_map_in = data.get("fpb_map") or {}
 if not isinstance(fpb_map_in, dict):
     fpb_map_in = {}
+# patient_fpb: granularidade PACIENTE — mesma receita = 1 lote inteiro.
+# Lista de { patient_cpf, item_code, fpb_name }. Reserva linha-a-linha.
+patient_fpb_in = data.get("patient_fpb") or []
+if not isinstance(patient_fpb_in, list):
+    patient_fpb_in = []
+# Indexa: (cpf, item_code) -> fpb_name
+patient_fpb_lookup = {}
+for pf in patient_fpb_in:
+    pcpf = "".join(ch for ch in (pf.get("patient_cpf") or "") if ch.isdigit())
+    pic = (pf.get("item_code") or "").strip()
+    pfn = (pf.get("fpb_name") or "").strip()
+    if pcpf and pic and pfn:
+        patient_fpb_lookup[(pcpf, pic)] = pfn
 
 if not customer_in:
     frappe.throw("customer ausente.")
@@ -387,12 +400,20 @@ if not existing_so:
             )
             council_row_id = council_row_id[0][0] if council_row_id else None
 
+        # Resolve FPB pra essa linha (paciente-item específico)
+        line_fpb = (fp.get("fp_future_production_batch") or "").strip()
+        if not line_fpb:
+            line_fpb = patient_fpb_lookup.get((pat_cpf, fp.get("item_code") or ""), "")
+        if not line_fpb:
+            line_fpb = fpb_map_in.get(fp.get("item_code") or "", "") or explicit_fpb
+
         so.append("fp_patients", {
             "patient": patient_name,
             "item_code": fp.get("item_code"),
             "qty": float(fp.get("qty") or 0),
             "prescriber": prescriber_name,
             "prescriber_council_row": council_row_id or "",
+            "fp_future_production_batch": line_fpb or None,
         })
 
     so.insert(ignore_permissions=True)
@@ -463,93 +484,148 @@ out_reserve_errors = []
 if p_ok and r_ok and h_ok:
     so_doc = frappe.get_doc("Sales Order", existing_so)
     if so_doc.docstatus == 1:
+        # Index SO items por item_code -> (sales_order_item.name, ...)
+        so_items_by_code = {}
         for it in so_doc.items:
-            is_stock = frappe.db.get_value("Item", it.item_code, "is_stock_item")
+            so_items_by_code.setdefault(it.item_code, []).append(it)
+
+        # Itera fp_patients: cada paciente reserva contra UM FPB inteiro.
+        # Receita nao divide entre lotes. qty da row vai 100% pro FPB
+        # da row.fp_future_production_batch.
+        for fpr in so_doc.fp_patients:
+            item_code = fpr.item_code
+            is_stock = frappe.db.get_value("Item", item_code, "is_stock_item")
             if not int(is_stock or 0):
                 continue
-            # Quantidade ja reservada pra essa linha
-            already = frappe.db.sql(
-                "select coalesce(sum(reserved_qty),0) from `tabProduction Reservation` "
-                "where sales_order_item=%s and docstatus=1",
-                (it.name,), as_dict=False,
-            )
-            already_qty = float((already[0][0] if already else 0) or 0)
-            needed = float(it.qty or 0) - already_qty
-            if needed <= 0:
+            pat_qty = float(fpr.qty or 0)
+            if pat_qty <= 0:
                 continue
-            # Resolve FPB pra essa linha: per-item map > top-level single > FIFO
-            item_specific_fpb = (fpb_map_in.get(it.item_code) or "").strip()
-            chosen_fpb = item_specific_fpb or explicit_fpb
-            if chosen_fpb:
-                # Operador escolheu lote — valida + usa ele
-                row = frappe.db.sql(
-                    "select name, available_qty, item_code, status, docstatus "
-                    "from `tabFuture Production Batch` where name=%s",
-                    (chosen_fpb,), as_dict=True,
-                )
-                if not row:
-                    out_reserve_errors.append({
-                        "item_code": it.item_code,
-                        "message": "FPB " + chosen_fpb + " nao existe.",
-                    })
-                    continue
-                fpb_row = row[0]
-                if int(fpb_row.docstatus or 0) != 1:
-                    out_reserve_errors.append({
-                        "item_code": it.item_code,
-                        "message": "FPB " + chosen_fpb + " nao submetida.",
-                    })
-                    continue
-                if fpb_row.item_code != it.item_code:
-                    out_reserve_errors.append({
-                        "item_code": it.item_code,
-                        "message": "FPB " + chosen_fpb + " e do item " + str(fpb_row.item_code) +
-                                   ", esperado " + str(it.item_code),
-                    })
-                    continue
-                if (fpb_row.status or "") != "Aberta para Reserva":
-                    out_reserve_errors.append({
-                        "item_code": it.item_code,
-                        "message": "FPB " + chosen_fpb + " status=" + str(fpb_row.status) +
-                                   " (esperado 'Aberta para Reserva').",
-                    })
-                    continue
-                fpbs = [fpb_row]
-            else:
-                fpbs = frappe.db.sql(
-                    "select name, available_qty from `tabFuture Production Batch` "
-                    "where item_code=%s and docstatus=1 and status='Aberta para Reserva' "
-                    "and available_qty > 0 "
-                    "order by planned_production_date asc, creation asc",
-                    (it.item_code,), as_dict=True,
-                )
-            for fpb in fpbs:
-                if needed <= 0:
-                    break
-                alloc = min(needed, float(fpb.available_qty or 0))
-                if alloc <= 0:
-                    continue
-                pr = frappe.new_doc("Production Reservation")
-                pr.sales_order = existing_so
-                pr.sales_order_item = it.name
-                pr.future_production_batch = fpb.name
-                pr.item_code = it.item_code
-                pr.reserved_qty = alloc
-                pr.insert(ignore_permissions=True)
-                pr.submit()
-                out_reservations.append({
-                    "reservation": pr.name,
-                    "sales_order_item": it.name,
-                    "future_production_batch": fpb.name,
-                    "reserved_qty": alloc,
-                })
-                needed -= alloc
-            if needed > 0:
+            # Acha sales_order_item linha (qualquer linha do mesmo item)
+            so_item_candidates = so_items_by_code.get(item_code, [])
+            if not so_item_candidates:
                 out_reserve_errors.append({
-                    "item_code": it.item_code,
-                    "missing_qty": needed,
-                    "message": "Saldo insuficiente em FPBs disponiveis.",
+                    "patient": fpr.patient,
+                    "item_code": item_code,
+                    "message": "SO sem linha de item " + str(item_code),
                 })
+                continue
+            so_item_name = so_item_candidates[0].name
+
+            # Resolve FPB pra ESSA linha de paciente
+            chosen_fpb = (fpr.fp_future_production_batch or "").strip()
+            if not chosen_fpb and patient_fpb_lookup:
+                # Lookup pelo CPF do paciente + item da row
+                row_cpf = frappe.db.get_value("Patient", fpr.patient, "cpf") or ""
+                chosen_fpb = patient_fpb_lookup.get((row_cpf, item_code), "")
+            if not chosen_fpb:
+                # Fallback: per-item map > top-level single > FIFO
+                chosen_fpb = (fpb_map_in.get(item_code) or "").strip() or explicit_fpb
+            if not chosen_fpb:
+                # FIFO: pega 1 FPB com saldo suficiente pra esse paciente inteiro
+                # available_qty = planned_qty - reserved_qty (computed na DB direto)
+                fifo = frappe.db.sql(
+                    "select name, (coalesce(planned_qty,0)-coalesce(reserved_qty,0)) as avail "
+                    "from `tabFuture Production Batch` "
+                    "where item_code=%s and docstatus=1 and status='Aberta para Reserva' "
+                    "and (coalesce(planned_qty,0)-coalesce(reserved_qty,0)) >= %s "
+                    "order by planned_production_date asc, creation asc limit 1",
+                    (item_code, pat_qty), as_dict=True,
+                )
+                if not fifo:
+                    out_reserve_errors.append({
+                        "patient": fpr.patient,
+                        "item_code": item_code,
+                        "qty": pat_qty,
+                        "message": "Nenhum FPB com saldo >= " + str(pat_qty) +
+                                   " pra paciente " + str(fpr.patient),
+                    })
+                    continue
+                chosen_fpb = fifo[0].name
+
+            # Idempotency PRIMEIRO: ja reservado total pra (so_item, fpb)?
+            # Aproxima: sum reserved_qty de PRs ativas
+            existing_pr = frappe.db.sql(
+                "select name, reserved_qty from `tabProduction Reservation` "
+                "where sales_order=%s and sales_order_item=%s "
+                "and future_production_batch=%s and docstatus=1",
+                (existing_so, so_item_name, chosen_fpb), as_dict=True,
+            )
+            sum_existing = sum(float(r.reserved_qty or 0) for r in existing_pr) if existing_pr else 0
+            # Re-call: se ja temos qty exata, pula (mesmo se FPB status virou Parcialmente)
+            if sum_existing >= pat_qty:
+                continue
+
+            # Valida FPB escolhido (available calculado igual)
+            row = frappe.db.sql(
+                "select name, (coalesce(planned_qty,0)-coalesce(reserved_qty,0)) as available_qty, "
+                "item_code, status, docstatus "
+                "from `tabFuture Production Batch` where name=%s",
+                (chosen_fpb,), as_dict=True,
+            )
+            if not row:
+                out_reserve_errors.append({
+                    "patient": fpr.patient, "item_code": item_code,
+                    "message": "FPB " + chosen_fpb + " nao existe.",
+                })
+                continue
+            fpb_row = row[0]
+            if int(fpb_row.docstatus or 0) != 1:
+                out_reserve_errors.append({
+                    "patient": fpr.patient, "item_code": item_code,
+                    "message": "FPB " + chosen_fpb + " nao submetida.",
+                })
+                continue
+            if fpb_row.item_code != item_code:
+                out_reserve_errors.append({
+                    "patient": fpr.patient, "item_code": item_code,
+                    "message": "FPB " + chosen_fpb + " e do item " + str(fpb_row.item_code) +
+                               ", esperado " + str(item_code),
+                })
+                continue
+            # Aceita Aberta para Reserva OR Reservada Parcialmente
+            # (parcialmente ainda tem saldo, esgotada = full reserved nao deveria mais reservar)
+            if (fpb_row.status or "") not in ("Aberta para Reserva", "Reservada Parcialmente"):
+                out_reserve_errors.append({
+                    "patient": fpr.patient, "item_code": item_code,
+                    "message": "FPB " + chosen_fpb + " status=" + str(fpb_row.status) +
+                               " nao aceita novas reservas.",
+                })
+                continue
+
+            # Valida saldo FPB pra esse paciente
+            if float(fpb_row.available_qty or 0) < pat_qty:
+                out_reserve_errors.append({
+                    "patient": fpr.patient, "item_code": item_code,
+                    "qty": pat_qty,
+                    "available": float(fpb_row.available_qty or 0),
+                    "message": "FPB " + chosen_fpb + " saldo " +
+                               str(fpb_row.available_qty) + " insuficiente pra paciente " +
+                               str(fpr.patient) + " (qty " + str(pat_qty) + ").",
+                })
+                continue
+
+            # Cria PR pra esse paciente inteiro
+            pr = frappe.new_doc("Production Reservation")
+            pr.sales_order = existing_so
+            pr.sales_order_item = so_item_name
+            pr.future_production_batch = chosen_fpb
+            pr.item_code = item_code
+            pr.reserved_qty = pat_qty
+            pr.insert(ignore_permissions=True)
+            pr.submit()
+            # Atualiza row fp_patients setando fpb se ainda nao
+            if not (fpr.fp_future_production_batch or "").strip():
+                frappe.db.set_value("Sales Order Patient", fpr.name,
+                                    "fp_future_production_batch", chosen_fpb,
+                                    update_modified=False)
+            out_reservations.append({
+                "reservation": pr.name,
+                "sales_order_item": so_item_name,
+                "future_production_batch": chosen_fpb,
+                "patient": fpr.patient,
+                "reserved_qty": pat_qty,
+            })
+        # final do loop fp_patients — auto-reserve concluido
 
 frappe.response["message"] = {
     "sales_order": existing_so,
