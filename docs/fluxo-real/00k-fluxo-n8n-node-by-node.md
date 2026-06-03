@@ -163,7 +163,12 @@ os pacientes (bin-pack) respeitando "receita inteira em 1 lote".
 | Credencial | ID | Uso |
 |---|---|---|
 | `Postgres dedicado` | `ZQSVfJQfNFuAdvFd` | node "Buscar Pagamento" (checkout_simples) |
-| `ERPNext Injemed (temp)` | `g3maLxJRtt1GzXNR` | httpHeaderAuth nos 4 nodes ERP (Authorization: token KEY:SECRET) |
+| `ERPNext Injemed (claude)` | `JNoxJ2A0Ng6Eytu6` | httpHeaderAuth nos nodes ERP (Authorization: token KEY:SECRET) |
+
+> A credencial ERPNext usa a API key/secret de um usuário System Manager.
+> Se a key for rotacionada (Generate Keys gera novo secret), atualize a
+> credencial no n8n OU recrie e repointe os nodes httpRequest. A key
+> anterior `(temp)` foi revogada em 2026-06-03.
 
 ## Teste executado em prod (2026-06-03)
 
