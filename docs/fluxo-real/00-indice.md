@@ -55,6 +55,7 @@ independente. Ver [`00b-numeracao.md`](00b-numeracao.md) pra detalhes.
 | 0a | Convenções gerais (este arquivo) | ✅ | [00-indice.md](00-indice.md) |
 | 0b | Numeração auto-increment | ✅ | [00b-numeracao.md](00b-numeracao.md) |
 | 0d | Sync produtos HubSpot ↔ ERPNext | ✅ | [00d-sync-produtos-hubspot.md](00d-sync-produtos-hubspot.md) |
+| 0e | Fonte de dados validacao_receita (Patients/Prescribers) | ✅ análise | [00e-fonte-dados-validacao-receita.md](00e-fonte-dados-validacao-receita.md) |
 | 1 | Criar primeiro FPB (lote planejado) | ✅ | [01-criar-fpb.md](01-criar-fpb.md) |
 | 2 | Cadastrar Cliente (Customer + Address + Contact) | ✅ | [02-cadastrar-cliente.md](02-cadastrar-cliente.md) |
 | 3 | Cadastrar Médico (Prescriber + Council) | ✅ | [03-cadastrar-medico.md](03-cadastrar-medico.md) |
