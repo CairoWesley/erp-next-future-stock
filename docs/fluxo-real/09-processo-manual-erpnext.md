@@ -103,7 +103,11 @@ Gate: pagamento AUTORIZADO basta (não espera liquidar).
 
 ---
 
-## ETAPA 13 — Sales Invoice (NF-e) — fiscal
+## ETAPA 13 — Sales Invoice (NF-e) — ⛔ PULA no modelo atual
+
+> **Modelo confirmado: só Payment Entry, sem Sales Invoice.** O recebimento já
+> foi lançado pela API (valor hoje, liquidação futura). Não emite Sales Invoice
+> aqui. (Se um dia precisar de NF-e fiscal, é nesta etapa — fora do fluxo atual.)
 
 ```
 No Delivery Note (ou Sales Order) → "Create" → Sales Invoice
@@ -172,12 +176,15 @@ Na Dispensacao → botão "Marcar Dispensado"
 [FPB]  preenche Batch real + Qtd Produzida → Produzida
         └ Liberar Reservas
 [SO]   Alocar Batch por Paciente
-        └ Create → Delivery Note → Submit        (entrega)
-            └ Create → Sales Invoice → Submit     (NF)
+        └ (PULA Delivery Note + Sales Invoice — só Payment Entry)
         └ Criar Dispensação → Abrir Dispensação
 [DISP] escolhe template → Imprimir Etiquetas Zebra
         └ Marcar Dispensado
 ```
+
+> Batch físico: validade **6 meses** (item TIR00060 shelf life 180d — a
+> validade auto-preenche da data de fabricação). Ex. SO 00138:
+> Batch `TIRZE60-20260603`, fab 03/06/2026, val 03/12/2026.
 
 ## Endpoints por trás de cada botão
 

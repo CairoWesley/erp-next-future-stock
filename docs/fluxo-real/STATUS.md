@@ -1,7 +1,7 @@
 # STATUS — Estado do Projeto (fonte de verdade)
 
 > Resumo vivo do que foi feito e do que falta. Atualizar conforme avança.
-> Última atualização: 2026-06-03 (ops de reserva: swap + cancel — doc 00n).
+> Última atualização: 2026-06-03 (fluxo manual produção→dispensação iniciado, SO 00138).
 
 ## 🧹 Estado atual dos dados (pós-limpeza)
 
@@ -34,6 +34,26 @@ Pronto pra produção/dispensação MANUAL.
 > **Ops de reserva** (doc 00n): `swap_reservation` troca o lote;
 > `cancel_reservation` libera (pedido fica) ou cancela o pedido inteiro
 > (`cancel_order`+`cancel_payments`). Validadas em prod no SO 00138.
+
+### 🏭 Fluxo manual em andamento (SO 00138) — guia 09
+
+Modo: **operador clica no ERPNext** (eu guio). Batch físico validade 6 meses
+(shelf life 180d). Pula 12 Delivery Note + 13 Sales Invoice ("só Payment Entry").
+
+```
+[ ] 9  Produzir: cria Batch TIRZE60-20260603 (val 03/12/2026) +
+       FPB 00137.batch_no + produced_qty=1 → "Produzida Totalmente"   ⬅ AQUI
+[ ] 10 FPB 00137 → botão "Liberar Reservas" → PR 00143 Liberado
+[ ] 11 SO 00138 → botão "Alocar Batch por Paciente" → paciente 00136 batch_no
+[—] 12 Delivery Note  — PULA (sem baixa fiscal nesse fluxo)
+[—] 13 Sales Invoice  — PULA (modelo só Payment Entry)
+[ ] 14 SO 00138 → "Criar Dispensação" → "Abrir Dispensação"
+[ ] 15 Dispensação → template → "Imprimir Etiquetas Zebra" (Zebra+BrowserPrint)
+[ ] 16 Dispensação → "Marcar Dispensado" → fecha ciclo
+```
+
+Gates: produção exige pago AUTORIZADO ✓ · allocate exige PR released ·
+dispensação pula paciente sem batch_no.
 
 ## Catálogo de erros padronizado (`{code, error, ...ctx}`)
 
@@ -151,7 +171,8 @@ A partir do pedido pronto, time opera manual:
   create_dispensation_from_so, generate_zpl, mark_*)
 
 ### A construir / validar
-- [ ] Validar fluxo manual ponta-a-ponta (produzir batch → dispensação → ZPL)
+- [~] Validar fluxo manual ponta-a-ponta (produzir batch → dispensação → ZPL)
+      EM ANDAMENTO no SO 00138 (guia manual, etapas 9-16 — ver bloco acima)
 - [ ] Stock Entry automático na produção (hoje manual)
 - [ ] BOM pro TIR00060 se quiser Work Order (hoje sem BOM)
 - [ ] Cron/job pra conciliar Payment Entry na clearance_date (extrato credpay)
