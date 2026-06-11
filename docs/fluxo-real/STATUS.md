@@ -195,6 +195,10 @@ AUTOMÁTICO (n8n):
   step_customer · step_order · step_reserve · step_patients
   register_payment · payment_schedule · get_financial_config
   issue_order (legado, single-call)
+API EXTERNA patient-free (doc 00o, setup_23):
+  create_batch (cria estoque futuro/FPB)
+  create_order (SO+submit+reserva numa chamada; fpb_name OU auto_reserve FIFO)
+  reserve_sales_order_item · auto_reserve_sales_order (granular/UI)
 RESERVA OPS (chave produto+pedido):
   swap_reservation (troca lote: cancela antigo + reserva novo + re-bin-pack)
     gate: SWAP_TOO_LATE se produzido ou <N dias (config swap_min_days, padrão 5)
