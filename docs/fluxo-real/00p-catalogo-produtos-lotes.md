@@ -42,37 +42,37 @@
 
 ## Estado das customizações no unikkapharma
 
-| Setup | O que | Estado |
-|---|---|---|
-| `setup_01` | DocTypes FPB + Production Reservation + Custom Fields SO Item | ✅ aplicado |
-| `setup_02..18` | client scripts, reports, workspace, patient, prescriber, dispensação, naming, receita | ⏳ pendente |
-| `setup_03/13/14/19-23` | **server scripts** (validações, hooks FPB, endpoints, financeiro) | 🔴 BLOQUEADO |
+**Suíte COMPLETA instalada** (toda a setup_01..23), porém os Server Scripts
+estão **dormentes** — instalados como doc, mas só EXECUTAM após habilitar a flag.
 
-### 🔴 Bloqueio: Server Scripts desabilitados
+```
+9 DocTypes (FPB, Production Reservation, Patient, Prescriber, Dispensacao,
+            Dispensacao Paciente, Sales Order Patient, Prescriber Council,
+            Injemed Financial Settings)
+37 Server Scripts = 28 endpoints (future_production_*) + 9 hooks
+   (FPB Validate/Update Status, PR Validate/On Submit/On Cancel,
+    Patient/Prescriber/SO validations)
+6 Client Scripts (botões UI: FPB, PR, Dispensação, Reserva Ops, etc.)
++ Custom Fields (SO Item, Sales Order Patient, Financial Settings),
+  Property Setters (form layout), naming, reports, workspace.
+```
 
-A instância está com **Server Scripts OFF**. Sem isso não dá pra instalar os
-hooks/endpoints (status automático do FPB, reservar/cancelar/trocar, create_order,
-financeiro). Habilitar no **servidor** (não dá via API):
+### 🟡 Último passo: habilitar Server Scripts (1 comando, no servidor)
+
+Os scripts existem mas **não rodam** até ligar a flag (igual fez no injemed):
 
 ```bash
 bench --site <site-unikka> set-config server_script_enabled 1
 bench --site <site-unikka> clear-cache
 ```
 
-Depois disso, a suíte completa entra idempotente:
-```bash
-python setup/setup_all.py          # 01..18
-python setup/setup_19_step_endpoints.py
-python setup/setup_20_financial_config.py
-python setup/setup_21_payment_entry.py
-python setup/setup_22_reservation_ops.py
-python setup/setup_23_external_api.py
-```
+Depois disso, **tudo fica live sem re-aplicar nada** (reservar/cancelar/trocar,
+create_order, financeiro, status automático do FPB, dispensação, ZPL).
 
-> Os FPB já criados continuam válidos; os hooks só passam a recalcular saldo
-> automático ao reservar. Endpoints (`create_order`, etc.) default usam company
-> "Injemedpharma" / "Produtos Acabados - I" — passar `company`/`warehouse`
-> explícito p/ Unikka Pharma OU parametrizar os defaults (follow-up).
+> **Follow-up:** endpoints default usam company "Injemedpharma" /
+> "Produtos Acabados - I". No unikkapharma, passar `company`="Unikka Pharma" +
+> `warehouse`="Produtos Acabados - UP" explícito nas chamadas, OU parametrizar
+> os defaults dos scripts (ler de Injemed Financial Settings).
 
 ## `.env`
 
