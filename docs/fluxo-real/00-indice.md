@@ -131,6 +131,7 @@ Cada DocType com contador independente. Ver
 | 0m | Configuração Financeira (tempos + banco certo) | ✅ | [00m-configuracao-financeira.md](00m-configuracao-financeira.md) |
 | 0n | **Trocar / cancelar reserva (chave produto + pedido)** | ✅ validado prod | [00n-trocar-cancelar-reserva.md](00n-trocar-cancelar-reserva.md) |
 | 0o | **API externa: pedido consome estoque futuro (patient-free)** | ✅ validado prod | [00o-api-externa-pedido.md](00o-api-externa-pedido.md) |
+| 0p | **Catálogo produtos (OT* SKU) + 6 lotes futuros + validades** | ✅ carga 2026-06-11 | [00p-catalogo-produtos-lotes.md](00p-catalogo-produtos-lotes.md) |
 
 ### Por pedido (cada deal HubSpot dispara)
 
