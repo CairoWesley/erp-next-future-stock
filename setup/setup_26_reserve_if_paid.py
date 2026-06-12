@@ -38,16 +38,30 @@ data = frappe.form_dict
 if isinstance(data, str):
     data = frappe.parse_json(data)
 
-# deal id flexível (manual ?id= OU payload de webhook)
-deal_id = str(data.get("deal_id") or data.get("id") or data.get("externalRef")
-              or data.get("ref") or "").strip()
+# deal id flexível (manual ?id= OU payload de webhook do checkout)
+def find_ref(root):
+    queue = [root]
+    seen = 0
+    while queue and seen < 60:
+        obj = queue.pop(0)
+        seen = seen + 1
+        if isinstance(obj, dict):
+            r = obj.get("externalRef")
+            if r:
+                return str(r)
+            for k in obj:
+                v = obj.get(k)
+                if isinstance(v, dict):
+                    queue.append(v)
+    return ""
+
+# externalRef (webhook) tem prioridade; id é fallback do modo manual.
+deal_id = str(data.get("deal_id") or data.get("externalRef") or data.get("ref")
+              or data.get("id") or "").strip()
 if not deal_id:
-    nested = data.get("data") or {}
-    if isinstance(nested, dict):
-        deal_id = str(nested.get("externalRef") or nested.get("dealId")
-                      or nested.get("deal_id") or nested.get("ref") or "").strip()
+    deal_id = str(find_ref(data) or "").strip()
 if not deal_id:
-    frappe.throw("[MISSING_DEAL] Informe id/deal_id/externalRef (deal HubSpot).")
+    frappe.throw("[MISSING_DEAL] Sem deal id no payload (externalRef/deal_id/id).")
 
 cfg = frappe.get_doc("Injemed Financial Settings", "Injemed Financial Settings")
 
