@@ -57,17 +57,35 @@ estão **dormentes** — instalados como doc, mas só EXECUTAM após habilitar a
   Property Setters (form layout), naming, reports, workspace.
 ```
 
-### 🟡 Último passo: habilitar Server Scripts (1 comando, no servidor)
+### ✅ Server Scripts LIVE (resolvido) — gotcha frappe_docker swarm
 
-Os scripts existem mas **não rodam** até ligar a flag (igual fez no injemed):
+Tudo funcionando: `create_order` consumiu estoque futuro (SO 00002, reserva
+00003, FPB-2026-00001 2674→2669), `auto_reserve` FIFO pegou o lote sozinho.
+
+**O pulo do gato (custou várias tentativas):** num deploy **frappe_docker
+(Docker Swarm)**, pôr `server_script_enabled: 1` só no **site_config.json**
+NÃO bastou — o `bench console` lia `1`, mas o **gunicorn** continuava
+`ServerScriptNotEnabled`. Resolveu colocando o flag no **`common_site_config.json`
+(global)**:
 
 ```bash
-bench --site <site-unikka> set-config server_script_enabled 1
-bench --site <site-unikka> clear-cache
+# 1. flag no config GLOBAL (volume erpnext_sites, raiz _data)
+nano /var/lib/docker/volumes/erpnext_sites/_data/common_site_config.json
+#    adiciona dentro do { }:   "server_script_enabled": 1,
+
+# 2. recria o backend no swarm (NÃO basta bench restart dentro do container)
+docker service update --force erpnext_erpnext_backend
 ```
 
-Depois disso, **tudo fica live sem re-aplicar nada** (reservar/cancelar/trocar,
-create_order, financeiro, status automático do FPB, dispensação, ZPL).
+Aprendizados:
+- Em Swarm, **`bench restart`/`supervisorctl` dentro do container não fazem nada** —
+  quem reinicia o gunicorn é `docker service update --force <service>` no host.
+- O site_config fica no **volume** `erpnext_sites` (`/var/lib/docker/volumes/
+  erpnext_sites/_data/<site>/site_config.json`); editar no host = editar o que o
+  container lê.
+- Diagnóstico decisivo: `docker exec <backend> bench --site <site> console` →
+  `frappe.conf.get("server_script_enabled")`; e POST direto em `localhost:8000`
+  de dentro do backend (pula Traefik/nginx) pra isolar proxy × gunicorn.
 
 > **Follow-up:** endpoints default usam company "Injemedpharma" /
 > "Produtos Acabados - I". No unikkapharma, passar `company`="Unikka Pharma" +
