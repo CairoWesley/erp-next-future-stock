@@ -49,7 +49,11 @@ if not deal_id:
     frappe.throw("[MISSING_DEAL] Informe id (deal HubSpot). Ex: ?id=123456")
 
 cfg = frappe.get_doc("Injemed Financial Settings", "Injemed Financial Settings")
-token = cfg.get("hubspot_access_token")
+# Password field: get() devolve o valor encriptado — get_password() decripta.
+try:
+    token = cfg.get_password("hubspot_access_token")
+except Exception:
+    token = cfg.get("hubspot_access_token")
 if not token:
     frappe.throw("[NO_HUBSPOT_TOKEN] Configure o token HubSpot em "
                  "Injemed Financial Settings (campo hubspot_access_token).")
