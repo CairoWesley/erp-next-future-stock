@@ -135,6 +135,7 @@ Cada DocType com contador independente. Ver
 | 0q | **Reservar pedido por deal id HubSpot (puxa line items + SKU)** | ✅ instalado · 🟡 falta token p/ testar real | [00q-reservar-pedido-hubspot.md](00q-reservar-pedido-hubspot.md) |
 | 0r | **Verificar pagamento (checkout API × itens de linha) — pago 100%?** | ✅ instalado · 🟡 falta cred checkout | [00r-verificar-pagamento-checkout.md](00r-verificar-pagamento-checkout.md) |
 | 0s | **Reservar SE pago 100% (webhook+manual, recusa sem itens)** | ✅ instalado · 🟡 falta cred checkout | [00s-reservar-se-pago.md](00s-reservar-se-pago.md) |
+| 0t | **Colunas Reservada+Disponível na lista do FPB** | ✅ | (setup_27) |
 
 ### Por pedido (cada deal HubSpot dispara)
 
