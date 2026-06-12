@@ -91,23 +91,31 @@ Idempotente por `hubspot_deal_id` — re-disparo não duplica; item já reservad
 
 ### Desconto PIX
 
-Pagamento via **PIX** pode ter desconto (config `pix_discount_pct`, default 5%).
-O valor pago PIX é "grossed-up" (`pago / (1 - %/100)`) antes de comparar com o
-total dos itens de linha. Ex: itens R$2580, PIX pago R$2451 (5% off) →
-efetivo R$2580 = **100% pago** → reserva. Validado: deal 61049766698 → SO 00021.
+Pagamento via **PIX** pode ter desconto. O valor pago PIX é "grossed-up"
+(`pago / (1 - %/100)`) antes de comparar com o total dos itens de linha.
+A taxa vem do **payload do webhook** (`checkout.pix_discount_pct`) se presente,
+senão do config (`pix_discount_pct`, default 5%).
+
+Ex: itens R$2580, PIX pago R$2451 (5% off) → efetivo R$2580 = **100% pago** →
+reserva. Validado: deal 61049766698 → SO 00021.
 
 ### Payload do checkout (formato real, validado)
 
-O checkout manda o deal id no campo **`external_ref`** (snake_case), dentro de
-`transaction`:
+O checkout manda o deal id em **`external_ref`** (snake_case), em
+`transaction` OU `transaction.checkout` (formato novo):
 
 ```json
 { "event": "transaction.paid",
-  "transaction": { "transaction_id":"...", "checkout_id":"...", "status":"PAID",
-                   "amount_cents":245100, "external_ref":"61049766698" } }
+  "transaction": {
+    "original_amount_cents":258000, "discount_pct_applied":5, "amount_cents":245100,
+    "status":"PAID", "payment_method":"PIX",
+    "installment_group_id":null, "installment_number":null, "installment_total":null,
+    "checkout": { "pix_discount_pct":5, "external_ref":"61049766698", "...": "..." } } }
 ```
 
-O endpoint acha o `external_ref`/`externalRef` em **qualquer nível** (BFS).
+O endpoint acha `external_ref`/`externalRef` e `pix_discount_pct` em **qualquer
+nível** (BFS). Parcelas (`installment_*`) são cobertas: somo todas as transações
+aprovadas do deal (via checkout API).
 Validado e2e: webhook real deal `61049766698` (PIX R$2451, itens R$2580).
 Com desconto PIX 5% → efetivo R$2580 = **100%** → reservou (SO 00021). 417→200.
 

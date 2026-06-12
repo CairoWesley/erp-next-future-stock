@@ -39,29 +39,31 @@ if isinstance(data, str):
     data = frappe.parse_json(data)
 
 # deal id flexível (manual ?id= OU payload de webhook do checkout)
-def find_ref(root):
+def find_keys(root, keys):
     queue = [root]
     seen = 0
-    while queue and seen < 60:
+    while queue and seen < 80:
         obj = queue.pop(0)
         seen = seen + 1
         if isinstance(obj, dict):
-            r = obj.get("external_ref") or obj.get("externalRef")
-            if r:
-                return str(r)
+            for kk in keys:
+                vv = obj.get(kk)
+                if vv is not None:
+                    return vv
             for k in obj:
                 v = obj.get(k)
                 if isinstance(v, dict):
                     queue.append(v)
-    return ""
+    return None
 
-# external_ref/externalRef (webhook) tem prioridade; id é fallback do modo manual.
-deal_id = str(data.get("deal_id") or data.get("external_ref") or data.get("externalRef")
-              or data.get("ref") or data.get("id") or "").strip()
+# deal id: external_ref/externalRef em qualquer nível (webhook); id = fallback manual.
+ref_val = find_keys(data, ["external_ref", "externalRef", "deal_id", "ref"])
+deal_id = str(ref_val if ref_val is not None else (data.get("id") or "")).strip()
 if not deal_id:
-    deal_id = str(find_ref(data) or "").strip()
-if not deal_id:
-    frappe.throw("[MISSING_DEAL] Sem deal id no payload (externalRef/deal_id/id).")
+    frappe.throw("[MISSING_DEAL] Sem deal id no payload (external_ref/deal_id/id).")
+
+# desconto PIX: usa o do payload (checkout.pix_discount_pct) se vier, senão config.
+payload_pix_disc = find_keys(data, ["pix_discount_pct"])
 
 cfg = frappe.get_doc("Injemed Financial Settings", "Injemed Financial Settings")
 
@@ -157,8 +159,10 @@ cookie = {"Cookie": "cs_session=" + str(token)}
 rec = frappe.make_post_request(
     co_url + "/api/transactions/recheck-by-deal/" + deal_id, headers=cookie, json={})
 checkouts = ((rec or {}).get("data") or {}).get("checkouts") or []
-# desconto PIX: paga menos no PIX, então "gross-up" o valor pago PIX pelo fator
-pix_disc = float(cfg.get("pix_discount_pct") or 0) / 100.0
+# desconto PIX: paga menos no PIX, então "gross-up" o valor pago PIX pelo fator.
+# Usa o desconto do payload do webhook se vier; senão o config.
+disc_src = payload_pix_disc if payload_pix_disc is not None else cfg.get("pix_discount_pct")
+pix_disc = float(disc_src or 0) / 100.0
 pix_factor = 1.0
 if pix_disc > 0.0 and pix_disc < 1.0:
     pix_factor = 1.0 / (1.0 - pix_disc)
