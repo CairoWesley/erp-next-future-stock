@@ -88,6 +88,14 @@ Chamada **autenticada** (com `Authorization: token KEY:SECRET`) ignora o secret
 
 Idempotente por `hubspot_deal_id` — re-disparo não duplica; item já reservado é pulado.
 
+
+### Desconto PIX
+
+Pagamento via **PIX** pode ter desconto (config `pix_discount_pct`, default 5%).
+O valor pago PIX é "grossed-up" (`pago / (1 - %/100)`) antes de comparar com o
+total dos itens de linha. Ex: itens R$2580, PIX pago R$2451 (5% off) →
+efetivo R$2580 = **100% pago** → reserva. Validado: deal 61049766698 → SO 00021.
+
 ### Payload do checkout (formato real, validado)
 
 O checkout manda o deal id no campo **`external_ref`** (snake_case), dentro de

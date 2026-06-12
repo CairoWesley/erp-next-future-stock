@@ -114,7 +114,12 @@ rdata = (rec or {}).get("data") or {}
 checkouts = rdata.get("checkouts") or []
 
 # 4) por checkout → transações → soma aprovadas
+pix_disc = float(cfg.get("pix_discount_pct") or 0) / 100.0
+pix_factor = 1.0
+if pix_disc > 0.0 and pix_disc < 1.0:
+    pix_factor = 1.0 / (1.0 - pix_disc)
 paid_cents = 0
+eff_cents = 0
 tx_sum = []
 for ck in checkouts:
     ckid = ck.get("id")
@@ -126,18 +131,24 @@ for ck in checkouts:
     for t in (txlist or []):
         st = (t.get("status") or "").upper()
         amt = int(t.get("amountCents") or 0)
+        mth = (t.get("paymentMethod") or "").upper()
         tx_sum.append({"id": t.get("id"), "status": st, "amountCents": amt,
-                       "method": t.get("paymentMethod"), "paidAt": t.get("paidAt")})
+                       "method": mth, "paidAt": t.get("paidAt")})
         if st in approved:
             paid_cents = paid_cents + amt
+            if mth == "PIX":
+                eff_cents = eff_cents + int(round(amt * pix_factor))
+            else:
+                eff_cents = eff_cents + amt
 
-paid_100 = due_cents > 0 and (paid_cents + tol) >= due_cents
-pct = round(paid_cents * 100.0 / due_cents, 2) if due_cents > 0 else None
+paid_100 = due_cents > 0 and (eff_cents + tol) >= due_cents
+pct = round(eff_cents * 100.0 / due_cents, 2) if due_cents > 0 else None
 
 frappe.response["message"] = {
     "deal_id": deal_id,
     "total_due_cents": due_cents, "total_due": round(due_cents / 100.0, 2),
     "total_paid_cents": paid_cents, "total_paid": round(paid_cents / 100.0, 2),
+    "total_paid_effective": round(eff_cents / 100.0, 2), "pix_discount_pct": round(pix_disc * 100.0, 2),
     "paid_pct": pct, "paid_100": paid_100,
     "approved_statuses": approved, "checkouts_found": len(checkouts),
     "line_items": li_dbg, "transactions": tx_sum,
