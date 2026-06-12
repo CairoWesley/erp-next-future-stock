@@ -19,8 +19,10 @@ import sys
 from lib.erpnext_api import client_from_env, log_error, log_ok, log_section
 
 DOCTYPE = "Future Production Batch"
-# (fieldname, columns width)
+# (fieldname, columns width) — mostra na lista
 LIST_FIELDS = [("reserved_qty", 1), ("available_qty", 1)]
+# tira da lista pra caber as quantidades (Frappe limita o total de colunas)
+HIDE_FROM_LIST = ["planned_production_date"]
 
 
 def _upsert_ps(c, field, prop, ptype, value):
@@ -49,6 +51,11 @@ def install() -> int:
         except Exception as exc:  # noqa: BLE001
             log_error(f"{field}: {exc}")
             rc = 1
+    for field in HIDE_FROM_LIST:
+        try:
+            _upsert_ps(c, field, "in_list_view", "Check", 0)
+        except Exception as exc:  # noqa: BLE001
+            log_error(f"{field}: {exc}")
     # limpa cache pra refletir na lista
     try:
         c._request("POST", "/api/method/frappe.client.get_count",
