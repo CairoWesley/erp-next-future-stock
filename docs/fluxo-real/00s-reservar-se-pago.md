@@ -88,6 +88,21 @@ Chamada **autenticada** (com `Authorization: token KEY:SECRET`) ignora o secret
 
 Idempotente por `hubspot_deal_id` — re-disparo não duplica; item já reservado é pulado.
 
+### Payload do checkout (formato real, validado)
+
+O checkout manda o deal id no campo **`external_ref`** (snake_case), dentro de
+`transaction`:
+
+```json
+{ "event": "transaction.paid",
+  "transaction": { "transaction_id":"...", "checkout_id":"...", "status":"PAID",
+                   "amount_cents":245100, "external_ref":"61049766698" } }
+```
+
+O endpoint acha o `external_ref`/`externalRef` em **qualquer nível** (BFS).
+Validado e2e: webhook real (deal `61049766698`, PIX R$2451, itens de linha
+R$2580 = 95%) → `paid_100:false` → **ignorou** (não reservou). 417→200.
+
 ## Validado end-to-end (unikkapharma)
 
 Deal real `61048721486`: `total_due` R$1966 (OT10000029 1900 + FRETE 66) =

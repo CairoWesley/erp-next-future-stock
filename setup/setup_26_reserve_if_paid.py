@@ -53,7 +53,7 @@ def find_ref(root):
         obj = queue.pop(0)
         seen = seen + 1
         if isinstance(obj, dict):
-            r = obj.get("externalRef")
+            r = obj.get("external_ref") or obj.get("externalRef")
             if r:
                 return str(r)
             for k in obj:
@@ -62,9 +62,9 @@ def find_ref(root):
                     queue.append(v)
     return ""
 
-# externalRef (webhook) tem prioridade; id é fallback do modo manual.
-deal_id = str(data.get("deal_id") or data.get("externalRef") or data.get("ref")
-              or data.get("id") or "").strip()
+# external_ref/externalRef (webhook) tem prioridade; id é fallback do modo manual.
+deal_id = str(data.get("deal_id") or data.get("external_ref") or data.get("externalRef")
+              or data.get("ref") or data.get("id") or "").strip()
 if not deal_id:
     deal_id = str(find_ref(data) or "").strip()
 if not deal_id:
