@@ -108,8 +108,8 @@ O checkout manda o deal id no campo **`external_ref`** (snake_case), dentro de
 ```
 
 O endpoint acha o `external_ref`/`externalRef` em **qualquer nível** (BFS).
-Validado e2e: webhook real (deal `61049766698`, PIX R$2451, itens de linha
-R$2580 = 95%) → `paid_100:false` → **ignorou** (não reservou). 417→200.
+Validado e2e: webhook real deal `61049766698` (PIX R$2451, itens R$2580).
+Com desconto PIX 5% → efetivo R$2580 = **100%** → reservou (SO 00021). 417→200.
 
 ## Validado end-to-end (unikkapharma)
 
