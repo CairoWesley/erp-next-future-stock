@@ -89,6 +89,22 @@ Chamada **autenticada** (com `Authorization: token KEY:SECRET`) ignora o secret
 Idempotente por `hubspot_deal_id` — re-disparo não duplica; item já reservado é pulado.
 
 
+### Idempotência por evento (boleto = 2 eventos)
+
+Boleto dispara **2 webhooks**: gerado (PENDING) e depois pago (PAID). Pra não
+reprocessar:
+
+```
+Evento 1 (PENDING/gerado): deal sem pedido → reserva → cria SO
+Evento 2 (PAID):           deal JÁ tem pedido → short-circuit
+                           { reserved:true, already_processed:true, sales_order }
+                           (NÃO refaz HubSpot/checkout, ~0.1s)
+```
+
+Checa `Sales Order` por `hubspot_deal_id` (docstatus != 2) **antes** de
+qualquer consulta. Re-disparo de qualquer evento (retry, PIX duplo, etc.) cai
+no short-circuit. Validado: Iara (SO 00021) → `already_processed:true`.
+
 ### Boleto gerado = venda
 
 `BOLETO` conta como **venda ao ser gerado** (não espera pagar) — boleto é
