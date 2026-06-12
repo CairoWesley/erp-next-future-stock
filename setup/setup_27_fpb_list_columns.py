@@ -19,14 +19,19 @@ import sys
 from lib.erpnext_api import client_from_env, log_error, log_ok, log_section
 
 DOCTYPE = "Future Production Batch"
-# mostra na lista (in_list_view=1)
-LIST_FIELDS = [("reserved_qty", 1), ("available_qty", 1)]
-# tira da lista pra caber as quantidades (Frappe limita o total de colunas)
-HIDE_FROM_LIST = ["planned_production_date"]
-# larguras apertadas pra TODAS caberem no orçamento da List View
-# (sem isso o Frappe dá largura default grande e corta a última = Disponível)
-COLUMN_WIDTHS = {"status": 1, "item_code": 2, "planned_qty": 1,
-                 "reserved_qty": 1, "available_qty": 1}
+# mostra na lista (in_list_view=1): Código(title) + Planejada + Reservada + Disponível
+LIST_FIELDS = [("planned_qty", 2), ("reserved_qty", 2), ("available_qty", 2)]
+# tira da lista (fica no form). Status + Produto + Data fora.
+HIDE_FROM_LIST = ["planned_production_date", "status", "item_code"]
+COLUMN_WIDTHS = {"planned_qty": 2, "reserved_qty": 2, "available_qty": 2}
+
+# Client Script (List) — esconde a coluna ID (name)
+CLIENT_SCRIPT_NAME = "Future Production Batch - List Clean"
+CLIENT_SCRIPT = (
+    "frappe.listview_settings['Future Production Batch'] = "
+    "Object.assign(frappe.listview_settings['Future Production Batch'] || {}, "
+    "{ hide_name_column: true });"
+)
 
 
 def _upsert_ps(c, field, prop, ptype, value):
@@ -65,6 +70,17 @@ def install() -> int:
             _upsert_ps(c, field, "columns", "Int", cols)
         except Exception as exc:  # noqa: BLE001
             log_error(f"{field}.columns: {exc}")
+    # Client Script (List): esconde coluna ID
+    try:
+        enc = CLIENT_SCRIPT_NAME.replace(" ", "%20")
+        if c._request("GET", "/api/resource/Client Script/" + enc)[1] is not None:
+            c._request("DELETE", "/api/resource/Client Script/" + enc)
+        c._request("POST", "/api/resource/Client Script", json_body={
+            "doctype": "Client Script", "name": CLIENT_SCRIPT_NAME,
+            "dt": DOCTYPE, "view": "List", "enabled": 1, "script": CLIENT_SCRIPT})
+        log_ok("Client Script (esconde coluna ID) pronto.")
+    except Exception as exc:  # noqa: BLE001
+        log_error(f"Client Script ID: {exc}")
     # limpa cache pra refletir na lista
     try:
         c._request("POST", "/api/method/frappe.client.get_count",
