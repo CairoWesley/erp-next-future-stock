@@ -29,13 +29,34 @@ Private App: `crm.objects.deals.read`, `crm.objects.line_items.read`,
 ## O que faz (passo a passo)
 
 ```
-1. GET deal {id}  → associations line_items + companies
+1. GET deal {id}  → associations line_items + companies (endpoints dedicados)
 2. cada line item → hs_sku (UPPERCASE) + quantity
-3. SKU → Item ERPNext (item_code = SKU uppercase). Sem match → unmatched_skus
+3. SKU → Item ERPNext (item_code = SKU uppercase). Sem Item → unmatched_skus
 4. customer: param > empresa associada ao deal > "Cliente HubSpot <id>"
-5. cria Sales Order (idempotente por hubspot_deal_id)
-6. reserva cada item: auto_reserve FIFO (default) OU fpb_map {item:lote}
+5. cria Sales Order (idempotente por hubspot_deal_id) — TODAS as linhas
+   (produto + FRETE) entram no pedido
+6. reserva cada item STOCK: auto_reserve FIFO com SPLIT entre lotes
+   (FRETE/non-stock entra no SO mas NÃO reserva)
 ```
+
+### Split entre lotes (pedido > 1 lote)
+
+`auto_reserve` distribui a quantidade entre lotes **FIFO** (mais antigo primeiro):
+
+```
+Pedido 100, lote A=50, lote B=50  →  reserva 50 no A + 50 no B (2 reservas)
+Lote acaba  →  pula pro próximo FIFO
+Total insuficiente (ex. 80 pra 100) → reserva 80 + erro INSUFFICIENT_TOTAL (short:20)
+```
+
+`fpb_map {item:lote}` força um lote específico (reserva o que couber nele).
+
+### FRETE / itens non-stock
+
+SKU non-stock (ex. `SV02000002` FRETE) **entra no pedido como linha** (compõe o
+total) mas **não reserva** (pulado pelo `is_stock_item`). Requer o Item existir
+no ERPNext — `unmatched_skus` lista SKU do HubSpot **sem Item** (esses sim ficam
+de fora do pedido).
 
 ## Params
 
@@ -98,7 +119,8 @@ curl "https://erp.service.unikkapharma.com.br/api/method/future_production_reser
 | `[NO_HUBSPOT_TOKEN]` | token não configurado |
 | `[HUBSPOT_DEAL_FAIL]` | deal não encontrado / token inválido / sem scope |
 | `ok:false` + `unmatched_skus` | nenhum line item mapeável (SKU sem Item) |
-| `reserve_errors[]` | item mapeado mas sem lote/saldo (FIFO vazio, etc.) |
+| `reserve_errors[].INSUFFICIENT_TOTAL` | estoque futuro < pedido em todos os lotes (reservou o disponível) |
+| `reserve_errors[].BATCH_REQUIRED` | item sem lote (auto_reserve=0 e sem fpb_map) |
 
 ## Coexistência com o fluxo COM paciente (não afeta)
 
@@ -127,19 +149,19 @@ SEM paciente:  create_order / reserve_from_hubspot  → SO + reserva (FIFO)
 
 ## Validado em prod (unikkapharma)
 
-Deal real `61048721486` → SO `00007` + customer `00006` (empresa do deal) +
-reserva `00008` no FPB-2026-00001 (FIFO, OT10000029). FRETE (`SV02000002`)
-caiu em `unmatched_skus` (sem Item no ERPNext) — não quebra, os outros itens
-reservam normal.
+- **Deal real** `61048721486` → SO `00015` + customer `00006` + reserva
+  `00016` no FPB-2026-00001 (OT10000029). FRETE `SV02000002` entrou como linha
+  (R$66), **não reservou** (non-stock). Total R$1966. `unmatched_skus: []`.
+- **Split FIFO** (pedido 1901 em OT10000052, lotes 1851+1300): 2 reservas —
+  1851 no FPB-2026-00003 + 50 no FPB-2026-00004. ✓
 
 Notas de implementação:
 - Line items + companies vêm dos **endpoints dedicados de associação**
   (`/crm/v3/objects/deals/{id}/associations/line_items` e `.../companies`) —
   o `?associations=` inline não popula confiável.
 - Token lido com `get_password()` (campo Password decripta).
-- **FRETE / não-stock**: SKU do HubSpot sem Item correspondente → `unmatched_skus`
-  (não entra no pedido, não reserva). Se quiser o frete no SO, crie um Item
-  (ex. `SV02000002`, non-stock) no ERPNext.
+- **Item FRETE** `SV02000002` criado non-stock no UP → entra no pedido sem reservar.
+- Reserva STOCK faz **split FIFO** entre lotes (`INSUFFICIENT_TOTAL` se faltar).
 
 ## Requisitos técnicos (validados)
 

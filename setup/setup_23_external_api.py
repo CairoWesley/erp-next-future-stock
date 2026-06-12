@@ -146,21 +146,33 @@ for it in items_in:
     if ic and fn:
         fpb_for[ic] = fn
 
-def pick_fifo(item_code, need):
-    rows = frappe.db.sql(
-        "select name from `tabFuture Production Batch` "
-        "where item_code=%s and docstatus=1 "
+def fifo_lotes(item_code):
+    return frappe.db.sql(
+        "select name, (coalesce(planned_qty,0)-coalesce(reserved_qty,0)) as avail "
+        "from `tabFuture Production Batch` where item_code=%s and docstatus=1 "
         "and status in ('Aberta para Reserva','Reservada Parcialmente') "
-        "and (coalesce(planned_qty,0)-coalesce(reserved_qty,0)) >= %s "
-        "order by planned_production_date asc, creation asc limit 1",
-        (item_code, need), as_dict=False)
-    return rows[0][0] if rows else None
+        "and (coalesce(planned_qty,0)-coalesce(reserved_qty,0)) > 0 "
+        "order by planned_production_date asc, creation asc", (item_code,), as_dict=True)
 
 so_doc = frappe.get_doc("Sales Order", so_name)
+
+def make_pr(soi_name, item_code, lote_name, qty_pr):
+    pr = frappe.new_doc("Production Reservation")
+    pr.sales_order = so_name
+    pr.sales_order_item = soi_name
+    pr.future_production_batch = lote_name
+    pr.item_code = item_code
+    pr.customer = so_doc.customer
+    pr.reserved_qty = qty_pr
+    pr.insert(ignore_permissions=True)
+    pr.submit()
+    return pr.name
+
 reservations = []
 errors = []
 for row in so_doc.items:
     ic = row.item_code
+    # FRETE / non-stock: entra no pedido, NAO reserva
     is_stock = frappe.db.get_value("Item", ic, "is_stock_item")
     if not int(is_stock or 0):
         continue
@@ -168,59 +180,56 @@ for row in so_doc.items:
         "select coalesce(sum(reserved_qty),0) from `tabProduction Reservation` "
         "where sales_order=%s and sales_order_item=%s and docstatus=1",
         (so_name, row.name), as_dict=False)
-    already_qty = float((already[0][0] if already else 0) or 0)
-    need = float(row.qty or 0) - already_qty
+    need = float(row.qty or 0) - float((already[0][0] if already else 0) or 0)
     if need <= 0:
         continue
-
-    fpb_name = fpb_for.get(ic)
-    if not fpb_name and auto:
-        fpb_name = pick_fifo(ic, need)
-    if not fpb_name:
+    explicit = (fpb_for.get(ic) or "").strip()
+    if explicit:
+        info = frappe.db.sql(
+            "select (coalesce(planned_qty,0)-coalesce(reserved_qty,0)) as avail, "
+            "item_code, status, docstatus from `tabFuture Production Batch` where name=%s",
+            (explicit,), as_dict=True)
+        if not info:
+            errors.append({"code": "BATCH_NOT_FOUND", "item_code": ic, "fpb": explicit})
+            continue
+        info = info[0]
+        if int(info.docstatus or 0) != 1 or (info.status or "") not in ("Aberta para Reserva", "Reservada Parcialmente"):
+            errors.append({"code": "BATCH_CLOSED", "item_code": ic, "fpb": explicit, "status": info.status})
+            continue
+        if info.item_code != ic:
+            errors.append({"code": "BATCH_WRONG_ITEM", "item_code": ic, "fpb": explicit})
+            continue
+        take = min(need, float(info.avail or 0))
+        if take <= 0:
+            errors.append({"code": "INSUFFICIENT_QTY", "item_code": ic, "fpb": explicit,
+                "available": float(info.avail or 0), "need": need})
+            continue
+        prn = make_pr(row.name, ic, explicit, take)
+        reservations.append({"reservation": prn, "future_production_batch": explicit,
+            "item_code": ic, "reserved_qty": take})
+        if take < need:
+            errors.append({"code": "INSUFFICIENT_QTY", "item_code": ic, "fpb": explicit,
+                "available": float(info.avail or 0), "need": need, "reserved": take})
+    elif auto:
+        remaining = need
+        for lt in fifo_lotes(ic):
+            if remaining <= 0:
+                break
+            take = min(remaining, float(lt.avail or 0))
+            if take <= 0:
+                continue
+            prn = make_pr(row.name, ic, lt.name, take)
+            reservations.append({"reservation": prn, "future_production_batch": lt.name,
+                "item_code": ic, "reserved_qty": take})
+            remaining = remaining - take
+        if remaining > 0:
+            errors.append({"code": "INSUFFICIENT_TOTAL", "item_code": ic,
+                "need": need, "short": remaining,
+                "error": "Faltam " + str(remaining) + " de " + str(ic) +
+                " (estoque futuro insuficiente; reservado o disponivel nos lotes)."})
+    else:
         errors.append({"code": "BATCH_REQUIRED", "item_code": ic,
-            "error": "Lote obrigatorio para " + str(ic) +
-            " (informe fpb_name no item, ou auto_reserve=true com lote aberto)."})
-        continue
-
-    info = frappe.db.sql(
-        "select (coalesce(planned_qty,0)-coalesce(reserved_qty,0)) as avail, "
-        "item_code, status, docstatus from `tabFuture Production Batch` where name=%s",
-        (fpb_name,), as_dict=True)
-    if not info:
-        errors.append({"code": "BATCH_NOT_FOUND", "item_code": ic, "fpb": fpb_name,
-            "error": "Lote " + fpb_name + " nao encontrado"})
-        continue
-    info = info[0]
-    if int(info.docstatus or 0) != 1:
-        errors.append({"code": "BATCH_NOT_SUBMITTED", "item_code": ic, "fpb": fpb_name,
-            "error": "Lote " + fpb_name + " nao esta submetido"})
-        continue
-    if info.item_code != ic:
-        errors.append({"code": "BATCH_WRONG_ITEM", "item_code": ic, "fpb": fpb_name,
-            "error": "Lote " + fpb_name + " e de outro produto (" + str(info.item_code) + ")"})
-        continue
-    if (info.status or "") not in ("Aberta para Reserva", "Reservada Parcialmente"):
-        errors.append({"code": "BATCH_CLOSED", "item_code": ic, "fpb": fpb_name,
-            "error": "Lote " + fpb_name + " nao aceita reservas (status: " + str(info.status) + ")"})
-        continue
-    if float(info.avail or 0) < need:
-        errors.append({"code": "INSUFFICIENT_QTY", "item_code": ic, "fpb": fpb_name,
-            "qty": need, "available": float(info.avail or 0),
-            "error": "Saldo insuficiente no lote " + fpb_name +
-            " (disponivel " + str(float(info.avail or 0)) + ", solicitado " + str(need) + ")"})
-        continue
-
-    pr = frappe.new_doc("Production Reservation")
-    pr.sales_order = so_name
-    pr.sales_order_item = row.name
-    pr.future_production_batch = fpb_name
-    pr.item_code = ic
-    pr.customer = so_doc.customer
-    pr.reserved_qty = need
-    pr.insert(ignore_permissions=True)
-    pr.submit()
-    reservations.append({"reservation": pr.name, "future_production_batch": fpb_name,
-        "item_code": ic, "reserved_qty": need})
+            "error": "Lote obrigatorio para " + str(ic) + " (fpb_name no item ou auto_reserve=true)."})
 
 frappe.response["message"] = {
     "ok": True,
