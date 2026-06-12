@@ -133,6 +133,7 @@ Cada DocType com contador independente. Ver
 | 0o | **API externa: pedido consome estoque futuro (patient-free)** | ✅ validado prod | [00o-api-externa-pedido.md](00o-api-externa-pedido.md) |
 | 0p | **Catálogo OT* + 6 lotes + SUÍTE COMPLETA @ unikkapharma** | ✅ LIVE (server scripts via common_site_config) | [00p-catalogo-produtos-lotes.md](00p-catalogo-produtos-lotes.md) |
 | 0q | **Reservar pedido por deal id HubSpot (puxa line items + SKU)** | ✅ instalado · 🟡 falta token p/ testar real | [00q-reservar-pedido-hubspot.md](00q-reservar-pedido-hubspot.md) |
+| 0r | **Verificar pagamento (checkout API × itens de linha) — pago 100%?** | ✅ instalado · 🟡 falta cred checkout | [00r-verificar-pagamento-checkout.md](00r-verificar-pagamento-checkout.md) |
 
 ### Por pedido (cada deal HubSpot dispara)
 
