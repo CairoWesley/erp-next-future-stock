@@ -125,6 +125,22 @@ SEM paciente:  create_order / reserve_from_hubspot  → SO + reserva (FIFO)
 > Conclusão: usar a integração enxuta (sem paciente) **não impede** usar o
 > fluxo completo (com paciente) depois, na mesma instância.
 
+## Validado em prod (unikkapharma)
+
+Deal real `61048721486` → SO `00007` + customer `00006` (empresa do deal) +
+reserva `00008` no FPB-2026-00001 (FIFO, OT10000029). FRETE (`SV02000002`)
+caiu em `unmatched_skus` (sem Item no ERPNext) — não quebra, os outros itens
+reservam normal.
+
+Notas de implementação:
+- Line items + companies vêm dos **endpoints dedicados de associação**
+  (`/crm/v3/objects/deals/{id}/associations/line_items` e `.../companies`) —
+  o `?associations=` inline não popula confiável.
+- Token lido com `get_password()` (campo Password decripta).
+- **FRETE / não-stock**: SKU do HubSpot sem Item correspondente → `unmatched_skus`
+  (não entra no pedido, não reserva). Se quiser o frete no SO, crie um Item
+  (ex. `SV02000002`, non-stock) no ERPNext.
+
 ## Requisitos técnicos (validados)
 
 - Server Scripts habilitados (✅ via `common_site_config`, ver [00p](00p-catalogo-produtos-lotes.md)).

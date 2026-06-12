@@ -66,31 +66,34 @@ fpb_map = data.get("fpb_map") or {}
 hub = "https://api.hubapi.com"
 headers = {"Authorization": "Bearer " + str(token)}
 
-# 1) deal + associations (line_items, companies)
-deal_url = (hub + "/crm/v3/objects/deals/" + deal_id +
-            "?associations=line_items,companies&properties=dealname")
+# 1) line items do deal — endpoint DEDICADO de associações (v3)
 try:
-    deal = frappe.make_get_request(deal_url, headers=headers)
+    li_assoc = frappe.make_get_request(
+        hub + "/crm/v3/objects/deals/" + deal_id + "/associations/line_items",
+        headers=headers)
 except Exception as exc:
     frappe.throw("[HUBSPOT_DEAL_FAIL] Falha ao buscar deal " + deal_id +
                  " no HubSpot: " + str(exc)[:200])
 
-assoc = deal.get("associations") or {}
-li_block = assoc.get("line_items") or {}
-li_results = li_block.get("results") or []
+li_results = li_assoc.get("results") or []
 li_ids = []
 for x in li_results:
-    if x.get("id"):
-        li_ids.append(str(x.get("id")))
+    lid = x.get("id") or x.get("toObjectId")
+    if lid:
+        li_ids.append(str(lid))
 
 # 2) cada line item → sku + qty
 items_in = []
 unmatched = []
+li_debug = []
 for liid in li_ids:
     li_url = (hub + "/crm/v3/objects/line_items/" + liid +
-              "?properties=hs_sku,quantity,name,price")
+              "?properties=hs_sku,quantity,name,price,hs_product_id")
     li = frappe.make_get_request(li_url, headers=headers)
     props = li.get("properties") or {}
+    li_debug.append({"id": liid, "hs_sku": props.get("hs_sku"),
+        "quantity": props.get("quantity"), "name": props.get("name"),
+        "hs_product_id": props.get("hs_product_id")})
     sku = (props.get("hs_sku") or "").strip().upper()
     qty = float(props.get("quantity") or 0)
     rate = float(props.get("price") or 0)
@@ -103,16 +106,21 @@ for liid in li_ids:
 
 if not items_in:
     frappe.response["message"] = {"ok": False, "deal_id": deal_id,
-        "error": "Nenhum line item mapeavel (SKU sem Item correspondente).",
+        "error": "Nenhum line item mapeavel.",
+        "line_items_count": len(li_ids),
+        "line_items": li_debug,
         "unmatched_skus": unmatched}
 else:
     # 3) customer
     cust = data.get("customer")
     if not cust:
-        comp_block = assoc.get("companies") or {}
-        comp_results = comp_block.get("results") or []
+        comp_assoc = frappe.make_get_request(
+            hub + "/crm/v3/objects/deals/" + deal_id + "/associations/companies",
+            headers=headers)
+        comp_results = comp_assoc.get("results") or []
         if comp_results:
-            comp_id = str(comp_results[0].get("id"))
+            comp0 = comp_results[0]
+            comp_id = str(comp0.get("id") or comp0.get("toObjectId"))
             comp = frappe.make_get_request(
                 hub + "/crm/v3/objects/companies/" + comp_id + "?properties=name",
                 headers=headers)
