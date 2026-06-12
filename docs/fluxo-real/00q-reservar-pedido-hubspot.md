@@ -100,6 +100,31 @@ curl "https://erp.service.unikkapharma.com.br/api/method/future_production_reser
 | `ok:false` + `unmatched_skus` | nenhum line item mapeável (SKU sem Item) |
 | `reserve_errors[]` | item mapeado mas sem lote/saldo (FIFO vazio, etc.) |
 
+## Coexistência com o fluxo COM paciente (não afeta)
+
+Os endpoints **sem paciente** (`create_batch`, `create_order`,
+`reserve_from_hubspot`, `swap/cancel_reservation`) são Server Scripts **novos e
+separados**. **Não editam nem chamam** o fluxo com paciente
+(`step_patients`, `allocate_patient_batches`, `create_dispensation_from_so`,
+receita, bin-pack). Os dois caminhos coexistem na mesma instância:
+
+```
+COM paciente:  step_customer → step_order → step_patients (bin-pack/receita)
+               → step_reserve → ... → dispensação/ZPL
+SEM paciente:  create_order / reserve_from_hubspot  → SO + reserva (FIFO)
+```
+
+- Ambos reservam contra os **mesmos FPB / Production Reservation** (sem conflito).
+- Escolha **por pedido**: um SO feito por `create_order` não tem `fp_patients`
+  (esperado). Pra dispensação com paciente, usa o fluxo paciente nesse pedido.
+- Idempotência por `hubspot_deal_id`: um deal num caminho não duplica no outro.
+- Única mudança **compartilhada** no histórico: `step_reserve` virou
+  **lote-obrigatório** (FIFO removido) — decisão de negócio, não efeito do
+  sem-paciente. Vale pros dois fluxos.
+
+> Conclusão: usar a integração enxuta (sem paciente) **não impede** usar o
+> fluxo completo (com paciente) depois, na mesma instância.
+
 ## Requisitos técnicos (validados)
 
 - Server Scripts habilitados (✅ via `common_site_config`, ver [00p](00p-catalogo-produtos-lotes.md)).
