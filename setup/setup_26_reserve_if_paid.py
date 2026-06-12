@@ -166,6 +166,12 @@ pix_disc = float(disc_src or 0) / 100.0
 pix_factor = 1.0
 if pix_disc > 0.0 and pix_disc < 1.0:
     pix_factor = 1.0 / (1.0 - pix_disc)
+# BOLETO gerado conta como venda (compromisso), mesmo sem pagar.
+boleto_sale = []
+for s in (cfg.get("boleto_sale_statuses") or "PENDING,PAID,AUTHORIZED").split(","):
+    s2 = s.strip().upper()
+    if s2:
+        boleto_sale.append(s2)
 paid_cents = 0
 eff_cents = 0
 tx_sum = []
@@ -181,7 +187,11 @@ for ck in checkouts:
         amt = int(t.get("amountCents") or 0)
         mth = (t.get("paymentMethod") or "").upper()
         tx_sum.append({"id": t.get("id"), "status": st, "amountCents": amt, "method": mth})
-        if st in approved:
+        if mth == "BOLETO":
+            counts = st in boleto_sale
+        else:
+            counts = st in approved
+        if counts:
             paid_cents = paid_cents + amt
             if mth == "PIX":
                 eff_cents = eff_cents + int(round(amt * pix_factor))
@@ -369,6 +379,24 @@ def install() -> int:
         log_ok("Config pix_discount_pct (=5) pronta.")
     except Exception as exc:  # noqa: BLE001
         log_error(f"pix_discount_pct: {exc}")
+
+    # Boleto gerado conta como venda — status que contam pra BOLETO
+    try:
+        c.create_custom_field({
+            "dt": "Injemed Financial Settings", "fieldname": "boleto_sale_statuses",
+            "label": "Boleto conta como venda (status CSV)", "fieldtype": "Data",
+            "insert_after": "pix_discount_pct",
+            "description": "Status de BOLETO que contam como venda (gerado=PENDING). "
+                           "Padrão: PENDING,PAID,AUTHORIZED. Boleto gerado já reserva."})
+        _, cur1 = c._request("GET",
+            "/api/resource/Injemed%20Financial%20Settings/Injemed%20Financial%20Settings")
+        if not ((cur1 or {}).get("data") or {}).get("boleto_sale_statuses"):
+            c._request("PUT",
+                "/api/resource/Injemed%20Financial%20Settings/Injemed%20Financial%20Settings",
+                json_body={"boleto_sale_statuses": "PENDING,PAID,AUTHORIZED"})
+        log_ok("Config boleto_sale_statuses pronta.")
+    except Exception as exc:  # noqa: BLE001
+        log_error(f"boleto_sale_statuses: {exc}")
 
     # Campo webhook_secret na config + gera valor se vazio (idempotente)
     try:

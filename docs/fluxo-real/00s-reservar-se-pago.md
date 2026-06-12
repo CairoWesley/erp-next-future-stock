@@ -89,6 +89,20 @@ Chamada **autenticada** (com `Authorization: token KEY:SECRET`) ignora o secret
 Idempotente por `hubspot_deal_id` — re-disparo não duplica; item já reservado é pulado.
 
 
+### Boleto gerado = venda
+
+`BOLETO` conta como **venda ao ser gerado** (não espera pagar) — boleto é
+compromisso. Por método:
+
+| Método | Conta quando (status) |
+|---|---|
+| PIX / CREDIT_CARD | `payment_approved_statuses` (default `PAID,AUTHORIZED`) |
+| **BOLETO** | `boleto_sale_statuses` (default `PENDING,PAID,AUTHORIZED`) — **PENDING = gerado** |
+
+Boleto gerado (PENDING) → conta o valor cheio → se cobre o total dos itens →
+**reserva**. Ajustável na config (ex: tirar PENDING se quiser só boleto pago).
+Boleto `EXPIRED`/`CANCELED`/`FAILED` não conta.
+
 ### Desconto PIX
 
 Pagamento via **PIX** pode ter desconto. O valor pago PIX é "grossed-up"

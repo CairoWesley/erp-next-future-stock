@@ -118,6 +118,11 @@ pix_disc = float(cfg.get("pix_discount_pct") or 0) / 100.0
 pix_factor = 1.0
 if pix_disc > 0.0 and pix_disc < 1.0:
     pix_factor = 1.0 / (1.0 - pix_disc)
+boleto_sale = []
+for s in (cfg.get("boleto_sale_statuses") or "PENDING,PAID,AUTHORIZED").split(","):
+    s2 = s.strip().upper()
+    if s2:
+        boleto_sale.append(s2)
 paid_cents = 0
 eff_cents = 0
 tx_sum = []
@@ -134,7 +139,11 @@ for ck in checkouts:
         mth = (t.get("paymentMethod") or "").upper()
         tx_sum.append({"id": t.get("id"), "status": st, "amountCents": amt,
                        "method": mth, "paidAt": t.get("paidAt")})
-        if st in approved:
+        if mth == "BOLETO":
+            counts = st in boleto_sale
+        else:
+            counts = st in approved
+        if counts:
             paid_cents = paid_cents + amt
             if mth == "PIX":
                 eff_cents = eff_cents + int(round(amt * pix_factor))
