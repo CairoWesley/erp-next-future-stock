@@ -38,6 +38,13 @@ data = frappe.form_dict
 if isinstance(data, str):
     data = frappe.parse_json(data)
 
+# Logger de hit (só chamadas não-autenticadas = webhook) — debug de entrega.
+if frappe.session.user == "Guest":
+    try:
+        frappe.log_error(json.dumps(data)[:1000], "WHK reserve_if_paid hit")
+    except Exception:
+        pass
+
 # deal id flexível (manual ?id= OU payload de webhook do checkout)
 def find_ref(root):
     queue = [root]
