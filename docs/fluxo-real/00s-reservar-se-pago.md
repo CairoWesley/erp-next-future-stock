@@ -62,13 +62,38 @@ Mesmo endpoint pros dois. O `externalRef` do checkout = deal id HubSpot.
 | `fpb_map` | — | `{item:lote}` lote explícito |
 | `customer`/`company`/`warehouse` | (deal/config/UP) | overrides |
 
-## Wiring do webhook
+## Wiring do webhook — URL + secret
 
-O checkout dispara webhook quando paga (registra em `/api/webhook-endpoints`).
-Aponta o webhook **pra este endpoint** (com header de auth), ou via n8n
-(checkout → n8n → este endpoint). O endpoint lê o `externalRef` do payload e
-roda o fluxo. Idempotente por `hubspot_deal_id` (re-disparo não duplica;
-item já reservado é pulado).
+O endpoint é **público com secret** (`allow_guest=1`, gateado por
+`webhook_secret`). Aponta o webhook do checkout (ou n8n) pra:
+
+```
+POST https://erp.service.unikkapharma.com.br/api/method/future_production_reserve_if_paid
+```
+
+Passa o secret num destes (⚠ **query `?secret=` NÃO funciona** com body JSON —
+o Frappe não funde query no form_dict):
+
+| Forma | Como |
+|---|---|
+| **Header** (recomendado) | `X-Webhook-Secret: <webhook_secret>` |
+| **Body** | adiciona `"secret": "<webhook_secret>"` no JSON |
+
+`webhook_secret` está em `Injemed Financial Settings` (gerado no setup; pode
+trocar). Body = payload do checkout (precisa ter `externalRef`/`deal_id`/`ref`)
+ou `{"id":"<deal>"}`.
+
+Chamada **autenticada** (com `Authorization: token KEY:SECRET`) ignora o secret
+(rota manual / server-to-server).
+
+Idempotente por `hubspot_deal_id` — re-disparo não duplica; item já reservado é pulado.
+
+## Validado end-to-end (unikkapharma)
+
+Deal real `61048721486`: `total_due` R$1966 (OT10000029 1900 + FRETE 66) =
+`total_paid` R$1966 (1 transação `PAID` cartão; 1 `FAILED` ignorada) →
+`paid_100:true` → reservado (SO 00015, FPB-2026-00001). Idempotente (sem
+duplicar). Secret testado por header e por body.
 
 ## Erros / códigos
 

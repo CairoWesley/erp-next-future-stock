@@ -51,6 +51,24 @@ if not deal_id:
 
 cfg = frappe.get_doc("Injemed Financial Settings", "Injemed Financial Settings")
 
+# Webhook público (allow_guest): chamada não-autenticada exige o secret.
+# Chamada autenticada (token/sessão) ignora.
+if frappe.session.user == "Guest":
+    wsec = cfg.get("webhook_secret")
+    given = str(data.get("secret") or "")
+    if not given:
+        try:
+            given = str((frappe.request.args or {}).get("secret") or "")
+        except Exception:
+            given = ""
+    if not given:
+        try:
+            given = str((frappe.request.headers or {}).get("X-Webhook-Secret") or "")
+        except Exception:
+            given = ""
+    if not wsec or given != str(wsec):
+        frappe.throw("[BAD_SECRET] Webhook secret invalido ou ausente.")
+
 def getpw(fn):
     try:
         return cfg.get_password(fn)
@@ -297,18 +315,42 @@ else:
 
 
 def install() -> int:
+    import secrets
     c = client_from_env()
     if not c.server_script_enabled():
         log_error("Server Scripts desabilitados.")
         return 1
-    log_section("Endpoint future_production_reserve_if_paid")
+    log_section("Endpoint future_production_reserve_if_paid (webhook + manual)")
+
+    # Campo webhook_secret na config + gera valor se vazio (idempotente)
+    try:
+        c.create_custom_field({
+            "dt": "Injemed Financial Settings", "fieldname": "webhook_secret",
+            "label": "Webhook Secret (reserve_if_paid)", "fieldtype": "Data",
+            "insert_after": "payment_tolerance_cents",
+            "description": "Secret pro webhook público. Mande como ?secret=... ou header X-Webhook-Secret.",
+        })
+        _, cur = c._request("GET",
+            "/api/resource/Injemed%20Financial%20Settings/Injemed%20Financial%20Settings")
+        val = ((cur or {}).get("data") or {}).get("webhook_secret")
+        if not val:
+            new_secret = secrets.token_hex(24)
+            c._request("PUT",
+                "/api/resource/Injemed%20Financial%20Settings/Injemed%20Financial%20Settings",
+                json_body={"webhook_secret": new_secret})
+            log_ok(f"webhook_secret gerado: {new_secret}")
+        else:
+            log_ok(f"webhook_secret já existe: {val}")
+    except Exception as exc:  # noqa: BLE001
+        log_error(f"webhook_secret: {exc}")
+
     try:
         c.upsert_server_script({
             "name": "future_production_reserve_if_paid", "script_type": "API",
             "api_method": "future_production_reserve_if_paid",
-            "allow_guest": 0, "enabled": 1, "script": SCRIPT,
+            "allow_guest": 1, "enabled": 1, "script": SCRIPT,
         })
-        log_ok("Endpoint future_production_reserve_if_paid pronto.")
+        log_ok("Endpoint future_production_reserve_if_paid pronto (allow_guest=1, secret-gated).")
         return 0
     except Exception as exc:  # noqa: BLE001
         log_error(f"{exc}")
